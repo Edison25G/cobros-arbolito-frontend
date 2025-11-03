@@ -1,1 +1,47 @@
-/* You can add global styles to this file, and also import other style files */
+@import "tailwindcss";
+@import "tailwindcss-primeui";
+@import 'primeicons/primeicons.css';
+
+
+.p-toast {
+  top: 1rem !important;
+  right: 1rem !important;
+  width: auto !important;
+  max-width: 90vw;
+  z-index: 9999;
+}
+
+.p-toast-message {
+  font-size: 0.9rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+}
+
+.p-toast-message-content {
+  display: flex;
+  align-items: center;
+}
+
+.p-toast-message {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.p-toast-message-success {
+  background-color: #ecfdf5 !important;
+  border-left: 4px solid #10b981 !important;
+}
+
+.p-toast-message-error {
+  background-color: #fef2f2 !important;
+  border-left: 4px solid #dc2626 !important;
+}
+
+.p-toast-message-info {
+  background-color: #eff6ff !important;
+  border-left: 4px solid #3b82f6 !important;
+}
+
+.p-toast-message-warn {
+  background-color: #fefce8 !important;
+  border-left: 4px solid #f59e0b !important;
+}
