@@ -1,84 +1,83 @@
-import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import {
-  FormBuilder,
-  FormGroup,
-  ReactiveFormsModule,
-  Validators,
-} from '@angular/forms';
+import { Component, OnInit, inject } from '@angular/core';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
+import { CommonModule } from '@angular/common';
+
+// PrimeNG
+import { ButtonModule } from 'primeng/button';
+import { DividerModule } from 'primeng/divider';
 import { InputTextModule } from 'primeng/inputtext';
 import { PasswordModule } from 'primeng/password';
-import { ButtonModule } from 'primeng/button';
+import { FloatLabelModule } from 'primeng/floatlabel';
+import { ToastModule } from 'primeng/toast';
+import { MessageModule } from 'primeng/message';
+
+// Servicios
+import { ErrorService } from '../../core/services/error.service';
 
 @Component({
-  selector: 'amc-login',
-  standalone: true,
-  imports: [
-    CommonModule,
-    RouterModule,
-    ReactiveFormsModule,
-    InputTextModule,
-    PasswordModule,
-    ButtonModule,
-  ],
-  templateUrl: './login.component.html',
-  styleUrls: ['./login.component.css'],
+	selector: 'amc-login',
+	standalone: true,
+	templateUrl: './login.component.html',
+	styleUrls: ['./login.component.css'],
+	imports: [
+		CommonModule,
+		RouterModule,
+		ReactiveFormsModule,
+		InputTextModule,
+		PasswordModule,
+		FloatLabelModule,
+		ButtonModule,
+		DividerModule,
+		ToastModule,
+		MessageModule,
+	],
 })
-export class LoginComponent implements OnInit {
-  loginForm!: FormGroup;
-  isLoading = false;
-  errorMessage: string | null = null;
+export default class LoginComponent implements OnInit {
+	loginForm!: FormGroup;
+	isLoading = false;
 
-  // Credenciales duras para pruebas
-  private readonly CREDENTIALS = [
-    { username: 'admin', password: 'admin123', role: 'admin' },
-    { username: 'user', password: 'user123', role: 'user' },
-  ];
+	private fb = inject(FormBuilder);
+	private router = inject(Router);
+	private errorService = inject(ErrorService);
 
-  constructor(
-    private fb: FormBuilder,
-    private router: Router,
-  ) {}
+	// Usuario simulado
+	private readonly mockUser = {
+		username: 'admin',
+		password: '123456',
+	};
 
-  ngOnInit(): void {
-    this.loginForm = this.fb.group({
-      username: ['', Validators.required],
-      password: ['', Validators.required],
-    });
-  }
+	ngOnInit(): void {
+		this.loginForm = this.fb.group({
+			username: ['', Validators.required],
+			password: ['', Validators.required],
+		});
+	}
 
-  login(): void {
-    if (this.loginForm.invalid) {
-      this.loginForm.markAllAsTouched();
-      this.errorMessage = 'Por favor completa los campos requeridos.';
-      return;
-    }
+	login(): void {
+		if (this.loginForm.invalid) {
+			this.loginForm.markAllAsTouched();
+			this.errorService.requiredFields();
+			return;
+		}
 
-    this.isLoading = true;
-    this.errorMessage = null;
+		const { username, password } = this.loginForm.value;
 
-    const { username, password } = this.loginForm.value as {
-      username: string;
-      password: string;
-    };
+		this.isLoading = true;
 
-    // Simulación: buscar en credenciales estáticas
-    const found = this.CREDENTIALS.find(
-      (c) => c.username === username && c.password === password,
-    );
+		// Simulamos petición al backend
+		setTimeout(() => {
+			this.isLoading = false;
 
-    setTimeout(() => {
-      this.isLoading = false;
-      if (found) {
-        // Redirigir según rol
-        const ruta =
-          found.role === 'admin' ? '/dashboard/home' : '/dashboard/user-home';
-        this.router.navigate([ruta]);
-      } else {
-        this.errorMessage = 'Usuario o contraseña incorrectos.';
-        this.loginForm.get('password')?.reset();
-      }
-    }, 600);
-  }
+			if (username === this.mockUser.username && password === this.mockUser.password) {
+				this.errorService.loginSuccess();
+				// Redirección al home
+				this.router.navigate(['/dashboard/home']);
+			} else {
+				this.errorService.loginError('Usuario o contraseña incorrectos.');
+				// Limpiar inputs si falla
+				this.loginForm.reset();
+			}
+		}, 1000); // simulamos 1s de carga
+	}
 }
