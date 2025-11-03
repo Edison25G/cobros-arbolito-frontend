@@ -1,1 +1,111 @@
-<p>register works!</p>
+<div
+	class="w-full max-w-sm bg-white/60 backdrop-blur-lg border border-white/50 p-6 rounded-3xl shadow-2xl animate-fade-in"
+	style="background: rgba(255, 255, 255, 0.75); backdrop-filter: blur(10px)"
+>
+	<!-- Logo -->
+	<div class="flex justify-center mb-3">
+		<img src="assets/img/Logo-web.png" alt="Logo SIGAF" class="h-16 object-contain" />
+	</div>
+
+	<!-- Título -->
+	<h1 class="text-2xl font-bold text-center text-gray-900 mb-1 tracking-wide">Crear Cuenta</h1>
+	<p class="text-center text-gray-700 text-sm mb-5">Por favor, completa tus datos</p>
+
+	<!-- Formulario -->
+	<form [formGroup]="registerForm" (ngSubmit)="register()" autocomplete="off">
+		<!-- Usuario -->
+		<div class="mb-4">
+			<div
+				class="flex items-center bg-gray-100 rounded-full px-4 py-3 shadow-sm hover:ring-2 hover:ring-indigo-300 transition"
+			>
+				<i class="pi pi-user text-indigo-500 text-lg mr-3"></i>
+				<input
+					pInputText
+					id="register-username"
+					formControlName="username"
+					placeholder="Usuario"
+					class="flex-1 bg-transparent border-0 text-gray-900 placeholder-gray-500 focus:ring-0"
+					autocomplete="username"
+				/>
+			</div>
+		</div>
+
+		<!-- Correo Electrónico -->
+		<div class="mb-4">
+			<div
+				class="flex items-center bg-gray-100 rounded-full px-4 py-3 shadow-sm hover:ring-2 hover:ring-indigo-300 transition"
+			>
+				<i class="pi pi-envelope text-indigo-500 text-lg mr-3"></i>
+				<input
+					pInputText
+					id="register-email"
+					formControlName="email"
+					placeholder="Correo Electrónico"
+					class="flex-1 bg-transparent border-0 text-gray-900 placeholder-gray-500 focus:ring-0"
+					autocomplete="email"
+				/>
+			</div>
+		</div>
+
+		<!-- Contraseña -->
+		<div class="mb-4">
+			<div
+				class="flex items-center bg-gray-100 rounded-full px-4 py-3 shadow-sm hover:ring-2 hover:ring-indigo-300 transition"
+			>
+				<i class="pi pi-lock text-indigo-500 text-lg mr-3"></i>
+				<p-password
+					inputId="register-password"
+					formControlName="password"
+					[toggleMask]="true"
+					[feedback]="true"
+					placeholder="Contraseña"
+					class="flex-1"
+					autocomplete="new-password"
+				></p-password>
+			</div>
+		</div>
+
+		<!-- Confirmar Contraseña -->
+		<div class="mb-4">
+			<div
+				class="flex items-center bg-gray-100 rounded-full px-4 py-3 shadow-sm hover:ring-2 hover:ring-indigo-300 transition"
+			>
+				<i class="pi pi-lock text-indigo-500 text-lg mr-3"></i>
+				<p-password
+					inputId="register-confirm-password"
+					formControlName="confirmPassword"
+					[toggleMask]="true"
+					[feedback]="false"
+					placeholder="Confirmar Contraseña"
+					class="flex-1"
+					autocomplete="new-password"
+				></p-password>
+			</div>
+		</div>
+
+		<!-- Botón Registrar -->
+		<button
+			type="submit"
+			[disabled]="isLoading"
+			class="w-full py-2.5 rounded-full bg-gradient-to-r from-indigo-400 to-purple-500 text-white font-bold hover:from-indigo-500 hover:to-purple-600 transition-all duration-300 flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-indigo-300 disabled:opacity-60 disabled:cursor-not-allowed"
+		>
+			<ng-container *ngIf="!isLoading">
+				<i class="pi pi-user-plus text-lg"></i>
+				<span>Crear Cuenta</span>
+			</ng-container>
+
+			<ng-container *ngIf="isLoading">
+				<i class="pi pi-spinner pi-spin text-lg"></i>
+				<span>Registrando...</span>
+			</ng-container>
+		</button>
+
+		<div class="my-3 border-t border-gray-300"></div>
+
+		<!-- Link a Login -->
+		<div class="text-center">
+			<span class="text-gray-700 text-sm">¿Ya tienes una cuenta? </span>
+			<a routerLink="/auth/login" class="text-purple-600 font-semibold hover:underline"> Inicia sesión </a>
+		</div>
+	</form>
+</div>

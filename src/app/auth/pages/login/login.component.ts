@@ -65,19 +65,21 @@ export default class LoginComponent implements OnInit {
 
 		this.isLoading = true;
 
-		// Simulamos petición al backend
 		setTimeout(() => {
 			this.isLoading = false;
 
 			if (username === this.mockUser.username && password === this.mockUser.password) {
+				// Login correcto
 				this.errorService.loginSuccess();
+
 				// Redirección al home
 				this.router.navigate(['/dashboard/home']);
 			} else {
+				// Login incorrecto
 				this.errorService.loginError('Usuario o contraseña incorrectos.');
-				// Limpiar inputs si falla
+				// Limpiar inputs
 				this.loginForm.reset();
 			}
-		}, 1000); // simulamos 1s de carga
+		}, 1000); // Simulamos 1s de carga
 	}
 }

@@ -13,24 +13,22 @@ export default [
 			{
 				path: 'register',
 				title: 'Registro de usuario',
-				loadComponent: () => import('./pages/register/register.component').then((m) => m.RegisterComponent),
+				loadComponent: () => import('./pages/register/register.component'),
 			},
 			{
 				path: 'forgot-password',
 				title: 'Recuperar contraseña',
-				loadComponent: () =>
-					import('./pages/forgot-password/forgot-password.component').then((m) => m.ForgotPasswordComponent),
+				loadComponent: () => import('./pages/forgot-password/forgot-password.component'),
 			},
 			{
 				path: 'verify-code',
 				title: 'Verificar Código',
-				loadComponent: () => import('./pages/verify-code/verify-code.component').then((m) => m.VerifyCodeComponent),
+				loadComponent: () => import('./pages/verify-code/verify-code.component'),
 			},
 			{
 				path: 'reset-password',
 				title: 'Cambiar contraseña',
-				loadComponent: () =>
-					import('./pages/reset-password/reset-password.component').then((m) => m.ResetPasswordComponent),
+				loadComponent: () => import('./pages/reset-password/reset-password.component'),
 			},
 
 			{
