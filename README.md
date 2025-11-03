@@ -57,3 +57,11 @@ Angular CLI does not come with an end-to-end testing framework by default. You c
 ## Additional Resources
 
 For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+
+1. Clonar el Proyecto (Solo la primera vez)
+   git clone https://github.com/Edison25G/sigaf-frontend.git
+   cd sigaf-frontend
+2. Instalar Dependencias (Solo la primera vez)
+   npm install
+3. Moverse a la Rama develop (¡El paso clave!) Ellos nunca deben trabajar en main. Deben empezar desde develop.
+   git checkout develop
