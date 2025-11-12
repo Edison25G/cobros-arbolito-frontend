@@ -3,7 +3,7 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "sigaf-frontend": {
+    "cobros-arbolito": {
       "projectType": "application",
       "schematics": {
 
@@ -63,10 +63,10 @@
           "builder": "@angular/build:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "sigaf-frontend:build:production"
+              "buildTarget": "cobros-arbolito:build:production"
             },
             "development": {
-              "buildTarget": "sigaf-frontend:build:development"
+              "buildTarget": "cobros-arbolito:build:development"
             }
           },
           "defaultConfiguration": "development"

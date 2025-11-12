@@ -8,25 +8,24 @@ import { ToastModule } from 'primeng/toast';
 // import { AuthService } from '@auth/core/services/auth.service';
 
 @Component({
-  selector: 'amc-root', // (Recuerda que cambiaste esto en index.html)
-  standalone: true,
-  imports: [RouterOutlet, ButtonModule, ToastModule],
-  providers: [],
-  templateUrl: './app.component.html',
-  styleUrl: './app.component.css',
+	selector: 'amc-root', // (Recuerda que cambiaste esto en index.html)
+	standalone: true,
+	imports: [RouterOutlet, ButtonModule, ToastModule],
+	providers: [],
+	templateUrl: './app.component.html',
+	styleUrl: './app.component.css',
 })
 export class AppComponent implements OnInit {
-  title = 'sigaf-frontend'; // <-- Te sugiero cambiar esto
+	title = 'cobros-arbolito'; // <-- Te sugiero cambiar esto
 
-  constructor() // 2. Comentamos las inyecciones
-  // private sessionService: SessionService,
-  // private authService: AuthService,
-  {}
+	constructor() // private sessionService: SessionService, // 2. Comentamos las inyecciones
+	// private authService: AuthService,
+	{}
 
-  ngOnInit(): void {
-    // 3. Comentamos la lógica que depende de los servicios
-    //  if (this.authService.isAuthenticated()) {
-    //  this.sessionService.startWatcher();
-    // }
-  }
+	ngOnInit(): void {
+		// 3. Comentamos la lógica que depende de los servicios
+		//  if (this.authService.isAuthenticated()) {
+		//  this.sessionService.startWatcher();
+		// }
+	}
 }

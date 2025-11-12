@@ -2,23 +2,19 @@
 	class="w-full max-w-sm bg-white/60 backdrop-blur-lg border border-white/50 p-6 rounded-3xl shadow-2xl animate-fade-in"
 	style="background: rgba(255, 255, 255, 0.75); backdrop-filter: blur(10px)"
 >
-	<!-- Logo -->
-	<div class="flex justify-center mb-3">
-		<img src="assets/img/Logo-web.png" alt="Logo SIGAF" class="h-16 object-contain" />
+	<div class="flex justify-center mb-2">
+		<img src="assets/img/arbolito.png" alt="Logo SGF El Arbolito" class="h-24 object-contain drop-shadow-md" />
 	</div>
 
-	<!-- Título -->
-	<h1 class="text-2xl font-bold text-center text-gray-900 mb-1 tracking-wide">SIGAF</h1>
-	<p class="text-center text-gray-700 text-sm mb-5">Sistema de Gestión de Alquiler y Facturación</p>
+	<h1 class="text-2xl font-bold text-center text-gray-900 mb-1 tracking-wide">Junta de Riego "El Arbolito"</h1>
+	<p class="text-center text-gray-700 text-sm mb-5">Sistema de Facturación Electrónica</p>
 
-	<!-- Formulario -->
 	<form [formGroup]="loginForm" (ngSubmit)="login()" autocomplete="off">
-		<!-- Usuario -->
 		<div class="mb-4">
 			<div
-				class="flex items-center bg-gray-100 rounded-full px-4 py-3 shadow-sm hover:ring-2 hover:ring-indigo-300 transition"
+				class="flex items-center bg-gray-100 rounded-full px-4 py-3 shadow-sm hover:ring-2 hover:ring-emerald-300 transition"
 			>
-				<i class="pi pi-user text-indigo-500 text-lg mr-3"></i>
+				<i class="pi pi-user text-emerald-600 text-lg mr-3"></i>
 				<input
 					pInputText
 					id="login-username"
@@ -30,12 +26,11 @@
 			</div>
 		</div>
 
-		<!-- Contraseña -->
 		<div class="mb-4">
 			<div
-				class="flex items-center bg-gray-100 rounded-full px-4 py-3 shadow-sm hover:ring-2 hover:ring-indigo-300 transition"
+				class="flex items-center bg-gray-100 rounded-full px-4 py-3 shadow-sm hover:ring-2 hover:ring-emerald-300 transition"
 			>
-				<i class="pi pi-lock text-indigo-500 text-lg mr-3"></i>
+				<i class="pi pi-lock text-emerald-600 text-lg mr-3"></i>
 				<p-password
 					inputId="login-password"
 					formControlName="password"
@@ -48,41 +43,37 @@
 			</div>
 		</div>
 
-		<!-- Olvidaste contraseña -->
 		<div class="flex justify-end text-gray-600 text-sm mb-4">
-			<a routerLink="/auth/forgot-password" class="hover:text-indigo-600 hover:underline">
+			<a routerLink="/auth/forgot-password" class="hover:text-emerald-600 hover:underline">
 				¿Olvidaste tu contraseña?
 			</a>
 		</div>
 
-		<!-- Botón Login -->
 		<button
 			type="submit"
 			[disabled]="isLoading"
-			class="w-full py-2.5 rounded-full bg-gradient-to-r from-indigo-400 to-purple-500 text-white font-bold hover:from-indigo-500 hover:to-purple-600 transition-all duration-300 flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-indigo-300 disabled:opacity-60 disabled:cursor-not-allowed"
+			class="w-full py-2.5 rounded-full bg-gradient-to-r from-emerald-400 to-green-500 text-white font-bold hover:from-emerald-500 hover:to-green-600 transition-all duration-300 flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-emerald-300 disabled:opacity-60 disabled:cursor-not-allowed"
 		>
 			<ng-container *ngIf="!isLoading">
 				<i class="pi pi-sign-in text-lg"></i>
-				<span>Ingresar</span>
+				<span>Ingresar al Sistema</span>
 			</ng-container>
 
 			<ng-container *ngIf="isLoading">
 				<i class="pi pi-spinner pi-spin text-lg"></i>
-				<span>Verificando...</span>
+				<span>Verificando credenciales...</span>
 			</ng-container>
 		</button>
 
 		<div class="my-3 border-t border-gray-300"></div>
 
-		<!-- Crear cuenta -->
 		<div class="text-center">
-			<span class="text-gray-700 text-sm">¿Eres nuevo en SIGAF? </span>
-			<a routerLink="/auth/register" class="text-purple-600 font-semibold hover:underline"> Crea una cuenta </a>
+			<span class="text-gray-700 text-sm">¿Nuevo usuario? </span>
+			<a routerLink="/auth/register" class="text-emerald-700 font-semibold hover:underline"> Registrarse aquí </a>
 		</div>
 
-		<!-- Footer -->
 		<p class="mt-4 text-xs text-gray-600 text-center italic">
-			Sistema desarrollado para una gestión eficiente de alquileres y facturación.
+			Sistema de gestión de cobros de la Junta de Riego "El Arbolito".
 		</p>
 	</form>
 </div>

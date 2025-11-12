@@ -2,23 +2,19 @@
 	class="w-full max-w-sm bg-white/60 backdrop-blur-lg border border-white/50 p-6 rounded-3xl shadow-2xl animate-fade-in"
 	style="background: rgba(255, 255, 255, 0.75); backdrop-filter: blur(10px)"
 >
-	<!-- Logo -->
 	<div class="flex justify-center mb-3">
-		<img src="assets/img/Logo-web.png" alt="Logo SIGAF" class="h-16 object-contain" />
+		<img src="assets/img/arbolito.png" alt="Logo El Arbolito" class="h-16 object-contain drop-shadow-md" />
 	</div>
 
-	<!-- Título -->
 	<h1 class="text-2xl font-bold text-center text-gray-900 mb-1 tracking-wide">Verificar Código</h1>
 	<p class="text-center text-gray-700 text-sm mb-5">Ingresa el código enviado a tu correo</p>
 
-	<!-- Formulario -->
 	<form [formGroup]="codeForm" (ngSubmit)="verify()" autocomplete="off">
-		<!-- Código de Verificación -->
-		<div class="mb-6">
+		<div class="mb-4">
 			<div
-				class="flex items-center bg-gray-100 rounded-full px-4 py-3 shadow-sm hover:ring-2 hover:ring-indigo-300 transition"
+				class="flex items-center bg-gray-100 rounded-full px-4 py-3 shadow-sm hover:ring-2 hover:ring-emerald-300 transition"
 			>
-				<i class="pi pi-key text-indigo-500 text-lg mr-3"></i>
+				<i class="pi pi-key text-emerald-600 text-lg mr-3"></i>
 				<input
 					pInputText
 					id="code"
@@ -31,11 +27,10 @@
 			</div>
 		</div>
 
-		<!-- Botón Verificar -->
 		<button
 			type="submit"
 			[disabled]="isLoading"
-			class="w-full py-2.5 rounded-full bg-gradient-to-r from-indigo-400 to-purple-500 text-white font-bold hover:from-indigo-500 hover:to-purple-600 transition-all duration-300 flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-indigo-300 disabled:opacity-60 disabled:cursor-not-allowed"
+			class="w-full py-2.5 rounded-full bg-gradient-to-r from-emerald-400 to-green-500 text-white font-bold hover:from-emerald-500 hover:to-green-600 transition-all duration-300 flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-emerald-300 disabled:opacity-60 disabled:cursor-not-allowed"
 		>
 			<ng-container *ngIf="!isLoading">
 				<i class="pi pi-check-circle text-lg"></i>
@@ -50,10 +45,9 @@
 
 		<div class="my-3 border-t border-gray-300"></div>
 
-		<!-- Link a Reenviar -->
 		<div class="text-center">
 			<span class="text-gray-700 text-sm">¿No recibiste el código? </span>
-			<a routerLink="/auth/forgot-password" class="text-purple-600 font-semibold hover:underline"> Reenviar </a>
+			<a routerLink="/auth/forgot-password" class="text-emerald-700 font-semibold hover:underline"> Reenviar </a>
 		</div>
 	</form>
 </div>

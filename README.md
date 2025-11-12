@@ -1,4 +1,4 @@
-# SigafFrontend
+# Aplicación Web para la Gestión de Cobros "El Arbolito" (Tesis)
 
 This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 20.0.1.
 
