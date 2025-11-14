@@ -1,0 +1,65 @@
+<p-card styleClass="shadow-md border-0 rounded-lg lg:max-w-4xl mx-auto">
+	<ng-template pTemplate="header">
+		<div class="p-4 bg-gray-50 rounded-t-lg">
+			<h2 class="text-2xl font-semibold text-gray-800">Registro de Lecturas</h2>
+			<p class="text-sm text-gray-500">Ingrese los datos del medidor para un socio.</p>
+		</div>
+	</ng-template>
+
+	<form [formGroup]="lecturaForm" (ngSubmit)="registrarLectura()">
+		<div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5 p-4">
+			<!-- SOCIO -->
+			<div class="md:col-span-2">
+				<span class="block text-sm font-medium text-gray-700 mb-1">Socio</span>
+
+				<p-select
+					formControlName="socio"
+					[options]="sociosDropdown"
+					placeholder="Seleccione un socio..."
+					[loading]="isLoadingSocios"
+					[filter]="true"
+					filterBy="label"
+					styleClass="w-full"
+				></p-select>
+			</div>
+
+			<!-- FECHA -->
+			<div>
+				<span class="block text-sm font-medium text-gray-700 mb-1">Fecha de Lectura</span>
+
+				<p-datepicker
+					formControlName="fechaLectura"
+					[maxDate]="maxDate"
+					dateFormat="dd/mm/yy"
+					[showIcon]="true"
+					styleClass="w-full"
+				></p-datepicker>
+			</div>
+
+			<!-- VALOR LECTURA -->
+			<div>
+				<span class="block text-sm font-medium text-gray-700 mb-1">Valor de Lectura (m³)</span>
+
+				<p-inputNumber
+					formControlName="valorLectura"
+					mode="decimal"
+					[min]="1"
+					placeholder="Ej: 150"
+					styleClass="w-full"
+				></p-inputNumber>
+			</div>
+		</div>
+
+		<!-- BOTÓN GUARDAR -->
+		<div class="border-t border-gray-200 p-4 mt-4 flex justify-end">
+			<p-button
+				type="submit"
+				label="Registrar Lectura"
+				icon="pi pi-check"
+				styleClass="p-button-success"
+				[loading]="isSaving"
+				[disabled]="lecturaForm.invalid || isSaving"
+			></p-button>
+		</div>
+	</form>
+</p-card>

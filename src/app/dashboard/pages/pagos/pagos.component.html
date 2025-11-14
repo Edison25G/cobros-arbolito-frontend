@@ -1,1 +1,66 @@
-<p>pagos works!</p>
+<div class="card shadow-md border-0 rounded-lg">
+	<div class="flex items-center justify-between gap-4 mb-5 p-4 bg-gray-50 rounded-t-lg">
+		<div>
+			<h2 class="text-2xl font-semibold text-gray-800">Mi Historial de Pagos</h2>
+			<p class="text-sm text-gray-500">Aquí puedes ver todas tus facturas, tanto pendientes como pagadas.</p>
+		</div>
+	</div>
+
+	<p-table
+		[value]="misFacturas"
+		[loading]="isLoading"
+		[paginator]="true"
+		[rows]="5"
+		styleClass="p-datatable-striped"
+		responsiveLayout="scroll"
+	>
+		<ng-template pTemplate="header">
+			<tr>
+				<th pSortableColumn="numeroFactura"># Factura <p-sortIcon field="numeroFactura"></p-sortIcon></th>
+				<th pSortableColumn="fechaEmision">F. Emisión <p-sortIcon field="fechaEmision"></p-sortIcon></th>
+				<th pSortableColumn="fechaVencimiento">F. Vencimiento <p-sortIcon field="fechaVencimiento"></p-sortIcon></th>
+				<th pSortableColumn="total">Total a Pagar <p-sortIcon field="total"></p-sortIcon></th>
+				<th pSortableColumn="estado">Estado <p-sortIcon field="estado"></p-sortIcon></th>
+				<th class="text-center">Acciones</th>
+			</tr>
+		</ng-template>
+
+		<ng-template pTemplate="body" let-factura>
+			<tr>
+				<td>
+					<span class="font-medium text-gray-700">{{ factura.numeroFactura }}</span>
+				</td>
+
+				<td>{{ factura.fechaEmision | date: 'dd/MM/yyyy' }}</td>
+
+				<td>{{ factura.fechaVencimiento | date: 'dd/MM/yyyy' }}</td>
+
+				<td>
+					<span class="font-bold">{{ factura.total | currency: 'USD' }}</span>
+				</td>
+
+				<td>
+					<p-tag [value]="getLabel(factura.estado)" [severity]="getSeverity(factura.estado)"></p-tag>
+				</td>
+
+				<td class="text-center">
+					<p-button
+						*ngIf="factura.estado !== EstadoFactura.Pagada"
+						(click)="pagarFactura(factura)"
+						label="Pagar Ahora"
+						icon="pi pi-credit-card"
+						styleClass="p-button-success p-button-sm"
+					></p-button>
+
+					<span *ngIf="factura.estado === EstadoFactura.Pagada" class="text-sm text-gray-500 italic"> Pagada </span>
+				</td>
+			</tr>
+		</ng-template>
+
+		<ng-template pTemplate="emptymessage">
+			<tr>
+				<td colspan="6" class="text-center">No se encontraron facturas en tu historial.</td>
+			</tr>
+		</ng-template>
+	</p-table>
+</div>

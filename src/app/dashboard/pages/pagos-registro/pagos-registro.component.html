@@ -1,0 +1,89 @@
+<p-card styleClass="shadow-md border-0 rounded-lg lg:max-w-4xl mx-auto">
+	<ng-template pTemplate="header">
+		<div class="p-4 bg-gray-50 rounded-t-lg">
+			<h2 class="text-2xl font-semibold text-gray-800">Registrar Pago de Socio</h2>
+			<p class="text-sm text-gray-500">Busque un socio para ver sus facturas pendientes y registrar un pago.</p>
+		</div>
+	</ng-template>
+
+	<form [formGroup]="pagoForm" (ngSubmit)="registrarPago()">
+		<div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5 p-4">
+			<div class="md:col-span-2">
+				<label for="socio" class="block text-sm font-medium text-gray-700 mb-1">Buscar Socio</label>
+				<p-select
+					inputId="socio"
+					formControlName="socio"
+					[options]="sociosDropdown"
+					placeholder="Seleccione un socio..."
+					[loading]="isLoadingSocios"
+					[filter]="true"
+					filterBy="label"
+					styleClass="w-full"
+					(onChange)="onSocioChange()"
+				></p-select>
+			</div>
+
+			<div class="md:col-span-2">
+				<label for="factura" class="block text-sm font-medium text-gray-700 mb-1">Facturas Pendientes</label>
+				<p-select
+					inputId="factura"
+					formControlName="factura"
+					[options]="facturasDropdown"
+					placeholder="Seleccione una factura a pagar..."
+					[loading]="isLoadingFacturas"
+					styleClass="w-full"
+					(onChange)="onFacturaChange()"
+				>
+					<ng-template pTemplate="empty">
+						<div class="p-2 text-center text-gray-500">No se encontraron facturas pendientes para este socio.</div>
+					</ng-template>
+				</p-select>
+			</div>
+
+			<div>
+				<label for="monto" class="block text-sm font-medium text-gray-700 mb-1">Monto a Pagar</label>
+				<p-inputNumber
+					inputId="monto"
+					formControlName="monto"
+					mode="currency"
+					currency="USD"
+					locale="en-US"
+					styleClass="w-full"
+					class="w-full"
+				></p-inputNumber>
+			</div>
+
+			<div>
+				<label for="metodo" class="block text-sm font-medium text-gray-700 mb-1">Método de Pago</label>
+				<p-select
+					inputId="metodo"
+					formControlName="metodoPago"
+					[options]="metodosPagoDropdown"
+					styleClass="w-full"
+				></p-select>
+			</div>
+
+			<div>
+				<label for="fecha" class="block text-sm font-medium text-gray-700 mb-1">Fecha de Pago</label>
+				<p-datepicker
+					inputId="fecha"
+					formControlName="fechaPago"
+					dateFormat="dd/mm/yy"
+					[showIcon]="true"
+					styleClass="w-full"
+				></p-datepicker>
+			</div>
+		</div>
+
+		<div class="border-t border-gray-200 p-4 mt-4 flex justify-end">
+			<p-button
+				type="submit"
+				label="Registrar Pago"
+				icon="pi pi-check-circle"
+				styleClass="p-button-success"
+				[loading]="isSaving"
+				[disabled]="pagoForm.invalid || isSaving"
+			></p-button>
+		</div>
+	</form>
+</p-card>
