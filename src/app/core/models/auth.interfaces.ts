@@ -1,4 +1,4 @@
-import { Role } from './role.enum';
+import { RolUsuario } from './role.enum';
 
 // Lo que enviamos al servicio
 export interface LoginCredentials {
@@ -11,5 +11,5 @@ export interface LoginResponse {
 	success: boolean;
 	message: string;
 	token?: string;
-	role?: Role | null;
+	role?: RolUsuario | null;
 }

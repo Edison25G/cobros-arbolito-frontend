@@ -25,17 +25,24 @@
 
 		<nav class="flex-1 overflow-y-auto p-2 h-[calc(100vh-80px)]">
 			<ul class="space-y-1">
-				<li *ngFor="let item of menuItems" [ngIf]="hasAccess(item.roles)">
-					<a
-						[routerLink]="item.link"
-						routerLinkActive="bg-emerald-600 text-white font-semibold"
-						(click)="onMenuClick()"
-						class="group flex items-center gap-3 px-4 py-2.5 rounded-md transition-colors duration-200 hover:bg-gray-700 text-gray-300"
-					>
-						<i [class]="item.icon + ' text-gray-400 group-hover:text-white transition-colors duration-200'"></i>
-						<span class="transition-colors duration-200">{{ item.label }}</span>
-					</a>
-				</li>
+				<!--
+          *** ¡CORRECCIÓN AQUÍ! (Línea 28) ***
+          1. Se usa <ng-container> para el bucle *ngFor.
+          2. Se usa *ngIf (en lugar de [ngIf]) en el <li> para la condición.
+        -->
+				<ng-container *ngFor="let item of menuItems">
+					<li *ngIf="hasAccess(item.roles)">
+						<a
+							[routerLink]="item.link"
+							routerLinkActive="bg-emerald-600 text-white font-semibold"
+							(click)="onMenuClick()"
+							class="group flex items-center gap-3 px-4 py-2.5 rounded-md transition-colors duration-200 hover:bg-gray-700 text-gray-300"
+						>
+							<i [class]="item.icon + ' text-gray-400 group-hover:text-white transition-colors duration-200'"></i>
+							<span class="transition-colors duration-200">{{ item.label }}</span>
+						</a>
+					</li>
+				</ng-container>
 			</ul>
 		</nav>
 	</aside>
@@ -66,6 +73,7 @@
 						<div class="text-center">
 							<div class="font-bold text-gray-800">{{ currentUser }}</div>
 							<div class="text-xs text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded-full inline-block mt-1">
+								<!-- Se usa el pipe 'titlecase' que importamos en el .ts -->
 								{{ currentRole | titlecase }}
 							</div>
 						</div>
@@ -85,6 +93,7 @@
 			<router-outlet></router-outlet>
 		</main>
 
+		<!-- El selector 'amc-footer' debe coincidir con el de FooterComponent -->
 		<amc-footer></amc-footer>
 	</section>
 </section>

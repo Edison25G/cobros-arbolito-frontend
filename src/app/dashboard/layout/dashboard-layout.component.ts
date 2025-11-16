@@ -12,14 +12,14 @@ import { FooterComponent } from '../../common/components/footer/footer.component
 
 // --- Imports de la Tesis (Core) ---
 import { AuthService } from '../../core/services/auth.service';
-import { Role } from '../../core/models/role.enum';
+import { RolUsuario } from '../../core/models/role.enum';
 
 // --- Interfaz actualizada con Roles ---
 interface SideNavItem {
 	label: string;
 	icon: string;
 	link: string;
-	roles: Role[]; // Qué roles pueden ver este enlace
+	roles: RolUsuario[]; // Qué roles pueden ver este enlace
 }
 
 @Component({
@@ -47,82 +47,83 @@ export class DashboardLayoutComponent implements OnInit {
 
 	// --- Datos del Usuario (Cargados de AuthService) ---
 	currentUser!: string;
-	currentRole: Role | null = null;
+	currentRole: RolUsuario | null = null;
 
 	// Hacemos el Enum 'Role' público para poder usarlo en el *ngIf del HTML
-	public roleEnum = Role;
+	public roleEnum = RolUsuario;
 
 	// --- Menú actualizado para "El Arbolito" ---
 	menuItems: SideNavItem[] = [
 		// --- Menú Común (Todos los roles) ---
 		{
-			label: 'Dashboard',
+			label: 'Resumen',
 			icon: 'pi pi-home',
 			link: '/dashboard/home',
-			roles: [Role.Admin, Role.Secretario, Role.Socio],
+			roles: [RolUsuario.ADMIN, RolUsuario.TESORERO, RolUsuario.OPERADOR, RolUsuario.SOCIO],
 		},
 		// --- Menú de Socio ---
 		{
 			label: 'Mis Pagos',
 			icon: 'pi pi-dollar',
 			link: '/dashboard/pagos',
-			roles: [Role.Socio],
+			roles: [RolUsuario.SOCIO],
 		},
 		{
 			label: 'Mi Medidor',
 			icon: 'pi pi-chart-line',
 			link: '/dashboard/medidor',
-			roles: [Role.Socio],
+			roles: [RolUsuario.SOCIO],
 		},
 		// --- Menú de Secretario ---
 		{
 			label: 'Gestión de Socios',
 			icon: 'pi pi-users',
 			link: '/dashboard/socios',
-			roles: [Role.Secretario, Role.Admin],
+			roles: [RolUsuario.ADMIN, RolUsuario.TESORERO], // <-- El Socio NO debe ver esto
 		},
 		{
 			label: 'Registro de Lecturas',
 			icon: 'pi pi-camera',
 			link: '/dashboard/lecturas',
-			roles: [Role.Secretario],
+			roles: [RolUsuario.ADMIN, RolUsuario.TESORERO, RolUsuario.OPERADOR],
 		},
 		{
 			label: 'Generar Facturación',
 			icon: 'pi pi-file-edit',
 			link: '/dashboard/facturacion',
-			roles: [Role.Secretario, Role.Admin],
+			roles: [RolUsuario.TESORERO, RolUsuario.ADMIN],
 		},
 		{
 			label: 'Registro de Pagos',
 			icon: 'pi pi-money-bill',
 			link: '/dashboard/pagos-registro',
-			roles: [Role.Secretario],
+			roles: [RolUsuario.TESORERO],
 		},
 		// --- Menú de Administrador ---
 		{
 			label: 'Gestión de Usuarios',
 			icon: 'pi pi-shield',
 			link: '/dashboard/usuarios',
-			roles: [Role.Admin],
+			roles: [RolUsuario.ADMIN],
 		},
 		{
 			label: 'Gestión de Medidores',
 			icon: 'pi pi-gauge',
 			link: '/dashboard/medidores',
-			roles: [Role.Admin],
+			roles: [RolUsuario.ADMIN, RolUsuario.TESORERO], // <-- El Socio NO debe ver esto
 		},
 		{
-			label: 'Reportes',
+			label: 'Reportes', // <-- Este se queda
 			icon: 'pi pi-chart-bar',
 			link: '/dashboard/reportes',
-			roles: [Role.Admin],
+			// Solo Admin y Tesorero ven reportes detallados
+			roles: [RolUsuario.ADMIN, RolUsuario.TESORERO],
 		},
 		{
 			label: 'Configuración',
 			icon: 'pi pi-cog',
 			link: '/dashboard/configuracion',
-			roles: [Role.Admin],
+			roles: [RolUsuario.ADMIN],
 		},
 	];
 
@@ -133,12 +134,15 @@ export class DashboardLayoutComponent implements OnInit {
 	ngOnInit(): void {
 		this.checkScreen();
 
-		// ⬅️ CORRECCIÓN DE TIPO: Forzamos el rol a que sea tipo Role o null
-		this.currentRole = this.authService.getRole() as Role | null;
+		// ⬅️ CAMBIO AQUÍ: Añade 'as Role | null'
+		// Esto fuerza al string "Administrador" a ser tratado como el tipo Role.Admin
+		this.currentRole = this.authService.getRole() as RolUsuario | null;
 
-		// Asignamos un nombre para el avatar. Si currentRole es null, usa 'Usuario'.
-		// Si currentRole tiene un valor (ej. 'Administrador'), úsalo.
+		// Esto ahora funcionará
 		this.currentUser = this.currentRole || 'Usuario';
+
+		// Para depurar, puedes dejar esto:
+		console.log('Rol cargado en el Layout:', this.currentRole);
 	}
 
 	onMenuClick(): void {
@@ -148,13 +152,14 @@ export class DashboardLayoutComponent implements OnInit {
 	}
 
 	logout(): void {
-		this.authService.logout(); // Llama al servicio real
+		this.authService.logout();
+		this.router.navigate(['/login']);
 	}
 
 	/**
 	 * Helper para verificar roles en el HTML
 	 */
-	hasAccess(itemRoles: Role[]): boolean {
+	hasAccess(itemRoles: RolUsuario[]): boolean {
 		if (!this.currentRole) {
 			return false; // Si no hay rol, no mostrar nada
 		}

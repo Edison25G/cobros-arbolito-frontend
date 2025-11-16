@@ -1,89 +1,117 @@
-import { Injectable } from '@angular/core';
-import { Observable, timer } from 'rxjs';
-import { map } from 'rxjs/operators';
-import { Medidor, EstadoMedidor } from '../models/medidor.interface';
-
-// --- DATOS FALSOS (MOCK DATA) ---
-const MOCK_MEDIDORES: Medidor[] = [
-	{
-		id: 1,
-		codigo: 'M-0001',
-		marca: 'Elster',
-		fechaInstalacion: new Date('2023-01-15'),
-		estado: EstadoMedidor.Asignado,
-		idSocioAsignado: 1,
-		nombreSocioAsignado: 'Juan Pérez',
-	},
-	{
-		id: 2,
-		codigo: 'M-0002',
-		marca: 'Itron',
-		fechaInstalacion: new Date('2023-02-20'),
-		estado: EstadoMedidor.Asignado,
-		idSocioAsignado: 2,
-		nombreSocioAsignado: 'Maria Gomez',
-	},
-	{
-		id: 3,
-		codigo: 'M-0003',
-		marca: 'Elster',
-		fechaInstalacion: null,
-		estado: EstadoMedidor.EnBodega,
-		idSocioAsignado: null,
-		nombreSocioAsignado: null,
-	},
-	{
-		id: 4,
-		codigo: 'M-0004',
-		marca: 'Badger',
-		fechaInstalacion: new Date('2022-05-10'),
-		estado: EstadoMedidor.Mantenimiento,
-		idSocioAsignado: null,
-		nombreSocioAsignado: null,
-	},
-	{
-		id: 5,
-		codigo: 'M-0005',
-		marca: 'Itron',
-		fechaInstalacion: new Date('2023-03-01'),
-		estado: EstadoMedidor.Asignado,
-		idSocioAsignado: 3,
-		nombreSocioAsignado: 'Carlos Andrade',
-	},
-];
-// --- FIN DE LOS DATOS FALSOS ---
+import { Injectable, inject } from '@angular/core';
+import { Observable, of, throwError, delay, map } from 'rxjs';
+import { Medidor } from '../models/medidor.interface';
+import { SocioService } from './socio.service'; // Importamos el servicio REAL
+import { Socio } from '../models/socio.interface';
 
 @Injectable({
 	providedIn: 'root',
 })
 export class MedidorService {
-	constructor() {}
+	// Usamos el SocioService real para poder listar socios en el formulario
+	private socioService = inject(SocioService);
+
+	// --- BASE DE DATOS FALSA (MOCK) ---
+	private medidoresMock: Medidor[] = [
+		{
+			id: 101,
+			socio: 1, // Asumimos que el Socio con ID 1 existe
+			codigo: 'MED-001',
+			esta_activo: true,
+			observacion: 'Instalado en lote 5',
+			tiene_medidor_fisico: true,
+		},
+		{
+			id: 102,
+			socio: 2, // Asumimos que el Socio con ID 2 existe
+			codigo: 'MED-002',
+			esta_activo: true,
+			observacion: 'Casa principal',
+			tiene_medidor_fisico: true,
+		},
+		{
+			id: 103,
+			socio: 1, // El socio 1 tiene un segundo medidor
+			codigo: 'MED-003-SIN',
+			esta_activo: true,
+			observacion: 'Tarifa fija para la granja',
+			tiene_medidor_fisico: false, // ¡Importante!
+		},
+	];
+	// ---------------------------------
 
 	/**
-	 * Simula una llamada API para obtener todos los medidores.
-	 * Tarda 600ms en responder.
+	 * Obtiene la lista de medidores (Simulado)
+	 * ¡Enriquece los datos con la info del socio!
 	 */
 	getMedidores(): Observable<Medidor[]> {
-		console.log('MedidorService: Simulando carga de medidores...');
-
-		return timer(600).pipe(
-			map(() => {
-				console.log('MedidorService: Carga simulada completa.');
-				return MOCK_MEDIDORES;
+		return this.socioService.getSocios().pipe(
+			map((socios) => {
+				// "Joins" los datos falsos del medidor con los datos reales del socio
+				return this.medidoresMock.map((medidor) => ({
+					...medidor,
+					socio_data: socios.find((s) => s.id === medidor.socio),
+				}));
 			}),
+			delay(500), // Simula tiempo de red
 		);
 	}
 
-	// (Aquí irían los métodos simulados de create, update, delete)
-	getMedidorDelSocioLogueado(): Observable<Medidor | undefined> {
-		console.log('MedidorService: Buscando medidor para el socio logueado (ID 2)...');
-		const ID_SOCIO_LOGUEADO = 2;
+	/**
+	 * Crea un nuevo medidor (Simulado)
+	 */
+	createMedidor(medidorData: any): Observable<Medidor> {
+		const newId = Math.floor(Math.random() * 1000) + 200;
+		const nuevoMedidor: Medidor = {
+			id: newId,
+			socio: medidorData.socio, // El formulario envía el ID del socio
+			codigo: medidorData.codigo,
+			esta_activo: true, // Siempre activo al crear
+			observacion: medidorData.observacion,
+			tiene_medidor_fisico: medidorData.tiene_medidor_fisico,
+		};
 
-		return timer(300).pipe(
-			map(() => {
-				// Busca en el mock el medidor asignado a ese socio
-				return MOCK_MEDIDORES.find((m) => m.idSocioAsignado === ID_SOCIO_LOGUEADO);
-			}),
-		);
+		this.medidoresMock.push(nuevoMedidor);
+		return of(nuevoMedidor).pipe(delay(500));
+	}
+
+	/**
+	 * Actualiza un medidor (Simulado)
+	 */
+	updateMedidor(id: number, medidorData: any): Observable<Medidor> {
+		const index = this.medidoresMock.findIndex((m) => m.id === id);
+		if (index === -1) {
+			return throwError(() => new Error('Medidor no encontrado en el mock'));
+		}
+
+		const medidorActualizado = {
+			...this.medidoresMock[index], // Mantiene el ID
+			...medidorData, // Sobrescribe con los datos del form
+		};
+
+		this.medidoresMock[index] = medidorActualizado;
+		return of(medidorActualizado).pipe(delay(500));
+	}
+
+	/**
+	 * Elimina (desactiva) un medidor (Simulado)
+	 */
+	deleteMedidor(id: number): Observable<void> {
+		const index = this.medidoresMock.findIndex((m) => m.id === id);
+		if (index === -1) {
+			return throwError(() => new Error('Medidor no encontrado en el mock'));
+		}
+
+		// Simula el "soft delete" del backend
+		this.medidoresMock[index].esta_activo = false;
+		return of(void 0).pipe(delay(500));
+	}
+
+	/**
+	 * (REAL) Obtiene los socios para el dropdown
+	 */
+	getSociosParaDropdown(): Observable<Socio[]> {
+		// Llama al servicio real de Socios
+		return this.socioService.getSocios();
 	}
 }

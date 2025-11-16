@@ -1,106 +1,186 @@
-<div *ngIf="userRole === Role.Admin || userRole === Role.Secretario; else socioView">
-	<h2 class="text-2xl font-semibold text-gray-800 mb-4">Resumen del Sistema</h2>
+<div *ngIf="userRole === Role.ADMIN || userRole === Role.TESORERO; else socioView" class="animate-fade-in">
+	<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-3">
+		<div>
+			<h2 class="text-2xl font-bold text-gray-800 tracking-tight">Resumen del Sistema</h2>
+			<p class="text-sm text-gray-500">Estadísticas generales de la Junta de Riego</p>
+		</div>
 
-	<div class="grid grid-cols-1 lg:grid-cols-4 gap-5">
-		<ng-container *ngIf="isLoading">
-			<p-skeleton height="9rem" styleClass="card shadow-md border-0 rounded-lg lg:col-span-1"></p-skeleton>
-			<p-skeleton height="9rem" styleClass="card shadow-md border-0 rounded-lg lg:col-span-1"></p-skeleton>
-			<p-skeleton height="9rem" styleClass="card shadow-md border-0 rounded-lg lg:col-span-1"></p-skeleton>
-			<p-skeleton height="9rem" styleClass="card shadow-md border-0 rounded-lg lg:col-span-1"></p-skeleton>
-			<div class="lg:col-span-4">
-				<p-skeleton height="24rem" styleClass="card shadow-md border-0 rounded-lg"></p-skeleton>
-			</div>
-		</ng-container>
-
-		<ng-container *ngIf="!isLoading && reporteData">
-			<p-card styleClass="shadow-md border-0 rounded-lg lg:col-span-1">
-				<div class="flex items-center gap-4">
-					<i class="pi pi-users text-3xl text-blue-500 p-3 bg-blue-100 rounded-full"></i>
-					<div>
-						<span class="text-sm text-gray-500">Socios Activos</span>
-						<p class="text-2xl font-bold text-gray-800">{{ reporteData.sociosActivos }}</p>
-					</div>
-				</div>
-			</p-card>
-
-			<p-card styleClass="shadow-md border-0 rounded-lg lg:col-span-1">
-				<div class="flex items-center gap-4">
-					<i class="pi pi-exclamation-triangle text-3xl text-red-500 p-3 bg-red-100 rounded-full"></i>
-					<div>
-						<span class="text-sm text-gray-500">Socios en Mora</span>
-						<p class="text-2xl font-bold text-gray-800">{{ reporteData.sociosEnMora }}</p>
-					</div>
-				</div>
-			</p-card>
-
-			<p-card styleClass="shadow-md border-0 rounded-lg lg:col-span-1">
-				<div class="flex items-center gap-4">
-					<i class="pi pi-dollar text-3xl text-green-500 p-3 bg-green-100 rounded-full"></i>
-					<div>
-						<span class="text-sm text-gray-500">Recaudado (Mes)</span>
-						<p class="text-2xl font-bold text-gray-800">
-							{{ reporteData.totalRecaudadoMes | currency: 'USD' }}
-						</p>
-					</div>
-				</div>
-			</p-card>
-
-			<p-card styleClass="shadow-md border-0 rounded-lg lg:col-span-1">
-				<div class="flex items-center gap-4">
-					<i class="pi pi-wallet text-3xl text-orange-500 p-3 bg-orange-100 rounded-full"></i>
-					<div>
-						<span class="text-sm text-gray-500">Deuda Total</span>
-						<p class="text-2xl font-bold text-gray-800">
-							{{ reporteData.totalDeuda | currency: 'USD' }}
-						</p>
-					</div>
-				</div>
-			</p-card>
-
-			<div class="lg:col-span-4">
-				<div class="card shadow-md border-0 rounded-lg p-5">
-					<h3 class="text-lg font-semibold text-gray-700 mb-3">Recaudación (Últimos 6 Meses)</h3>
-					<p-chart
-						*ngIf="barChartData"
-						type="bar"
-						[data]="barChartData"
-						[options]="barChartOptions"
-						height="24rem"
-					></p-chart>
-				</div>
-			</div>
-		</ng-container>
+		<button
+			type="button"
+			(click)="loadDashboardData()"
+			class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-emerald-600 rounded-md hover:bg-emerald-50 transition-colors"
+		>
+			<i class="pi pi-refresh" [ngClass]="{ 'animate-spin': isLoading }"></i>
+			<span>Actualizar</span>
+		</button>
 	</div>
+
+	<ng-container *ngIf="isLoading">
+		<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-6">
+			<div class="w-full h-32 bg-gray-200 rounded-xl shadow-sm animate-pulse"></div>
+			<div class="w-full h-32 bg-gray-200 rounded-xl shadow-sm animate-pulse"></div>
+			<div class="w-full h-32 bg-gray-200 rounded-xl shadow-sm animate-pulse"></div>
+			<div class="w-full h-32 bg-gray-200 rounded-xl shadow-sm animate-pulse"></div>
+		</div>
+		<div class="w-full h-96 bg-gray-200 rounded-xl shadow-sm animate-pulse"></div>
+	</ng-container>
+
+	<ng-container *ngIf="!isLoading">
+		<div *ngIf="!isEmpty && reporteData; else emptyState">
+			<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-6">
+				<div
+					class="bg-white p-5 rounded-xl shadow-sm border border-slate-100 hover:shadow-md transition-all duration-300 group"
+				>
+					<div class="flex justify-between items-start">
+						<div>
+							<span class="text-slate-500 text-sm font-medium mb-1 block">Total Socios</span>
+							<span class="text-3xl font-bold text-slate-800">{{ reporteData.sociosActivos }}</span>
+						</div>
+						<div
+							class="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors duration-300"
+						>
+							<i class="pi pi-users text-xl"></i>
+						</div>
+					</div>
+				</div>
+
+				<div
+					class="bg-white p-5 rounded-xl shadow-sm border border-slate-100 hover:shadow-md transition-all duration-300 group"
+				>
+					<div class="flex justify-between items-start">
+						<div>
+							<span class="text-slate-500 text-sm font-medium mb-1 block">Socios en Mora</span>
+							<span class="text-3xl font-bold text-red-600">{{ reporteData.sociosEnMora }}</span>
+						</div>
+						<div
+							class="w-12 h-12 rounded-xl bg-red-50 flex items-center justify-center text-red-600 group-hover:bg-red-600 group-hover:text-white transition-colors duration-300"
+						>
+							<i class="pi pi-exclamation-circle text-xl"></i>
+						</div>
+					</div>
+				</div>
+
+				<div
+					class="bg-white p-5 rounded-xl shadow-sm border border-slate-100 hover:shadow-md transition-all duration-300 group"
+				>
+					<div class="flex justify-between items-start">
+						<div>
+							<span class="text-slate-500 text-sm font-medium mb-1 block">Recaudado (Mes)</span>
+							<span class="text-3xl font-bold text-emerald-600">{{
+								reporteData.totalRecaudadoMes | currency: 'USD'
+							}}</span>
+						</div>
+						<div
+							class="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white transition-colors duration-300"
+						>
+							<i class="pi pi-dollar text-xl"></i>
+						</div>
+					</div>
+				</div>
+
+				<div
+					class="bg-white p-5 rounded-xl shadow-sm border border-slate-100 hover:shadow-md transition-all duration-300 group"
+				>
+					<div class="flex justify-between items-start">
+						<div>
+							<span class="text-slate-500 text-sm font-medium mb-1 block">Deuda Total</span>
+							<span class="text-3xl font-bold text-orange-600">{{ reporteData.totalDeuda | currency: 'USD' }}</span>
+						</div>
+						<div
+							class="w-12 h-12 rounded-xl bg-orange-50 flex items-center justify-center text-orange-600 group-hover:bg-orange-600 group-hover:text-white transition-colors duration-300"
+						>
+							<i class="pi pi-wallet text-xl"></i>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+				<div class="flex justify-between items-center mb-4">
+					<h3 class="text-lg font-bold text-slate-800">Historial de Recaudación</h3>
+					<span class="px-3 py-1 text-xs font-semibold bg-slate-100 text-slate-600 rounded-full">Próximamente</span>
+				</div>
+				<div class="relative w-full h-[24rem]">
+					<p-chart type="bar" [data]="barChartData" [options]="barChartOptions" height="100%"></p-chart>
+				</div>
+			</div>
+		</div>
+
+		<ng-template #emptyState>
+			<div
+				class="flex flex-col items-center justify-center py-20 px-4 bg-white rounded-xl border-2 border-dashed border-slate-200 text-center animate-fade-in-up"
+			>
+				<div class="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center mb-6">
+					<i class="pi pi-chart-bar text-4xl text-slate-300"></i>
+				</div>
+				<h3 class="text-2xl font-bold text-slate-800 mb-2">Sin datos para mostrar</h3>
+				<p class="text-slate-500 max-w-md mb-8 text-lg">El sistema está listo, pero aún no hay registros de socios.</p>
+				<div class="flex flex-wrap gap-4 justify-center">
+					<a
+						routerLink="/dashboard/socios"
+						class="inline-flex items-center gap-2 px-5 py-3 text-sm font-semibold text-white bg-emerald-600 rounded-lg shadow-md hover:bg-emerald-700 transition-colors"
+					>
+						<i class="pi pi-user-plus"></i>
+						<span>Registrar Nuevo Socio</span>
+					</a>
+				</div>
+			</div>
+		</ng-template>
+	</ng-container>
 </div>
 
 <ng-template #socioView>
-	<div class="card shadow-md border-0 rounded-lg p-6 bg-gradient-to-r from-emerald-500 to-green-600 text-white">
-		<h2 class="text-3xl font-bold mb-2">¡Bienvenido!</h2>
-		<p class="text-lg text-green-100 mb-6">Aquí tienes un resumen de tu cuenta.</p>
+	<div
+		class="relative p-8 rounded-2xl overflow-hidden shadow-xl bg-gradient-to-br from-emerald-600 to-teal-800 text-white"
+	>
+		<div
+			class="absolute top-0 right-0 w-64 h-64 bg-white opacity-5 rounded-full -mr-16 -mt-16 blur-3xl pointer-events-none"
+		></div>
+		<div
+			class="absolute bottom-0 left-0 w-40 h-40 bg-emerald-300 opacity-10 rounded-full -ml-10 -mb-10 blur-2xl pointer-events-none"
+		></div>
 
-		<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-			<a routerLink="/dashboard/pagos" class="block">
-				<div class="p-5 bg-white/30 backdrop-blur-sm rounded-lg hover:bg-white/40 transition-colors duration-200">
-					<div class="flex items-center gap-4">
-						<i class="pi pi-dollar text-4xl text-white"></i>
+		<div class="relative z-10">
+			<div class="mb-8">
+				<h2 class="text-4xl font-bold mb-2">¡Bienvenido Socio!</h2>
+				<p class="text-emerald-100 text-lg">Sistema de Agua Potable "El Arbolito"</p>
+			</div>
+
+			<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+				<a
+					routerLink="/dashboard/pagos"
+					class="group block bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-6 hover:bg-white/20 transition-all duration-300 cursor-pointer"
+				>
+					<div class="flex items-center gap-5">
+						<div
+							class="w-14 h-14 rounded-full bg-white/20 flex items-center justify-center group-hover:scale-110 transition-transform duration-300"
+						>
+							<i class="pi pi-receipt text-2xl text-white"></i>
+						</div>
 						<div>
-							<h3 class="text-xl font-semibold text-white">Mis Pagos</h3>
-							<p class="text-sm text-green-50">Ver mi historial de facturas y pagos.</p>
+							<h3 class="text-xl font-bold mb-1">Mis Pagos</h3>
+							<p class="text-emerald-100 text-sm group-hover:text-white">Consulta tus facturas pendientes</p>
 						</div>
 					</div>
-				</div>
-			</a>
-			<a routerLink="/dashboard/medidor" class="block">
-				<div class="p-5 bg-white/30 backdrop-blur-sm rounded-lg hover:bg-white/40 transition-colors duration-200">
-					<div class="flex items-center gap-4">
-						<i class="pi pi-chart-line text-4xl text-white"></i>
+				</a>
+
+				<a
+					routerLink="/dashboard/medidor"
+					class="group block bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-6 hover:bg-white/20 transition-all duration-300 cursor-pointer"
+				>
+					<div class="flex items-center gap-5">
+						<div
+							class="w-14 h-14 rounded-full bg-white/20 flex items-center justify-center group-hover:scale-110 transition-transform duration-300"
+						>
+							<i class="pi pi-chart-line text-2xl text-white"></i>
+						</div>
 						<div>
-							<h3 class="text-xl font-semibold text-white">Mi Medidor</h3>
-							<p class="text-sm text-green-50">Consultar mi historial de lecturas.</p>
+							<h3 class="text-xl font-bold mb-1">Mi Medidor</h3>
+							<p class="text-emerald-100 text-sm group-hover:text-white">Historial de consumo de agua</p>
 						</div>
 					</div>
-				</div>
-			</a>
+				</a>
+			</div>
 		</div>
 	</div>
 </ng-template>

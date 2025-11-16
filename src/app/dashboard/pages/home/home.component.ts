@@ -1,106 +1,120 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
-
-// --- Servicios y Modelos ---
-import { AuthService } from '../../../core/services/auth.service';
-import { Role } from '../../../core/models/role.enum';
-import { ReporteService, ReporteGeneral } from '../../../core/services/reporte.service';
-
-// --- Imports de PrimeNG ---
-import { CardModule } from 'primeng/card';
-import { ButtonModule } from 'primeng/button';
-import { SkeletonModule } from 'primeng/skeleton';
+import { CardModule } from 'primeng/card'; // Opcional si usas el diseño personalizado
+import { SkeletonModule } from 'primeng/skeleton'; // Opcional ya que usas Tailwind animate-pulse
 import { ChartModule } from 'primeng/chart';
+import { ButtonModule } from 'primeng/button';
+
+import { AuthService } from '../../../core/services/auth.service';
+import { SocioService } from '../../../core/services/socio.service'; // <--- IMPORTANTE
+import { RolUsuario } from '../../../core/models/role.enum';
 
 @Component({
-	selector: 'ca-home',
+	selector: 'amc-home',
 	standalone: true,
-	imports: [CommonModule, RouterModule, CardModule, ButtonModule, SkeletonModule, ChartModule],
+	imports: [CommonModule, RouterModule, CardModule, SkeletonModule, ChartModule, ButtonModule],
 	templateUrl: './home.component.html',
 	styleUrls: ['./home.component.css'],
 })
 export class HomeComponent implements OnInit {
 	private authService = inject(AuthService);
-	private reporteService = inject(ReporteService);
+	private socioService = inject(SocioService); // <--- INYECCIÓN DEL SERVICIO
 
-	// --- SOLUCIÓN DEL BUG TS2322 ---
-	// El tipo se mantiene como 'Role | null', pero lo forzamos en la asignación.
-	public userRole: Role | null = null;
-	public reporteData: ReporteGeneral | null = null;
-	public isLoading = false;
+	userRole: RolUsuario | null = null;
+	Role = RolUsuario;
 
-	public Role = Role;
+	// Control de estado visual
+	isLoading = true;
+	isEmpty = false;
+	reporteData: any = null;
 
-	public barChartData: any;
-	public barChartOptions: any;
-
-	constructor() {}
+	// Configuración del Gráfico (Datos visuales simulados por ahora)
+	barChartData: any;
+	barChartOptions: any;
 
 	ngOnInit(): void {
-		// 🔥 ASIGNACIÓN CORREGIDA: Usamos 'as Role | null' para resolver el conflicto de tipos de localStorage.
-		this.userRole = this.authService.getRole() as Role | null;
+		this.userRole = this.authService.getRole() as RolUsuario;
 
-		// Carga los reportes SÓLO si es Admin o Secretario
-		if (this.userRole === Role.Admin || this.userRole === Role.Secretario) {
-			this.initChartOptions();
-			this.loadReporte();
+		if (this.userRole === RolUsuario.ADMIN || this.userRole === RolUsuario.TESORERO) {
+			this.loadDashboardData();
+		} else {
+			this.isLoading = false;
 		}
+
+		// Iniciamos la config del gráfico aunque no tengamos datos reales aún
+		this.initChart();
 	}
 
-	loadReporte(): void {
+	loadDashboardData() {
 		this.isLoading = true;
-		this.reporteService.getReporteGeneral().subscribe({
-			next: (data) => {
-				this.reporteData = data;
-				this.initBarChart(data.recaudacionUltimos6Meses);
+
+		// LLAMADA REAL A LA API DE SOCIOS
+		this.socioService.getSocios().subscribe({
+			next: (socios) => {
+				// 1. Calcular datos REALES
+				const totalSocios = socios.length;
+
+				// Si no hay socios, activamos el estado "Empty"
+				if (totalSocios === 0) {
+					this.isEmpty = true;
+					this.reporteData = null;
+				} else {
+					this.isEmpty = false;
+
+					// 2. Construimos el reporte (HÍBRIDO: Real + Falso)
+					this.reporteData = {
+						sociosActivos: totalSocios, // <--- ¡DATO REAL DE TU BD!
+						sociosEnMora: 0, // Placeholder (Falta API Cobros)
+						totalRecaudadoMes: 0, // Placeholder (Falta API Cobros)
+						totalDeuda: 0, // Placeholder (Falta API Cobros)
+					};
+				}
+
 				this.isLoading = false;
 			},
 			error: (err) => {
-				console.error('Error al cargar reporte:', err);
+				console.error('Error al cargar datos del dashboard:', err);
+				// En caso de error, quitamos el loading para que no se quede pegado
 				this.isLoading = false;
+				// Opcional: Podrías mostrar un mensaje de error aquí
 			},
 		});
 	}
 
-	// --- Lógica de la Gráfica ---
+	initChart() {
+		const documentStyle = getComputedStyle(document.documentElement);
+		const textColor = documentStyle.getPropertyValue('--text-color');
+		const textColorSecondary = documentStyle.getPropertyValue('--text-color-secondary');
+		const surfaceBorder = documentStyle.getPropertyValue('--surface-border');
 
-	initBarChart(datosMeses: number[]): void {
 		this.barChartData = {
 			labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'],
 			datasets: [
 				{
-					label: 'Recaudación Mensual ($)',
-					backgroundColor: '#10b981',
-					borderColor: '#059669',
-					data: datosMeses,
+					label: 'Recaudación ($)',
+					data: [0, 0, 0, 0, 0, 0], // Datos vacíos por ahora
+					backgroundColor: '#10b981', // Emerald-500
+					borderRadius: 6,
 				},
 			],
 		};
-	}
 
-	initChartOptions(): void {
 		this.barChartOptions = {
+			responsive: true,
 			maintainAspectRatio: false,
-			aspectRatio: 0.8,
 			plugins: {
-				legend: {
-					labels: { color: '#4b5563' },
-				},
+				legend: { labels: { color: textColor } },
 			},
 			scales: {
-				x: {
-					ticks: { color: '#6b7280' },
-					grid: { color: 'rgba(209, 213, 219, 0.2)' },
-				},
 				y: {
-					ticks: {
-						color: '#6b7280',
-						callback: function (value: number) {
-							return '$' + value.toLocaleString();
-						},
-					},
-					grid: { color: 'rgba(209, 213, 219, 0.2)' },
+					beginAtZero: true,
+					grid: { color: surfaceBorder, drawBorder: false },
+					ticks: { color: textColorSecondary },
+				},
+				x: {
+					grid: { color: surfaceBorder, drawBorder: false },
+					ticks: { color: textColorSecondary },
 				},
 			},
 		};

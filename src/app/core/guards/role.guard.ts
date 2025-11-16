@@ -1,7 +1,7 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router, ActivatedRouteSnapshot } from '@angular/router';
 import { AuthService } from '@core/services/auth.service';
-import { Role } from '@core/models/role.enum';
+import { RolUsuario } from '@core/models/role.enum';
 
 export const RoleGuard: CanActivateFn = (route: ActivatedRouteSnapshot) => {
 	const authService = inject(AuthService);
@@ -15,7 +15,7 @@ export const RoleGuard: CanActivateFn = (route: ActivatedRouteSnapshot) => {
 	}
 
 	// 2. ¿Qué roles requiere esta ruta? (Los definimos en 'data' en las rutas)
-	const requiredRoles = route.data['roles'] as Role[];
+	const requiredRoles = route.data['roles'] as RolUsuario[];
 
 	// 3. Si la ruta no requiere roles, déjalo pasar (ej. /home)
 	if (!requiredRoles || requiredRoles.length === 0) {
@@ -24,7 +24,7 @@ export const RoleGuard: CanActivateFn = (route: ActivatedRouteSnapshot) => {
 
 	// 4. ¿Tiene el usuario el rol necesario?
 	// ⬅️ SOLUCIÓN: Usamos 'as Role' para decirle a TypeScript que confíe en que userRole es un tipo Role válido.
-	const userRole = authService.getRole() as Role;
+	const userRole = authService.getRole() as RolUsuario;
 
 	if (userRole && requiredRoles.includes(userRole)) {
 		return true; // ¡Acceso concedido!

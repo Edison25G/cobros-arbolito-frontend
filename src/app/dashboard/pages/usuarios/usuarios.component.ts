@@ -4,7 +4,7 @@ import { CommonModule } from '@angular/common';
 // --- Servicios y Modelos ---
 import { UsuarioService } from '@core/services/usuario.service';
 import { Usuario } from '@core/models/usuario.interface';
-import { Role } from '@core/models/role.enum';
+import { RolUsuario } from '@core/models/role.enum';
 import { ErrorService } from '../../../auth/core/services/error.service';
 
 // --- Imports de PrimeNG ---
@@ -37,7 +37,7 @@ export class UsuariosComponent implements OnInit {
 	public isLoading = true;
 
 	// Hacemos el Enum visible para el template
-	public Role = Role;
+	public Role = RolUsuario;
 
 	constructor() {}
 

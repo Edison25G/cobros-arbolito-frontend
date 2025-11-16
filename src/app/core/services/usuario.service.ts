@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { Observable, timer } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Usuario } from '../models/usuario.interface';
-import { Role } from '../models/role.enum';
+import { RolUsuario } from '../models/role.enum';
 
 // --- DATOS FALSOS (MOCK DATA) ---
 const MOCK_USUARIOS: Usuario[] = [
@@ -10,21 +10,21 @@ const MOCK_USUARIOS: Usuario[] = [
 		id: 1,
 		username: 'admin',
 		email: 'admin@el-arbolito.com',
-		role: Role.Admin,
+		role: RolUsuario.ADMIN,
 		activo: true,
 	},
 	{
 		id: 2,
 		username: 'secretario1',
 		email: 'secretario.juan@el-arbolito.com',
-		role: Role.Secretario,
+		role: RolUsuario.TESORERO,
 		activo: true,
 	},
 	{
 		id: 3,
 		username: 'secretario2',
 		email: 'secretaria.ana@el-arbolito.com',
-		role: Role.Secretario,
+		role: RolUsuario.TESORERO,
 		activo: false, // Un usuario inactivo
 	},
 	// (Los 'Socios' no son usuarios del sistema, son clientes)

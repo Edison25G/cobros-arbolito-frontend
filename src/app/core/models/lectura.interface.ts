@@ -1,13 +1,20 @@
-// Define la estructura de datos que enviamos al registrar una lectura
-export interface LecturaPayload {
-	idSocio: number;
-	valorLectura: number;
-	fechaLectura: Date;
+/**
+ * Lo que enviamos a la API para registrar una lectura.
+ * Coincide con RegistrarLecturaSerializer de Django.
+ */
+export interface RegistrarLecturaDTO {
+	medidor_id: number;
+	lectura_actual_m3: number;
+	fecha_lectura: string; // Formato YYYY-MM-DD
+	operador_id: number; // El ID del usuario que está registrando
 }
 
-// Podríamos añadir una respuesta, pero por ahora un 'any' simple nos sirve
+/**
+ * Lo que la API nos devuelve al registrar.
+ * Coincide con la 'respuesta_data' de la APIView.
+ */
 export interface LecturaResponse {
-	success: boolean;
-	message: string;
-	idLectura?: number;
+	id: number;
+	medidor_id: number;
+	consumo_del_mes: number;
 }

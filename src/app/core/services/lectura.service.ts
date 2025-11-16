@@ -1,63 +1,43 @@
-import { Injectable } from '@angular/core';
-import { Observable, timer } from 'rxjs';
-import { map } from 'rxjs/operators';
-import { LecturaPayload, LecturaResponse } from '../models/lectura.interface';
-
-// --- NUEVA INTERFAZ Y DATOS FALSOS ---
-export interface HistorialLectura {
-	id: number;
-	idMedidor: number;
-	fechaLectura: Date;
-	valorLectura: number;
-	consumoMes: number; // Consumo en m³
-}
-
-const MOCK_HISTORIAL: HistorialLectura[] = [
-	// Historial para Medidor ID 2 (Maria Gomez)
-	{ id: 1, idMedidor: 2, fechaLectura: new Date('2025-08-05'), valorLectura: 1150, consumoMes: 0 },
-	{ id: 2, idMedidor: 2, fechaLectura: new Date('2025-09-05'), valorLectura: 1175, consumoMes: 25 },
-	{ id: 3, idMedidor: 2, fechaLectura: new Date('2025-10-05'), valorLectura: 1200, consumoMes: 25 },
-	{ id: 4, idMedidor: 2, fechaLectura: new Date('2025-11-05'), valorLectura: 1222, consumoMes: 22 },
-	// Historial para Medidor ID 1 (Juan Perez)
-	{ id: 5, idMedidor: 1, fechaLectura: new Date('2025-10-05'), valorLectura: 980, consumoMes: 0 },
-	{ id: 6, idMedidor: 1, fechaLectura: new Date('2025-11-05'), valorLectura: 1005, consumoMes: 25 },
-];
-// --- FIN DE DATOS FALSOS ---
+import { Injectable, inject } from '@angular/core';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { Observable, throwError } from 'rxjs';
+import { catchError } from 'rxjs/operators';
+import { environment } from '../../environments/environment.development';
+import { RegistrarLecturaDTO, LecturaResponse } from '../models/lectura.interface';
 
 @Injectable({
 	providedIn: 'root',
 })
 export class LecturaService {
-	constructor() {}
+	private http = inject(HttpClient);
 
-	// ... (registrarLectura() se queda igual) ...
-	registrarLectura(_payload: LecturaPayload): Observable<LecturaResponse> {
-		// ...
-		return timer(700).pipe(
-			map(() => ({
-				success: true,
-				message: 'Lectura registrada exitosamente',
-				idLectura: Math.floor(Math.random() * 1000),
-			})),
-		);
+	// URL base de la API (ej: http://localhost:8000/api/v1)
+	private apiUrl = environment.apiUrl;
+
+	/**
+	 * Llama a la API real para registrar una nueva lectura.
+	 * POST /api/v1/lecturas/registrar/
+	 */
+	registrarLectura(data: RegistrarLecturaDTO): Observable<LecturaResponse> {
+		const url = `${this.apiUrl}/lecturas/registrar/`;
+		return this.http.post<LecturaResponse>(url, data).pipe(catchError(this.handleError));
 	}
 
-	// --- AÑADIR ESTE NUEVO MÉTODO ---
-	/**
-	 * Simula la obtención del historial de lecturas para el socio logueado.
-	 * * (SIMULACIÓN: Pretendemos que el socio logueado es el ID 2)
-	 */
-	getHistorialLecturasSocioLogueado(): Observable<HistorialLectura[]> {
-		console.log('LecturaService: Buscando historial de lecturas para el socio logueado (ID 2)...');
-		const ID_MEDIDOR_SOCIO = 2; // El medidor de Maria Gomez
+	private handleError(error: HttpErrorResponse) {
+		let errorMessage = 'Ocurrió un error desconocido.';
 
-		return timer(600).pipe(
-			map(() => {
-				// Filtra el historial por el ID del medidor
-				return MOCK_HISTORIAL.filter((l) => l.idMedidor === ID_MEDIDOR_SOCIO).sort(
-					(a, b) => b.fechaLectura.getTime() - a.fechaLectura.getTime(),
-				); // Más recientes primero
-			}),
-		);
+		if (error.status === 0) {
+			errorMessage = 'Error de Conexión. ¿El servidor de Django (backend) está corriendo?';
+		} else if (error.status === 400 && error.error) {
+			// Errores de validación (ej: "Lectura actual no puede ser menor a la anterior")
+			errorMessage = error.error.error || 'Error en los datos enviados.';
+		} else if (error.status === 404) {
+			errorMessage = 'El Medidor no fue encontrado en el backend (Error 404).';
+		} else if (error.status === 403) {
+			errorMessage = 'No tienes permisos (Token JWT) para realizar esta acción.';
+		}
+
+		console.error(error);
+		return throwError(() => new Error(errorMessage));
 	}
 }

@@ -2,125 +2,114 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 // --- Servicios y Modelos ---
-import { ReporteService, ReporteGeneral } from '@core/services/reporte.service';
+import { ReporteService } from '../../../core/services/reporte.service';
+// 1. ¡CORRECCIÓN DE IMPORTACIÓN! Importamos la interfaz desde 'interfaces'
+import { ReporteGeneral } from '../../../core/interfaces/reporte.interfaces';
+// 2. Importamos el ErrorService que querías usar
+import { ErrorService } from '../../../auth/core/services/error.service';
 
-// --- Imports de PrimeNG ---
+// --- Imports de PrimeNG v20 (Standalone) ---
+// 3. ¡CORRECCIÓN DE PRIMENG! Importamos Componentes, NO Módulos
 import { CardModule } from 'primeng/card';
 import { ChartModule } from 'primeng/chart';
-import { SkeletonModule } from 'primeng/skeleton'; // Usaremos esto para la carga
+import { SkeletonModule } from 'primeng/skeleton';
+import { ToastModule } from 'primeng/toast';
+import { MessageService } from 'primeng/api';
 
 @Component({
 	selector: 'amc-reportes',
 	standalone: true,
 	imports: [
 		CommonModule,
-		// --- Módulos de PrimeNG ---
+		// 4. ¡CORRECCIÓN DE PRIMENG! Usamos los componen
+		// tes standalone
 		CardModule,
 		ChartModule,
-		SkeletonModule, // Skeleton es mejor que un spinner para tarjetas
+		SkeletonModule,
+		ToastModule,
 	],
+	providers: [MessageService], // MessageService es necesario para Toast y ErrorService
 	templateUrl: './reportes.component.html',
 	styleUrls: ['./reportes.component.css'],
 })
 export class ReportesComponent implements OnInit {
 	// --- Inyección de Servicios ---
 	private reporteService = inject(ReporteService);
+	private errorService = inject(ErrorService); // 5. Inyectamos ErrorService
 
 	// --- Estado del Componente ---
 	public reporteData: ReporteGeneral | null = null;
 	public isLoading = true;
 
 	// --- Opciones de la Gráfica ---
-	public barChartData: any; // Datos del gráfico (se inicializa después)
-	public barChartOptions: any; // Opciones del gráfico (se inicializa en ngOnInit)
+	public barChartData: any;
+	public barChartOptions: any;
 
 	constructor() {}
 
-	/**
-	 * ngOnInit: Se ejecuta al cargar el componente.
-	 */
 	ngOnInit(): void {
-		this.initChartOptions(); // Prepara las opciones del gráfico
-		this.loadReporte(); // Llama al servicio para obtener los datos
+		this.initChartOptions();
+		this.loadReporte();
 	}
 
-	/**
-	 * Llama al servicio para cargar los datos del reporte
-	 */
 	loadReporte(): void {
 		this.isLoading = true;
 
 		this.reporteService.getReporteGeneral().subscribe({
 			next: (data) => {
-				// Éxito: Guarda los datos
 				this.reporteData = data;
-
-				// Llama a la función para construir el gráfico con los datos recibidos
 				this.initBarChart(data.recaudacionUltimos6Meses);
-
 				this.isLoading = false;
 				console.log('Reporte cargado:', this.reporteData);
 			},
 			error: (err) => {
-				// Error: Apaga el spinner y muestra un error
 				console.error('Error al cargar reporte:', err);
 				this.isLoading = false;
-				// this.errorService.showError('No se pudo cargar el reporte.');
+				// 6. Usamos el ErrorService (con el método que sí existe)
+				this.errorService.showError('No se pudo cargar el reporte.');
 			},
 		});
 	}
 
-	/**
-	 * Inicializa los DATOS del gráfico de barras
-	 * (Se llama DESPUÉS de recibir los datos)
-	 */
 	initBarChart(datosMeses: number[]): void {
 		this.barChartData = {
-			labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'], // Ajustar si son más meses
+			labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'],
 			datasets: [
 				{
 					label: 'Recaudación Mensual ($)',
-					backgroundColor: '#10b981', // Color verde esmeralda
+					backgroundColor: '#10b981',
 					borderColor: '#059669',
-					data: datosMeses, // <-- Los datos reales del servicio
+					data: datosMeses,
 				},
 			],
 		};
 	}
 
-	/**
-	 * Inicializa las OPCIONES del gráfico de barras
-	 * (Se llama en ngOnInit)
-	 */
 	initChartOptions(): void {
 		this.barChartOptions = {
-			maintainAspectRatio: false, // Para que se ajuste al contenedor
-			aspectRatio: 0.8, // Proporción
+			maintainAspectRatio: false,
+			aspectRatio: 0.8,
 			plugins: {
 				legend: {
 					labels: {
-						color: '#4b5563', // Color de texto gris
+						color: '#4b5563',
 					},
 				},
 			},
 			scales: {
 				x: {
-					ticks: {
-						color: '#6b7280',
-					},
-					grid: {
-						color: 'rgba(209, 213, 219, 0.2)', // Color de la cuadrícula X
-					},
+					ticks: { color: '#6b7280' },
+					grid: { color: 'rgba(209, 213, 219, 0.2)' },
 				},
 				y: {
 					ticks: {
 						color: '#6b7280',
 						callback: function (value: number) {
-							return '$' + value.toLocaleString(); // Formatea el eje Y como dinero
+							return '$' + value.toLocaleString();
 						},
 					},
 					grid: {
-						color: 'rgba(209, 213, 219, 0.2)', // Color de la cuadrícula Y
+						color: 'rgba(209, 213, 219, 0.2)',
 					},
 				},
 			},

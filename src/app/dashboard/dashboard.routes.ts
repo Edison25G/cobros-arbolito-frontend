@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 import { RoleGuard } from '@core/guards/role.guard';
-import { Role } from '@core/models/role.enum';
+import { RolUsuario } from '@core/models/role.enum';
 
 export default [
 	{
@@ -21,40 +21,33 @@ export default [
 				path: 'pagos',
 				loadComponent: () => import('./pages/pagos/pagos.component').then((m) => m.PagosComponent),
 				canActivate: [RoleGuard],
-				data: { roles: [Role.Socio] },
+				data: { roles: [RolUsuario.SOCIO] },
 			},
-			{
-				path: 'medidor',
-				loadComponent: () => import('./pages/medidor/medidor.component').then((m) => m.MedidorComponent),
-				canActivate: [RoleGuard],
-				data: { roles: [Role.Socio] },
-			},
+			// {
+			// 	path: 'medidor',
+			// 	loadComponent: () => import('./pages/medidor/medidor.component').then((m) => m.MedidorComponent),
+			// 	canActivate: [RoleGuard],
+			// 	data: { roles: [RolUsuario.SOCIO] },
+			// },
 
 			// --- Rutas de Secretario (Algunas compartidas con Admin) ---
 			{
 				path: 'socios',
 				loadComponent: () => import('./pages/socios/socios.component').then((m) => m.SociosComponent),
 				canActivate: [RoleGuard],
-				data: { roles: [Role.Admin, Role.Secretario] },
+				data: { roles: [RolUsuario.ADMIN, RolUsuario.TESORERO] },
 			},
 			{
 				path: 'lecturas',
 				loadComponent: () => import('./pages/lecturas/lecturas.component').then((m) => m.LecturasComponent),
 				canActivate: [RoleGuard],
-				data: { roles: [Role.Secretario] },
+				data: { roles: [RolUsuario.ADMIN, RolUsuario.TESORERO, RolUsuario.OPERADOR] },
 			},
 			{
 				path: 'facturacion',
 				loadComponent: () => import('./pages/facturacion/facturacion.component').then((m) => m.FacturacionComponent),
 				canActivate: [RoleGuard],
-				data: { roles: [Role.Admin, Role.Secretario] },
-			},
-			{
-				path: 'pagos-registro',
-				loadComponent: () =>
-					import('./pages/pagos-registro/pagos-registro.component').then((m) => m.PagosRegistroComponent),
-				canActivate: [RoleGuard],
-				data: { roles: [Role.Secretario] },
+				data: { roles: [RolUsuario.ADMIN, RolUsuario.TESORERO] },
 			},
 
 			// --- Rutas de Admin ---
@@ -62,26 +55,26 @@ export default [
 				path: 'usuarios',
 				loadComponent: () => import('./pages/usuarios/usuarios.component').then((m) => m.UsuariosComponent),
 				canActivate: [RoleGuard],
-				data: { roles: [Role.Admin] },
+				data: { roles: [RolUsuario.ADMIN] },
 			},
 			{
 				path: 'medidores',
 				loadComponent: () => import('./pages/medidores/medidores.component').then((m) => m.MedidoresComponent),
 				canActivate: [RoleGuard],
-				data: { roles: [Role.Admin] },
+				data: { roles: [RolUsuario.ADMIN] },
 			},
 			{
 				path: 'reportes',
 				loadComponent: () => import('./pages/reportes/reportes.component').then((m) => m.ReportesComponent),
 				canActivate: [RoleGuard],
-				data: { roles: [Role.Admin] },
+				data: { roles: [RolUsuario.ADMIN, RolUsuario.TESORERO] },
 			},
 			{
 				path: 'configuracion',
 				loadComponent: () =>
 					import('./pages/configuracion/configuracion.component').then((m) => m.ConfiguracionComponent),
 				canActivate: [RoleGuard],
-				data: { roles: [Role.Admin] },
+				data: { roles: [RolUsuario.ADMIN] },
 			},
 
 			// --- Redirección por defecto ---

@@ -19,7 +19,7 @@ import { MessageModule } from 'primeng/message';
 import { ErrorService } from '../../core/services/error.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { LoadingService } from '../../../core/services/loading.service';
-import { Role } from '../../../core/models/role.enum'; // Asumimos esta ruta
+import { RolUsuario } from '../../../core/models/role.enum'; // Asumimos esta ruta
 
 @Component({
 	selector: 'amc-login',
@@ -80,7 +80,7 @@ export default class LoginComponent implements OnInit {
 					// ⬅️ LÓGICA CORREGIDA: El AuthService ya maneja el éxito y devuelve el usuario
 					if (user && user.rol) {
 						// Ya se mostró el mensaje de éxito en el AuthService
-						this.redirectByRole(user.rol as Role); // Redirige usando el rol
+						this.redirectByRole(user.rol as RolUsuario); // Redirige usando el rol
 					} else {
 						// Esto solo ocurriría si el Backend devuelve un objeto vacío (caso raro)
 						this.errorService.loginError('Respuesta de usuario incompleta.');
@@ -95,19 +95,22 @@ export default class LoginComponent implements OnInit {
 			});
 	}
 
-	private redirectByRole(role: Role): void {
+	// src/app/auth/components/login/login.component.ts
+
+	private redirectByRole(role: RolUsuario): void {
 		switch (role) {
-			case Role.Admin:
+			case RolUsuario.ADMIN:
+				// ⬅️ CAMBIO AQUÍ: Apunta a 'home' en lugar de 'reportes'
 				this.router.navigate(['/dashboard/home']);
 				break;
-			case Role.Secretario:
+			case RolUsuario.TESORERO:
 				this.router.navigate(['/dashboard/socios']);
 				break;
-			case Role.Socio:
+			case RolUsuario.SOCIO:
 				this.router.navigate(['/dashboard/pagos']);
 				break;
 			default:
-				this.router.navigate(['/dashboard/reportes']);
+				this.router.navigate(['/dashboard/home']);
 		}
 	}
 }

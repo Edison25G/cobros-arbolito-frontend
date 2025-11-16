@@ -1,142 +1,83 @@
-<div class="flex flex-col gap-6">
-	<p-card styleClass="shadow-md border-0 rounded-lg">
-		<ng-template pTemplate="header">
-			<div class="p-4 bg-gray-50 rounded-t-lg">
-				<h2 class="text-xl font-semibold text-gray-800">Generar Facturación Mensual</h2>
-				<p class="text-sm text-gray-500">Seleccione el mes y año para generar las facturas.</p>
+<p-toast></p-toast>
+<p-confirmDialog [style]="{ width: '450px' }"></p-confirmDialog>
+
+<!-- Encabezado -->
+<div class="mb-6">
+	<h2 class="text-3xl font-extrabold text-gray-800 tracking-tight">Generar Facturación</h2>
+	<p class="text-lg text-gray-500 mt-1">Lista de lecturas pendientes por facturar. (Datos simulados)</p>
+</div>
+
+<!-- Tabla de Lecturas Pendientes -->
+<div class="p-6 rounded-2xl shadow border border-gray-200 bg-white">
+	<p-table
+		#dt
+		[value]="lecturasPendientes"
+		[loading]="isLoading"
+		[paginator]="true"
+		[rows]="10"
+		[rowsPerPageOptions]="[5, 10, 20]"
+		[globalFilterFields]="['medidor.codigo', 'socio.nombres', 'socio.apellidos', 'socio.cedula']"
+		dataKey="id"
+		[rowHover]="true"
+		currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} lecturas"
+		[showCurrentPageReport]="true"
+		[tableStyle]="{ 'min-width': '75rem' }"
+	>
+		<ng-template pTemplate="caption">
+			<div class="flex items-center justify-between">
+				<span class="text-xl font-semibold text-black">Lecturas Pendientes de Facturar</span>
+				<p-iconfield>
+					<p-inputicon styleClass="pi pi-search" />
+					<input
+						pInputText
+						type="text"
+						placeholder="Buscar por socio, cédula o medidor..."
+						(input)="dt.filterGlobal($any($event.target).value, 'contains')"
+						class="w-full sm:w-64 text-black"
+					/>
+				</p-iconfield>
 			</div>
 		</ng-template>
 
-		<form
-			[formGroup]="facturacionForm"
-			(ngSubmit)="generarFacturacion()"
-			class="flex flex-col md:flex-row items-end gap-4 p-4"
-		>
-			<div class="w-full md:w-auto">
-				<label for="mesAnio" class="block text-sm font-medium text-gray-700 mb-1">Mes y Año</label>
-				<p-datepicker
-					inputId="mesAnio"
-					formControlName="mesAnio"
-					view="month"
-					dateFormat="mm/yy"
-					[showIcon]="true"
-					styleClass="w-full"
-				></p-datepicker>
-			</div>
+		<ng-template pTemplate="header">
+			<tr>
+				<th pSortableColumn="socio.apellidos">Socio <p-sortIcon field="socio.apellidos" /></th>
+				<th pSortableColumn="medidor.codigo">Medidor <p-sortIcon field="medidor.codigo" /></th>
+				<th pSortableColumn="fecha_lectura">Fecha Lectura <p-sortIcon field="fecha_lectura" /></th>
+				<th pSortableColumn="consumo_del_mes_m3">Consumo (m³) <p-sortIcon field="consumo_del_mes_m3" /></th>
+				<th>Acciones</th>
+			</tr>
+		</ng-template>
 
-			<p-button
-				type="submit"
-				label="Generar Facturas"
-				icon="pi pi-cog"
-				styleClass="p-button-success"
-				[loading]="isGenerating"
-				[disabled]="facturacionForm.invalid || isGenerating"
-			></p-button>
-		</form>
-	</p-card>
+		<ng-template pTemplate="body" let-lectura>
+			<tr>
+				<td>
+					<div class="font-medium text-black">{{ lectura.socio.nombres }} {{ lectura.socio.apellidos }}</div>
+					<div class="text-xs text-gray-600">{{ lectura.socio.cedula }}</div>
+				</td>
+				<td>
+					<span class="font-mono text-black p-2 bg-gray-100 rounded-md">{{ lectura.medidor.codigo }}</span>
+				</td>
+				<td class="text-black">{{ lectura.fecha_lectura | date: 'dd/MM/yyyy' }}</td>
+				<td class="font-bold text-black text-lg">{{ lectura.consumo_del_mes_m3 }} m³</td>
+				<td>
+					<!--
+            Este botón llama a la API REAL de tu compañero
+          -->
+					<p-button
+						label="Generar Factura"
+						icon="pi pi-file-export"
+						[loading]="isGenerating"
+						(click)="onGenerarFactura(lectura)"
+					></p-button>
+				</td>
+			</tr>
+		</ng-template>
 
-	<div class="card shadow-md border-0 rounded-lg">
-		<div class="flex items-center justify-between gap-4 mb-5 p-4 bg-gray-50 rounded-t-lg">
-			<div>
-				<h2 class="text-xl font-semibold text-gray-800">Historial de Facturas</h2>
-				<p class="text-sm text-gray-500">Lista de todas las facturas generadas, pendientes y pagadas.</p>
-			</div>
-		</div>
-
-		<p-table
-			[value]="facturas"
-			[loading]="isLoadingTable"
-			[paginator]="true"
-			[rows]="10"
-			styleClass="p-datatable-striped"
-			responsiveLayout="scroll"
-		>
-			<ng-template pTemplate="header">
-				<tr>
-					<th pSortableColumn="numeroFactura"># Factura <p-sortIcon field="numeroFactura"></p-sortIcon></th>
-					<th pSortableColumn="nombreSocio">Socio <p-sortIcon field="nombreSocio"></p-sortIcon></th>
-					<th pSortableColumn="fechaEmision">F. Emisión <p-sortIcon field="fechaEmision"></p-sortIcon></th>
-					<th pSortableColumn="total">Total <p-sortIcon field="total"></p-sortIcon></th>
-					<th pSortableColumn="estado">Estado <p-sortIcon field="estado"></p-sortIcon></th>
-					<th class="text-center">Acciones</th>
-				</tr>
-			</ng-template>
-
-			<ng-template pTemplate="body" let-factura>
-				<tr>
-					<td>
-						<span class="font-medium text-gray-700">{{ factura.numeroFactura }}</span>
-					</td>
-					<td>
-						<div class="flex flex-col">
-							<span class="font-medium">{{ factura.nombreSocio | titlecase }}</span>
-							<span class="text-sm text-gray-600">{{ factura.cedulaSocio }}</span>
-						</div>
-					</td>
-					<td>
-						{{ factura.fechaEmision | date: 'dd/MM/yyyy' }}
-					</td>
-					<td>
-						<div class="flex justify-center gap-2">
-							<button
-								pButton
-								pRipple
-								pTooltip="Ver Detalle"
-								tooltipPosition="top"
-								icon="pi pi-search"
-								class="p-button-rounded p-button-text p-button-info"
-							>
-								<span class="sr-only">Ver Detalle</span>
-							</button>
-
-							<button
-								pButton
-								pRipple
-								pTooltip="Registrar Pago"
-								tooltipPosition="top"
-								icon="pi pi-check-circle"
-								class="p-button-rounded p-button-text p-button-success"
-								[disabled]="factura.estado === 'Pagada'"
-							>
-								<span class="sr-only">Registrar Pago</span>
-							</button>
-						</div>
-					</td>
-
-					<td>
-						<div class="flex justify-center gap-2">
-							<button
-								pButton
-								pRipple
-								pTooltip="Ver Detalle"
-								tooltipPosition="top"
-								icon="pi pi-search"
-								class="p-button-rounded p-button-text p-button-info"
-							>
-								<span class="sr-only">Ver Detalle</span>
-							</button>
-
-							<button
-								pButton
-								pRipple
-								pTooltip="Registrar Pago"
-								tooltipPosition="top"
-								icon="pi pi-check-circle"
-								class="p-button-rounded p-button-text p-button-success"
-								[disabled]="factura.estado === 'Pagada'"
-							>
-								<span class="sr-only">Registrar Pago</span>
-							</button>
-						</div>
-					</td>
-				</tr>
-			</ng-template>
-
-			<ng-template pTemplate="emptymessage">
-				<tr>
-					<td colspan="6" class="text-center">No se encontraron facturas.</td>
-				</tr>
-			</ng-template>
-		</p-table>
-	</div>
+		<ng-template pTemplate="emptymessage">
+			<tr>
+				<td colspan="5" class="text-black text-center p-4">No hay lecturas pendientes por facturar (simulación).</td>
+			</tr>
+		</ng-template>
+	</p-table>
 </div>

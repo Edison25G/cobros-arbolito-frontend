@@ -1,40 +1,100 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { HttpClientModule } from '@angular/common/http';
+import { ReactiveFormsModule, FormBuilder, Validators, FormGroup } from '@angular/forms';
+import { Observable, catchError, of, tap } from 'rxjs';
 
-// --- Servicios y Modelos ---
-import { MedidorService } from '@core/services/medidor.service';
-import { Medidor, EstadoMedidor } from '@core/models/medidor.interface';
-import { ErrorService } from '../../../auth/core/services/error.service';
+// Modelos y Servicios
+import { Medidor } from '../../../core/models/medidor.interface';
+import { Socio } from '../../../core/models/socio.interface';
+import { MedidorService } from '../../../core/services/medidor.service'; // <-- El servicio SIMULADO
 
-// --- PrimeNG ---
-import { TableModule } from 'primeng/table';
+// Componentes PrimeNG v20
+import { TableModule, Table } from 'primeng/table';
+import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
-import { TooltipModule } from 'primeng/tooltip';
+import { SelectModule } from 'primeng/select'; // Dropdown
+import { ToggleSwitchModule } from 'primeng/toggleswitch'; // Switch
+import { ToastModule } from 'primeng/toast';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { TagModule } from 'primeng/tag';
-
-// ✔ Tipo permitido por PrimeNG 20
-type Severity = 'success' | 'secondary' | 'info' | 'warn' | 'danger' | 'contrast' | null;
+import { TooltipModule } from 'primeng/tooltip';
+import { IconFieldModule } from 'primeng/iconfield';
+import { InputIconModule } from 'primeng/inputicon';
+import { TextareaModule } from 'primeng/textarea'; // Para observaciones
+import { MessageService, ConfirmationService } from 'primeng/api';
 
 @Component({
-	selector: 'amc-medidores',
+	selector: 'amc-medidores', // Nombre del selector
 	standalone: true,
-	imports: [CommonModule, TableModule, ButtonModule, InputTextModule, TooltipModule, TagModule],
+	imports: [
+		CommonModule,
+		HttpClientModule, // Necesario para que SocioService (inyectado en MedidorService) funcione
+		ReactiveFormsModule,
+		// Componentes PrimeNG
+		TableModule,
+		DialogModule,
+		ButtonModule,
+		InputTextModule,
+		SelectModule,
+		ToggleSwitchModule,
+		ToastModule,
+		ConfirmDialogModule,
+		TagModule,
+		TooltipModule,
+		IconFieldModule,
+		InputIconModule,
+		TextareaModule,
+	],
+	providers: [
+		MessageService,
+		ConfirmationService,
+		// No proveemos MedidorService aquí porque ya está en 'root'
+	],
 	templateUrl: './medidores.component.html',
-	styleUrls: ['./medidores.component.css'],
 })
 export class MedidoresComponent implements OnInit {
-	// --- Inject Services ---
+	// Inyección de dependencias
 	private medidorService = inject(MedidorService);
-	private errorService = inject(ErrorService);
+	private fb = inject(FormBuilder);
+	private messageService = inject(MessageService);
+	private confirmationService = inject(ConfirmationService);
 
-	public medidores: Medidor[] = [];
-	public isLoading = true;
+	// Estado del componente
+	medidores: Medidor[] = [];
+	socios$: Observable<Socio[]>; // Observable para el dropdown
+	isLoading = true;
 
-	// Exponemos el Enum al HTML
-	public EstadoMedidor = EstadoMedidor;
+	// Control del Modal
+	showMedidorModal = false;
+	isEditMode = false;
+	currentMedidorId: number | null = null;
 
-	constructor() {}
+	// Formulario
+	medidorForm: FormGroup;
+
+	constructor() {
+		this.medidorForm = this.fb.group({
+			socio: [null, [Validators.required]], // Guardará el objeto Socio completo
+			codigo: ['', [Validators.required]],
+			observacion: [''],
+			tiene_medidor_fisico: [true],
+			esta_activo: [true], // Solo visible en edición
+		});
+
+		// Inicializamos el observable de socios
+		this.socios$ = this.medidorService.getSociosParaDropdown().pipe(
+			catchError((_err) => {
+				this.messageService.add({
+					severity: 'error',
+					summary: 'Error',
+					detail: 'No se pudieron cargar los socios para el formulario.',
+				});
+				return of([]); // Devuelve vacío si falla
+			}),
+		);
+	}
 
 	ngOnInit(): void {
 		this.loadMedidores();
@@ -42,43 +102,141 @@ export class MedidoresComponent implements OnInit {
 
 	loadMedidores(): void {
 		this.isLoading = true;
+		this.medidorService
+			.getMedidores()
+			.pipe(
+				tap((data) => {
+					this.medidores = data;
+					this.isLoading = false;
+				}),
+				catchError((_err) => {
+					this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Error al cargar medidores.' });
+					this.isLoading = false;
+					return of([]);
+				}),
+			)
+			.subscribe();
+	}
 
-		this.medidorService.getMedidores().subscribe({
-			next: (data) => {
-				this.medidores = data;
-				this.isLoading = false;
-			},
-			error: () => {
-				this.isLoading = false;
-				this.errorService.showError('No se pudieron cargar los medidores.');
+	// --- MÉTODOS DEL MODAL ---
+
+	openNewMedidorModal(): void {
+		this.isEditMode = false;
+		this.currentMedidorId = null;
+		this.medidorForm.reset({
+			socio: null,
+			codigo: '',
+			observacion: '',
+			tiene_medidor_fisico: true,
+			esta_activo: true,
+		});
+		this.f['socio'].enable(); // Habilita el dropdown de socio
+		this.showMedidorModal = true;
+	}
+
+	openEditMedidorModal(medidor: Medidor): void {
+		this.isEditMode = true;
+		this.currentMedidorId = medidor.id;
+
+		// Asigna el objeto Socio completo al dropdown
+		this.medidorForm.patchValue({
+			...medidor,
+			socio: medidor.socio_data,
+		});
+
+		// No se puede cambiar el socio de un medidor (regla de negocio)
+		this.f['socio'].disable();
+		this.showMedidorModal = true;
+	}
+
+	closeMedidorModal(): void {
+		this.showMedidorModal = false;
+	}
+
+	// --- MÉTODOS CRUD (Simulados) ---
+
+	saveMedidor(): void {
+		if (this.medidorForm.invalid) {
+			this.medidorForm.markAllAsTouched();
+			this.messageService.add({
+				severity: 'warn',
+				summary: 'Formulario Inválido',
+				detail: 'Revise los campos requeridos.',
+			});
+			return;
+		}
+
+		const formData = this.medidorForm.getRawValue();
+
+		// Preparamos los datos para el servicio (solo enviamos el ID del socio)
+		const datosParaApi = {
+			...formData,
+			socio: formData.socio.id, // Extraemos el ID del objeto Socio
+		};
+
+		let request$: Observable<Medidor>;
+
+		if (this.isEditMode && this.currentMedidorId) {
+			request$ = this.medidorService.updateMedidor(this.currentMedidorId, datosParaApi);
+		} else {
+			delete datosParaApi.esta_activo; // El servicio simulado lo pone en 'true'
+			request$ = this.medidorService.createMedidor(datosParaApi);
+		}
+
+		request$
+			.pipe(
+				tap(() => {
+					this.messageService.add({
+						severity: 'success',
+						summary: 'Éxito',
+						detail: `Medidor ${this.isEditMode ? 'actualizado' : 'creado'} (Simulación).`,
+					});
+					this.loadMedidores();
+					this.closeMedidorModal();
+				}),
+				catchError((err) => {
+					this.messageService.add({ severity: 'error', summary: 'Error', detail: err.message });
+					return of(null);
+				}),
+			)
+			.subscribe();
+	}
+
+	deleteMedidor(id: number): void {
+		this.confirmationService.confirm({
+			message: '¿Está seguro de desactivar este medidor? (Simulación)',
+			header: 'Confirmar Desactivación',
+			icon: 'pi pi-exclamation-triangle',
+			acceptLabel: 'Sí, desactivar',
+			rejectLabel: 'Cancelar',
+			accept: () => {
+				this.medidorService
+					.deleteMedidor(id)
+					.pipe(
+						tap(() => {
+							this.messageService.add({
+								severity: 'success',
+								summary: 'Éxito',
+								detail: 'Medidor marcado como inactivo (Simulación).',
+							});
+							this.loadMedidores();
+						}),
+						catchError((err) => {
+							this.messageService.add({ severity: 'error', summary: 'Error', detail: err.message });
+							return of(null);
+						}),
+					)
+					.subscribe();
 			},
 		});
 	}
 
-	// ✔ Método correcto para PrimeNG 20 (NO EXISTE TagSeverity)
-	getSeverity(estado: EstadoMedidor): Severity {
-		switch (estado) {
-			case EstadoMedidor.Asignado:
-				return 'success';
-			case EstadoMedidor.EnBodega:
-				return 'info';
-			case EstadoMedidor.Mantenimiento:
-				return 'warn';
-			default:
-				return 'secondary';
-		}
+	// --- Helpers ---
+	get f() {
+		return this.medidorForm.controls;
 	}
 
-	// --- Métodos futuros ---
-	crearMedidor(): void {
-		console.log('Abriendo modal para crear medidor...');
-	}
-
-	editarMedidor(medidor: Medidor): void {
-		console.log('Editando medidor:', medidor.id);
-	}
-
-	asignarSocio(medidor: Medidor): void {
-		console.log('Asignando socio al medidor:', medidor.id);
+	filterGlobal(event: Event, dt: Table) {
+		dt.filterGlobal((event.target as HTMLInputElement).value, 'contains');
 	}
 }

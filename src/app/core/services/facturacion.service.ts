@@ -1,121 +1,80 @@
-import { Injectable } from '@angular/core';
-import { Observable, timer } from 'rxjs';
-import { map } from 'rxjs/operators';
-import { Factura, EstadoFactura, GenerarFacturacionPayload, FacturacionResponse } from '../models/factura.interface';
+import { Injectable, inject } from '@angular/core';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { Observable, throwError, delay, map } from 'rxjs';
+import { catchError } from 'rxjs/operators';
+import { environment } from '../../environments/environment.development';
 
-// --- DATOS FALSOS (MOCK DATA) ACTUALIZADOS ---
-const MOCK_FACTURAS: Factura[] = [
-	{
-		id: 101,
-		numeroFactura: 'F-001-000123',
-		idSocio: 1, // Socio Juan Pérez
-		nombreSocio: 'Juan Pérez',
-		cedulaSocio: '1712345678',
-		fechaEmision: new Date('2025-11-05'),
-		fechaVencimiento: new Date('2025-11-20'),
-		total: 25.5,
-		estado: EstadoFactura.Pendiente,
-	},
-	{
-		id: 102,
-		numeroFactura: 'F-001-000122',
-		idSocio: 2, // Socio Maria Gomez
-		nombreSocio: 'Maria Gomez',
-		cedulaSocio: '1787654321',
-		fechaEmision: new Date('2025-10-05'),
-		fechaVencimiento: new Date('2025-10-20'),
-		total: 18.0,
-		estado: EstadoFactura.Pagada,
-	},
-	{
-		id: 103,
-		numeroFactura: 'F-001-000121',
-		idSocio: 4, // Socio Ana Martinez
-		nombreSocio: 'Ana Martinez',
-		cedulaSocio: '1799887766',
-		fechaEmision: new Date('2025-09-05'),
-		fechaVencimiento: new Date('2025-09-20'),
-		total: 30.1,
-		estado: EstadoFactura.Vencida,
-	},
-	// --- NUEVAS FACTURAS PARA PROBAR ---
-	{
-		id: 104,
-		numeroFactura: 'F-001-000124',
-		idSocio: 2, // Otra para Maria Gomez
-		nombreSocio: 'Maria Gomez',
-		cedulaSocio: '1787654321',
-		fechaEmision: new Date('2025-11-05'),
-		fechaVencimiento: new Date('2025-11-20'),
-		total: 22.0,
-		estado: EstadoFactura.Pendiente,
-	},
-	{
-		id: 105,
-		numeroFactura: 'F-001-000125',
-		idSocio: 3, // Para Carlos Andrade
-		nombreSocio: 'Carlos Andrade',
-		cedulaSocio: '1755443322',
-		fechaEmision: new Date('2025-10-10'),
-		fechaVencimiento: new Date('2025-10-25'),
-		total: 40.0,
-		estado: EstadoFactura.Vencida,
-	},
-];
-// --- FIN DE LOS DATOS FALSOS ---
+// Interfaces
+import { GenerarFacturaDTO, FacturaGeneradaResponse, LecturaPendiente } from '../interfaces/factura.interface';
+
+// Servicios (para crear datos simulados realistas)
+import { MedidorService } from './medidor.service';
+import { SocioService } from './socio.service';
 
 @Injectable({
 	providedIn: 'root',
 })
-export class FacturacionService {
-	constructor() {}
+export class FacturaService {
+	private http = inject(HttpClient);
+	private apiUrl = environment.apiUrl;
 
-	// ... (getFacturas() y generarFacturacion() se quedan igual) ...
-	getFacturas(): Observable<Factura[]> {
-		console.log('FacturacionService: Simulando carga de facturas...');
-		return timer(700).pipe(map(() => MOCK_FACTURAS));
-	}
+	// Inyectamos los otros servicios para crear un mock realista
+	private medidorService = inject(MedidorService);
+	private socioService = inject(SocioService);
 
-	generarFacturacion(payload: GenerarFacturacionPayload): Observable<FacturacionResponse> {
-		console.log('FacturacionService: Simulando generación de facturas...', payload);
-		return timer(1500).pipe(
-			map(() => ({
-				success: true,
-				message: 'Facturación del mes generada exitosamente',
-				facturasGeneradas: 120,
-			})),
-		);
-	}
-
-	// --- NUEVO MÉTODO ---
 	/**
-	 * Simula la obtención de facturas PENDIENTES o VENCIDAS para un socio.
-	 * Tarda 400ms en responder.
+	 * [SIMULADO] Obtiene una lista de lecturas pendientes de facturar.
+	 * (En el futuro, esto debería ser una llamada real a una API
+	 * ej: GET /api/v1/lecturas/?facturada=false)
 	 */
-	getFacturasPendientesPorSocio(idSocio: number): Observable<Factura[]> {
-		console.log(`FacturacionService: Buscando facturas pendientes para socio ${idSocio}`);
+	getLecturasPendientes(): Observable<LecturaPendiente[]> {
+		// 1. Obtenemos medidores (simulados) y socios (reales)
+		const medidores$ = this.medidorService.getMedidores(); // Ya vienen con socio_data
 
-		return timer(400).pipe(
-			map(() => {
-				// Filtra la lista de facturas
-				return MOCK_FACTURAS.filter(
-					(factura) =>
-						factura.idSocio === idSocio &&
-						(factura.estado === EstadoFactura.Pendiente || factura.estado === EstadoFactura.Vencida),
-				);
+		return medidores$.pipe(
+			map((medidores) => {
+				// 2. Creamos "Lecturas Pendientes" falsas basadas en esos medidores
+				const lecturasFalsas: LecturaPendiente[] = [];
+
+				medidores.forEach((medidor, index) => {
+					// Solo creamos lecturas para medidores físicos
+					if (medidor.tiene_medidor_fisico && medidor.socio_data) {
+						lecturasFalsas.push({
+							id: 501 + index, // ID de la LECTURA (falso)
+							fecha_lectura: '2025-11-10',
+							consumo_del_mes_m3: 15 + index * 2, // Consumo falso
+							medidor: medidor,
+							socio: medidor.socio_data,
+						});
+					}
+				});
+				return lecturasFalsas;
 			}),
+			delay(800), // Simula tiempo de red
 		);
 	}
 
-	getFacturasDelSocioLogueado(): Observable<Factura[]> {
-		console.log('FacturacionService: Buscando historial de facturas para el socio logueado (ID 2)...');
-		const ID_SOCIO_LOGUEADO = 2; // Simulación para Maria Gomez
+	/**
+	 * [REAL] Llama a la API para generar una factura desde una lectura.
+	 * POST /api/v1/facturas/generar/
+	 */
+	generarFactura(dto: GenerarFacturaDTO): Observable<FacturaGeneradaResponse> {
+		const url = `${this.apiUrl}/facturas/generar/`;
+		return this.http.post<FacturaGeneradaResponse>(url, dto).pipe(catchError(this.handleError));
+	}
 
-		return timer(500).pipe(
-			map(() => {
-				// Filtra la lista de facturas
-				return MOCK_FACTURAS.filter((factura) => factura.idSocio === ID_SOCIO_LOGUEADO);
-			}),
-		);
+	private handleError(error: HttpErrorResponse) {
+		let errorMessage = 'Ocurrió un error desconocido.';
+		if (error.status === 0) {
+			errorMessage = 'Error de Conexión. ¿El servidor de Django (backend) está corriendo?';
+		} else if (error.status === 400 && error.error) {
+			errorMessage = error.error.error || 'Error en los datos enviados.';
+		} else if (error.status === 404) {
+			errorMessage = 'API no encontrada (404). Revisa la URL.';
+		} else if (error.status === 403) {
+			errorMessage = 'No tienes permisos (Token JWT) para esta acción.';
+		}
+		console.error(error);
+		return throwError(() => new Error(errorMessage));
 	}
 }

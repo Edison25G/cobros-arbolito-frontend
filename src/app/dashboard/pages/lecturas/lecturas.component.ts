@@ -1,123 +1,130 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
-import { finalize } from 'rxjs/operators';
+import { ReactiveFormsModule, FormBuilder, Validators, FormGroup } from '@angular/forms';
+import { Observable, catchError, of, tap, map } from 'rxjs'; // <-- 1. IMPORTAR 'map' DE RxJS
 
-// --- Servicios y Modelos ---
-import { LecturaService } from '@core/services/lectura.service';
-import { SocioService } from '@core/services/socio.service';
-import { Socio } from '@core/models/socio.interface';
+// Modelos y Servicios
+import { Medidor } from '../../../core/models/medidor.interface';
+import { RegistrarLecturaDTO } from '../../../core/models/lectura.interface';
+import { MedidorService } from '../../../core/services/medidor.service'; // (Simulado)
+import { LecturaService } from '../../../core/services/lectura.service'; // (Real)
+
+// 2. Importar tu ErrorService con la ruta correcta
 import { ErrorService } from '../../../auth/core/services/error.service';
 
-// --- Imports de PrimeNG (CORREGIDOS PARA V20) ---
-import { CardModule } from 'primeng/card';
+// Componentes PrimeNG v20
 import { ButtonModule } from 'primeng/button';
 import { InputNumberModule } from 'primeng/inputnumber';
-import { SelectModule } from 'primeng/select'; // <-- DropdownModule está aquí
-import { DatePickerModule } from 'primeng/datepicker'; // <-- CalendarModule está aquí
-import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import { SelectModule } from 'primeng/select';
+import { DatePickerModule } from 'primeng/datepicker';
+import { ToastModule } from 'primeng/toast';
+import { MessageService } from 'primeng/api'; // Necesario para que ErrorService funcione
 
 @Component({
-	selector: 'amc-lecturas', // Usando prefijo 'amc-'
+	selector: 'amc-lecturas',
 	standalone: true,
 	imports: [
 		CommonModule,
 		ReactiveFormsModule,
-		// --- Módulos de PrimeNG ---
-		CardModule,
+		// Componentes PrimeNG
 		ButtonModule,
 		InputNumberModule,
-		SelectModule, // <-- CORREGIDO
-		DatePickerModule, // <-- CORREGIDO
-		ProgressSpinnerModule,
+		SelectModule,
+		DatePickerModule,
+		ToastModule, // <-- Se mantiene, ya que ErrorService lo usa internamente
+	],
+	providers: [
+		MessageService, // <-- Se mantiene, ya. que ErrorService lo inyecta
 	],
 	templateUrl: './lecturas.component.html',
-	styleUrls: ['./lecturas.component.css'],
 })
-// Quitamos el 'default' para evitar el NG1010
 export class LecturasComponent implements OnInit {
-	// --- Inyección de Servicios ---
+	// Inyección de dependencias
 	private fb = inject(FormBuilder);
-	private socioService = inject(SocioService);
+	private medidorService = inject(MedidorService);
 	private lecturaService = inject(LecturaService);
-	private errorService = inject(ErrorService);
+	private errorService = inject(ErrorService); // <-- 3. Inyectar ErrorService
 
-	// --- Estado del Componente ---
-	public lecturaForm!: FormGroup;
-	public isLoadingSocios = true;
-	public isSaving = false;
-
-	// --- Datos ---
-	public sociosDropdown: any[] = [];
-	public maxDate = new Date();
+	lecturaForm: FormGroup;
+	medidores$: Observable<Medidor[]>;
+	isLoading = false;
 
 	constructor() {
 		this.lecturaForm = this.fb.group({
-			socio: [null, [Validators.required]],
-			valorLectura: [null, [Validators.required, Validators.min(1)]],
-			fechaLectura: [new Date(), [Validators.required]],
+			medidor: [null, [Validators.required]],
+			lectura_actual_m3: [null, [Validators.required, Validators.min(0)]],
+			fecha_lectura: [new Date(), [Validators.required]],
 		});
+
+		this.medidores$ = this.medidorService.getMedidores().pipe(
+			// 4. Se añade el TIPO para corregir el error de 'any'
+			map((medidores: Medidor[]) => medidores.filter((m) => m.tiene_medidor_fisico)),
+			catchError((err) => {
+				// 5. Se llama al método CORRECTO 'showError' de tu ErrorService
+				this.errorService.showError('No se pudieron cargar los medidores.');
+				console.error(err); // Dejamos el log para depuración
+				return of([]);
+			}),
+		);
 	}
 
 	ngOnInit(): void {
-		this.loadSociosDropdown();
-	}
-
-	loadSociosDropdown(): void {
-		this.isLoadingSocios = true;
-		this.socioService.getSocios().subscribe({
-			next: (data) => {
-				this.sociosDropdown = data.map((socio: Socio) => ({
-					label: `${socio.nombre} ${socio.apellido} (${socio.cedula})`,
-					value: socio,
-				}));
-				this.isLoadingSocios = false;
+		// Se realiza una suscripción puntual para forzar la carga inicial de medidores
+		// (la fuente es un Observable de HTTP y se completa tras la respuesta).
+		this.medidores$.subscribe({
+			next: () => {
+				// Carga exitosa; los efectos (errores/filtrado) ya se manejan en el pipe.
 			},
-			error: (err) => {
-				console.error('Error al cargar socios:', err);
-				this.isLoadingSocios = false;
-				this.errorService.showError('No se pudieron cargar los socios.');
+			error: () => {
+				// Manejo defensivo: el catchError del pipe ya notifica mediante ErrorService.
 			},
 		});
 	}
 
-	registrarLectura(): void {
+	get f() {
+		return this.lecturaForm.controls;
+	}
+
+	onSubmit(): void {
 		if (this.lecturaForm.invalid) {
 			this.lecturaForm.markAllAsTouched();
+			// 7. Usamos tu ErrorService para mensajes de validación
 			this.errorService.requiredFields();
 			return;
 		}
 
-		this.isSaving = true;
-		const formValue = this.lecturaForm.value;
+		this.isLoading = true;
+		const formData = this.lecturaForm.value;
 
-		const payload = {
-			idSocio: formValue.socio.id,
-			valorLectura: formValue.valorLectura,
-			fechaLectura: formValue.fechaLectura,
+		const fecha = new Date(formData.fecha_lectura);
+		const fechaISO = fecha.toISOString().split('T')[0];
+
+		const dto: RegistrarLecturaDTO = {
+			medidor_id: formData.medidor.id,
+			lectura_actual_m3: formData.lectura_actual_m3,
+			fecha_lectura: fechaISO,
+			operador_id: 1, // (Dato quemado - pendiente de reemplazar por el ID del usuario logueado)
 		};
 
 		this.lecturaService
-			.registrarLectura(payload)
+			.registrarLectura(dto)
 			.pipe(
-				finalize(() => {
-					this.isSaving = false;
+				tap((response) => {
+					this.isLoading = false;
+					// 8. Usamos 'showSuccess' de tu ErrorService
+					this.errorService.showSuccess(`Éxito. Consumo del mes: ${response.consumo_del_mes} m³`);
+
+					this.lecturaForm.reset({
+						fecha_lectura: formData.fecha_lectura,
+					});
+				}),
+				catchError((err) => {
+					this.isLoading = false;
+					// 9. Usamos 'showError' de tu ErrorService
+					this.errorService.showError(err.message);
+					return of(null);
 				}),
 			)
-			.subscribe({
-				next: (response) => {
-					if (response.success) {
-						this.errorService.showSuccess(response.message);
-						this.lecturaForm.reset();
-						this.lecturaForm.patchValue({ fechaLectura: new Date() });
-					} else {
-						this.errorService.showError(response.message);
-					}
-				},
-				error: (err) => {
-					console.error('Error al registrar lectura:', err);
-					this.errorService.showError('Error de conexión al guardar.');
-				},
-			});
+			.subscribe();
 	}
 }

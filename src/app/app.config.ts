@@ -1,32 +1,39 @@
 // src/app/app.config.ts
+
 import { ApplicationConfig, provideZoneChangeDetection } from '@angular/core';
-import { provideRouter, withHashLocation } from '@angular/router';
+// 1. ELIMINAMOS 'withHashLocation' de aquí
+import { provideRouter, withViewTransitions } from '@angular/router';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
-import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
+
 import { MessageService } from 'primeng/api';
 import { providePrimeNG } from 'primeng/config';
-
-// 1. CORRECCIÓN: Importar desde '@primeuix/themes'
+import { DialogService } from 'primeng/dynamicdialog';
 import Aura from '@primeuix/themes/aura';
 
 import { routes } from './app.routes';
-import { DialogService } from 'primeng/dynamicdialog';
+import { tokenInterceptor } from './interceptors/token-interceptor';
 
 export const appConfig: ApplicationConfig = {
 	providers: [
 		provideZoneChangeDetection({ eventCoalescing: true }),
-		provideRouter(routes, withHashLocation()),
+
+		// 2. CORRECCIÓN: Dejamos solo 'routes' (y opcionalmente withViewTransitions para suavidad)
+		// ¡Adios al withHashLocation()!
+		provideRouter(routes, withViewTransitions()),
+
 		provideAnimationsAsync(),
-		provideHttpClient(withInterceptorsFromDi()),
+		provideHttpClient(withInterceptors([tokenInterceptor])),
+
 		providePrimeNG({
 			theme: {
-				// 2. CORRECCIÓN: Esto ahora funcionará
 				preset: Aura,
 				options: {
 					darkModeSelector: '.my-app-dark',
 				},
 			},
 		}),
+
 		MessageService,
 		DialogService,
 	],

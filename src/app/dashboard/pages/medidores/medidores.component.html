@@ -1,72 +1,204 @@
-<div class="card shadow-md border-0 rounded-lg">
-	<div class="flex items-center justify-between gap-4 mb-5 p-4 bg-gray-50 rounded-t-lg">
-		<div>
-			<h2 class="text-2xl font-semibold text-gray-800">Gestión de Medidores</h2>
-			<p class="text-sm text-gray-500">Administra el inventario de medidores del sistema.</p>
-		</div>
-		<p-button (click)="crearMedidor()" label="Nuevo Medidor" icon="pi pi-plus" styleClass="p-button-success"></p-button>
-	</div>
+<p-toast></p-toast>
+<p-confirmDialog [style]="{ width: '450px' }"></p-confirmDialog>
 
+<!-- Botón "Nuevo Medidor" -->
+<section class="flex justify-start mb-6">
+	<button
+		type="button"
+		(click)="openNewMedidorModal()"
+		class="px-6 py-3 rounded-full flex items-center gap-2 bg-[#23A455] shadow-lg transition-colors duration-300 group"
+	>
+		<i class="pi pi-plus text-[22px]" style="color: #ffffff"></i>
+		<span class="text-black font-semibold transition-colors duration-300 group-hover:text-[#ffffff]">
+			Nuevo Medidor
+		</span>
+	</button>
+</section>
+
+<!-- Tabla de Medidores -->
+<div class="p-6 rounded-2xl shadow border border-gray-200 bg-white">
 	<p-table
+		#dt
 		[value]="medidores"
 		[loading]="isLoading"
 		[paginator]="true"
 		[rows]="10"
-		styleClass="p-datatable-striped"
-		responsiveLayout="scroll"
+		[rowsPerPageOptions]="[5, 10, 20]"
+		[globalFilterFields]="['codigo', 'socio_data.nombre_completo', 'socio_data.cedula', 'observacion']"
+		dataKey="id"
+		[rowHover]="true"
+		currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} registros"
+		[showCurrentPageReport]="true"
+		[tableStyle]="{ 'min-width': '75rem' }"
 	>
+		<ng-template pTemplate="caption">
+			<div class="flex items-center justify-between">
+				<span class="text-xl font-semibold text-black">Gestión de Medidores</span>
+				<p-iconfield>
+					<p-inputicon styleClass="pi pi-search" />
+					<input
+						pInputText
+						type="text"
+						placeholder="Buscar por código, socio, cédula..."
+						(input)="filterGlobal($event, dt)"
+						class="w-full sm:w-64 text-black"
+					/>
+				</p-iconfield>
+			</div>
+		</ng-template>
+
 		<ng-template pTemplate="header">
 			<tr>
-				<th pSortableColumn="codigo">Código <p-sortIcon field="codigo"></p-sortIcon></th>
-				<th pSortableColumn="marca">Marca <p-sortIcon field="marca"></p-sortIcon></th>
-				<th pSortableColumn="estado">Estado <p-sortIcon field="estado"></p-sortIcon></th>
-				<th pSortableColumn="nombreSocioAsignado">Asignado a <p-sortIcon field="nombreSocioAsignado"></p-sortIcon></th>
-				<th class="text-center">Acciones</th>
+				<th pSortableColumn="codigo">Código Medidor <p-sortIcon field="codigo" /></th>
+				<th pSortableColumn="socio_data.nombre_completo">
+					Socio Asignado <p-sortIcon field="socio_data.nombre_completo" />
+				</th>
+				<th pSortableColumn="tiene_medidor_fisico">Tipo <p-sortIcon field="tiene_medidor_fisico" /></th>
+				<th pSortableColumn="esta_activo">Estado <p-sortIcon field="esta_activo" /></th>
+				<th>Acciones</th>
 			</tr>
 		</ng-template>
 
 		<ng-template pTemplate="body" let-medidor>
 			<tr>
+				<td class="font-medium text-black">{{ medidor.codigo }}</td>
 				<td>
-					<span class="font-medium text-gray-700">{{ medidor.codigo }}</span>
-				</td>
-				<td>{{ medidor.marca }}</td>
-				<p-tag [severity]="getSeverity(medidor.estado)" [value]="medidor.estado"> </p-tag>
-
-				<td>
-					{{ medidor.nombreSocioAsignado || '---' }}
+					<div class="text-black">{{ medidor.socio_data?.nombres }} {{ medidor.socio_data?.apellidos }}</div>
+					<div class="text-xs text-gray-600">{{ medidor.socio_data?.cedula || 'Socio no encontrado' }}</div>
 				</td>
 				<td>
-					<div class="flex justify-center gap-2">
-						<p-button
-							*ngIf="medidor.estado === EstadoMedidor.EnBodega"
-							pButton
-							pRipple
-							pTooltip="Asignar a socio"
-							tooltipPosition="top"
-							(click)="asignarSocio(medidor)"
-							icon="pi pi-user-plus"
-							class="p-button-rounded p-button-text p-button-success"
-						></p-button>
-
-						<p-button
-							pButton
-							pRipple
-							pTooltip="Editar medidor"
-							tooltipPosition="top"
-							(click)="editarMedidor(medidor)"
-							icon="pi pi-pencil"
-							class="p-button-rounded p-button-text p-button-warning"
-						></p-button>
-					</div>
+					<p-tag
+						[value]="medidor.tiene_medidor_fisico ? 'Físico' : 'Tarifa Fija'"
+						[severity]="medidor.tiene_medidor_fisico ? 'info' : 'secondary'"
+					></p-tag>
+				</td>
+				<td>
+					<p-tag
+						[value]="medidor.esta_activo ? 'Activo' : 'Inactivo'"
+						[severity]="medidor.esta_activo ? 'success' : 'warn'"
+					></p-tag>
+				</td>
+				<td class="flex gap-2">
+					<p-button
+						icon="pi pi-pencil"
+						rounded
+						outlined
+						size="small"
+						(click)="openEditMedidorModal(medidor)"
+					></p-button>
+					<p-button
+						icon="pi pi-trash"
+						severity="danger"
+						rounded
+						outlined
+						size="small"
+						pTooltip="Desactivar"
+						tooltipPosition="top"
+						(click)="deleteMedidor(medidor.id)"
+					></p-button>
 				</td>
 			</tr>
 		</ng-template>
 
 		<ng-template pTemplate="emptymessage">
 			<tr>
-				<td colspan="5" class="text-center">No se encontraron medidores.</td>
+				<td colspan="5" class="text-black text-center p-4">No hay medidores registrados (simulación).</td>
 			</tr>
 		</ng-template>
 	</p-table>
 </div>
+
+<!-- MODAL (p-dialog) para Crear/Editar Medidor -->
+<p-dialog
+	[(visible)]="showMedidorModal"
+	[modal]="true"
+	[closable]="true"
+	header="{{ isEditMode ? 'Editar Medidor' : 'Registrar Medidor' }}"
+	[style]="{ width: '500px', maxWidth: '90vw' }"
+	(onHide)="closeMedidorModal()"
+>
+	<form [formGroup]="medidorForm" (ngSubmit)="saveMedidor()" class="space-y-4 p-4">
+		<!-- Fila 1: Socio (Dropdown) -->
+		<div>
+			<label for="socio" class="block text-sm font-medium mb-1">Asignar a Socio</label>
+			<p-select
+				id="socio"
+				formControlName="socio"
+				[options]="socios$ | async"
+				optionLabel="nombres"
+				placeholder="Seleccione un socio"
+				[filter]="true"
+				filterBy="nombres,apellidos,cedula"
+				appendTo="body"
+				class="w-full"
+				[invalid]="f['socio'].invalid && f['socio'].touched"
+			>
+				<!-- Plantilla para mostrar nombre y cédula en el dropdown -->
+				<ng-template let-socio pTemplate="item">
+					<div>
+						<div>{{ socio.nombres }} {{ socio.apellidos }}</div>
+						<small class="text-gray-500">{{ socio.cedula }}</small>
+					</div>
+				</ng-template>
+				<ng-template let-socio pTemplate="selectedItem">
+					<div>
+						<div>{{ socio.nombres }} {{ socio.apellidos }}</div>
+						<small class="text-gray-500">{{ socio.cedula }}</small>
+					</div>
+				</ng-template>
+			</p-select>
+			<small *ngIf="f['socio'].invalid && f['socio'].touched" class="p-error block"> Debe seleccionar un socio. </small>
+		</div>
+
+		<!-- Fila 2: Código del Medidor -->
+		<div>
+			<label for="codigo" class="block text-sm font-medium mb-1">Código del Medidor</label>
+			<input
+				pInputText
+				id="codigo"
+				formControlName="codigo"
+				placeholder="Ej: MED-004"
+				class="w-full"
+				[invalid]="f['codigo'].invalid && f['codigo'].touched"
+			/>
+			<small *ngIf="f['codigo'].invalid && f['codigo'].touched" class="p-error block"> El código es requerido. </small>
+		</div>
+
+		<!-- Fila 3: Observación -->
+		<div>
+			<label for="observacion" class="block text-sm font-medium mb-1">Observación (Opcional)</label>
+			<textarea
+				pTextarea
+				id="observacion"
+				formControlName="observacion"
+				rows="3"
+				class="w-full"
+				placeholder="Ej: Lote 5, casa esquinera..."
+			></textarea>
+		</div>
+
+		<!-- Fila 4: Tipo y Estado -->
+		<div class="flex flex-wrap justify-between gap-4 pt-2">
+			<div class="flex items-center">
+				<p-toggleSwitch id="tiene_medidor_fisico" formControlName="tiene_medidor_fisico"></p-toggleSwitch>
+				<label for="tiene_medidor_fisico" class="ml-3 font-medium">¿Tiene medidor físico?</label>
+			</div>
+
+			<div *ngIf="isEditMode" class="flex items-center">
+				<p-toggleSwitch id="esta_activo" formControlName="esta_activo"></p-toggleSwitch>
+				<label for="esta_activo" class="ml-3 font-medium">¿Está activo?</label>
+			</div>
+		</div>
+
+		<!-- Botones del Footer -->
+		<div class="flex justify-end gap-3 pt-6">
+			<p-button label="Cancelar" type="button" (click)="closeMedidorModal()" [text]="true" severity="danger"></p-button>
+			<p-button
+				label="{{ isEditMode ? 'Actualizar' : 'Guardar' }}"
+				type="submit"
+				[loading]="isLoading"
+				[disabled]="medidorForm.invalid"
+			></p-button>
+		</div>
+	</form>
+</p-dialog>

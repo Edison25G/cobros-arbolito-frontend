@@ -1,21 +1,11 @@
-// src/app/core/services/auth.service.ts
-
-// =================================================================
-// 1. IMPORTS CORREGIDOS
-// =================================================================
-
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable, throwError, map, catchError, tap } from 'rxjs';
-
-// ⬅️ Importación de environment (asume que el entorno base es el correcto)
 import { environment } from './../../environments/environment.development';
-
-// ⬅️ Asumo que el ErrorService está en /app/auth/services, ajustando la ruta
 import { ErrorService } from '../../auth/core/services/error.service';
 
-// ⬅️ Asumo que las interfaces están en /app/auth/core/interfaces/auth.interface
-import { LoginRequest, LoginResponse, UserData } from '../../core/interfaces/auth.interface';
+// ⬅️ CAMBIO: Importamos 'TokenResponse' y quitamos 'LoginResponse'
+import { LoginRequest, TokenResponse, UserData } from '../../core/interfaces/auth.interface';
 
 // =================================================================
 // 2. SERVICE IMPLEMENTATION
@@ -39,21 +29,19 @@ export class AuthService {
 	}
 
 	// ---------------------------------------------------------------
-	// MÉTODOS AUXILIARES (Necesarios para Guards y Dashboard)
+	// MÉTODOS AUXILIARES (Actualizados para JWT)
 	// ---------------------------------------------------------------
 
 	isAuthenticated(): boolean {
-		// Verifica si el usuario está en memoria o en localStorage
-		return !!this.currentUser || !!localStorage.getItem('user');
+		// ⬅️ CAMBIO: Es más seguro verificar la existencia del token
+		return !!localStorage.getItem('token');
 	}
 
 	getRole(): string | null {
-		// Intenta obtener el rol de la memoria (currentUser)
+		// (Este método sigue funcionando porque 'login' sigue guardando 'user')
 		if (this.currentUser && this.currentUser.rol) {
 			return this.currentUser.rol;
 		}
-
-		// Si la app se recargó, intenta cargarlo desde localStorage
 		const userJson = localStorage.getItem('user');
 		if (userJson) {
 			const user = JSON.parse(userJson);
@@ -63,27 +51,39 @@ export class AuthService {
 	}
 
 	logout(): void {
-		// Limpia el estado de la aplicación y el almacenamiento
 		this.currentUser = null;
 		localStorage.removeItem('user');
-		// Normalmente aquí va la navegación a la página de login
+		localStorage.removeItem('token'); // ⬅️ CAMBIO: Asegúrate de borrar el token
 	}
 
 	// ---------------------------------------------------------------
-	// MÉTODO PRINCIPAL DE LOGIN (Tu código original)
+	// MÉTODO PRINCIPAL DE LOGIN (Actualizado para JWT)
 	// ---------------------------------------------------------------
 
 	login(credentials: LoginRequest): Observable<UserData> {
-		// Usa environment.apiUrl (el localhost:8000 de Django)
-		const loginUrl = `${environment.apiUrl}/auth/login/`;
+		// ⬅️ CAMBIO: Apunta al endpoint de JWT
+		const loginUrl = `${environment.apiUrl}/token/`;
 
-		return this.http.post<LoginResponse>(loginUrl, credentials).pipe(
+		// ⬅️ CAMBIO: Espera una TokenResponse
+		return this.http.post<TokenResponse>(loginUrl, credentials).pipe(
 			// 1. Mapeo de la respuesta
 			map((response) => {
-				// --- SIMULACIÓN TEMPORAL DEL ROL ---
-				const rol = response.user.username === 'admin' ? 'Administrador' : 'Socio';
+				// ⬅️ CAMBIO: Guardamos el token real
+				localStorage.setItem('token', response.access);
 
-				this.currentUser = { ...response.user, rol: rol };
+				// --- SIMULACIÓN DE USUARIO Y ROL ---
+				// (Usamos 'credentials' porque 'response' ya no trae el 'user')
+				const rol = credentials.username === 'admin' ? 'Administrador' : 'Socio';
+
+				// (Creamos un usuario simulado para que getRole() siga funcionando)
+				this.currentUser = {
+					id: 0, // No lo tenemos, pero lo simulamos
+					username: credentials.username,
+					first_name: '',
+					last_name: '',
+					email: '',
+					rol: rol,
+				};
 				localStorage.setItem('user', JSON.stringify(this.currentUser));
 
 				return this.currentUser;
@@ -98,15 +98,24 @@ export class AuthService {
 			catchError((error: HttpErrorResponse) => {
 				let errorMessage: string;
 
+				// 1. Si es error 401 (Fallo de autenticación)
 				if (error.status === 401) {
+					// NO leemos error.error.detail. FORZAMOS nuestro mensaje.
 					errorMessage = 'Credenciales inválidas.';
-				} else if (error.status === 400) {
-					errorMessage = error.error?.detail || 'Faltan datos de login.';
-				} else {
-					errorMessage = 'Error de conexión al servidor.';
+				}
+				// 2. Si es error 400 (Petición mal formada)
+				else if (error.status === 400) {
+					errorMessage = 'Faltan datos de usuario o contraseña.';
+				}
+				// 3. Cualquier otro error (Servidor caído, sin internet, 500)
+				else {
+					errorMessage = 'Error de conexión con el servidor.';
 				}
 
+				// Mostramos la notificación con TU mensaje personalizado
 				this.errorService.loginError(errorMessage);
+
+				// Devolvemos el error para que el componente detenga el "Loading..."
 				return throwError(() => new Error(errorMessage));
 			}),
 		);

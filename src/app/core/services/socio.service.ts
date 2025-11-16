@@ -1,74 +1,79 @@
-import { Injectable } from '@angular/core';
-import { Observable, timer } from 'rxjs';
-import { map } from 'rxjs/operators';
-import { Socio, EstadoSocio } from '../models/socio.interface';
+import { Injectable, inject } from '@angular/core';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { Observable, throwError } from 'rxjs';
+import { catchError } from 'rxjs/operators';
+import { Socio } from '../models/socio.interface';
 
-// --- NUESTROS DATOS FALSOS (MOCK DATA) ---
-// Esta es nuestra "base de datos" simulada
-const MOCK_SOCIOS: Socio[] = [
-	{
-		id: 1,
-		cedula: '1712345678',
-		nombre: 'Juan',
-		apellido: 'Pérez',
-		email: 'juan.perez@email.com',
-		telefono: '0991234567',
-		estado: EstadoSocio.AlDia,
-	},
-	{
-		id: 2,
-		cedula: '1787654321',
-		nombre: 'Maria',
-		apellido: 'Gomez',
-		email: 'maria.gomez@email.com',
-		telefono: '0987654321',
-		estado: EstadoSocio.EnMora,
-	},
-	{
-		id: 3,
-		cedula: '1755443322',
-		nombre: 'Carlos',
-		apellido: 'Andrade',
-		email: 'carlos.andrade@email.com',
-		telefono: '0976543210',
-		estado: EstadoSocio.AlDia,
-	},
-	{
-		id: 4,
-		cedula: '1799887766',
-		nombre: 'Ana',
-		apellido: 'Martinez',
-		email: 'ana.martinez@email.com',
-		telefono: '0965432109',
-		estado: EstadoSocio.Inactivo,
-	},
-];
-// --- FIN DE LOS DATOS FALSOS ---
+// 1. ¡IMPORTANTE! Importamos tu archivo de entorno
+// (Esta ruta asume que 'environments' está en 'src/environments/')
+import { environment } from '../../environments/environment.development';
 
 @Injectable({
 	providedIn: 'root',
 })
 export class SocioService {
-	constructor() {}
+	private http = inject(HttpClient);
+
+	// 2. ¡CORRECCIÓN! Construimos la URL base usando la variable de entorno
+	//    tu environment: 'http://localhost:8000/api/v1'
+	//    le añadimos: '/socios/'
+	//    Resultado: 'http://localhost:8000/api/v1/socios/'
+	private baseUrl = environment.apiUrl + '/socios/';
 
 	/**
-	 * Simula una llamada API para obtener todos los socios.
-	 * Tarda 500ms en responder.
+	 * Obtiene la lista completa de socios (GET http://localhost:8000/api/v1/socios/)
 	 */
 	getSocios(): Observable<Socio[]> {
-		console.log('SocioService: Simulando carga de socios...');
-
-		// Usamos timer() para simular una espera de 500ms (medio segundo)
-		return timer(500).pipe(
-			map(() => {
-				console.log('SocioService: Carga simulada completa.');
-				return MOCK_SOCIOS; // Devuelve nuestra lista de datos falsos
-			}),
-		);
+		return this.http.get<Socio[]>(this.baseUrl).pipe(catchError(this.handleError));
 	}
 
-	// (En el futuro, aquí crearías métodos como:)
-	// getSocioById(id: number): Observable<Socio> { ... }
-	// createSocio(socio: Socio): Observable<Socio> { ... }
-	// updateSocio(id: number, socio: Socio): Observable<Socio> { ... }
+	/**
+	 * Crea un nuevo socio (POST http://localhost:8000/api/v1/socios/)
+	 */
+	createSocio(socioData: any): Observable<Socio> {
+		return this.http.post<Socio>(this.baseUrl, socioData).pipe(catchError(this.handleError));
+	}
+
+	/**
+	 * Actualiza un socio (PATCH http://localhost:8000/api/v1/socios/<id>/)
+	 */
+	updateSocio(id: number, socioData: any): Observable<Socio> {
+		return this.http.patch<Socio>(`${this.baseUrl}${id}/`, socioData).pipe(catchError(this.handleError));
+	}
+
+	/**
+	 * Elimina (desactiva) un socio (DELETE http://localhost:8000/api/v1/socios/<id>/)
+	 */
+	deleteSocio(id: number): Observable<void> {
+		return this.http.delete<void>(`${this.baseUrl}${id}/`).pipe(catchError(this.handleError));
+	}
+
+	/**
+	 * Manejador de errores (Actualizado)
+	 */
+	private handleError(error: HttpErrorResponse) {
+		let errorMessage = 'Ocurrió un error desconocido.';
+
+		// Este es el error que probablemente verás si Django no está corriendo o si bloquea CORS
+		if (error.status === 0) {
+			errorMessage = 'Error de Conexión. ¿Está el servidor de Django (backend) corriendo en http://localhost:8000?';
+		} else if (error.status === 400 && error.error) {
+			try {
+				const errors = error.error;
+				const firstKey = Object.keys(errors)[0];
+				const firstMessage = Array.isArray(errors[firstKey]) ? errors[firstKey][0] : errors[firstKey];
+				errorMessage = `Error de validación: ${firstMessage}`;
+			} catch (_e) {
+				errorMessage = `Error ${error.status}: ${error.message}`;
+			}
+		} else if (error.status === 404) {
+			// Este 404 ahora SÍ es del backend
+			errorMessage = 'El API (http://localhost:8000/api/v1/socios/) no fue encontrado (Error 404). Revisa la URL.';
+		} else if (error.status === 403) {
+			errorMessage = 'No tienes permisos (IsAdminUser) para realizar esta acción. Necesitas un token JWT válido.';
+		}
+
+		console.error(error); // Mantenemos el log del error completo
+		return throwError(() => new Error(errorMessage)); // Devolvemos el mensaje amigable
+	}
 }

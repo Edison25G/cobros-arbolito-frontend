@@ -1,18 +1,17 @@
-// Define los posibles estados de un socio
-export enum EstadoSocio {
-	AlDia = 'Al día',
-	EnMora = 'En mora',
-	Inactivo = 'Inactivo',
-}
+import { RolUsuario } from './role.enum';
 
-// Define la estructura de un objeto Socio
+/**
+ * Define la estructura de datos de un Socio en el frontend.
+ * Coincide con el 'SocioSerializer' del backend.
+ */
 export interface Socio {
 	id: number;
 	cedula: string;
-	nombre: string;
-	apellido: string;
-	email: string;
-	telefono: string;
-	estado: EstadoSocio;
-	// Puedes añadir más campos que viste en la API, como 'id_medidor', 'direccion', etc.
+	nombres: string;
+	apellidos: string;
+	barrio: string;
+	rol: RolUsuario; // Usa el Enum
+	email: string | null;
+	telefono: string | null;
+	esta_activo: boolean;
 }
