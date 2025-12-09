@@ -80,6 +80,17 @@
 					<td class="text-center">
 						<div class="flex justify-center gap-2">
 							<p-button
+								icon="pi pi-eye"
+								rounded
+								outlined
+								severity="help"
+								size="small"
+								pTooltip="Ver Perfil y Pagos"
+								tooltipPosition="top"
+								(onClick)="verDetalle(socio.id)"
+							>
+							</p-button>
+							<p-button
 								icon="pi pi-pencil"
 								[rounded]="true"
 								[outlined]="true"

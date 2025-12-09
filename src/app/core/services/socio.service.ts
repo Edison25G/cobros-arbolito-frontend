@@ -17,7 +17,9 @@ export class SocioService {
 	getSocios(): Observable<Socio[]> {
 		return this.http.get<Socio[]>(this.baseUrl).pipe(catchError(this.handleError));
 	}
-
+	getSocioById(id: number): Observable<Socio> {
+		return this.http.get<Socio>(`${this.baseUrl}${id}/`).pipe(catchError(this.handleError));
+	}
 	createSocio(socioData: any): Observable<Socio> {
 		return this.http.post<Socio>(this.baseUrl, socioData).pipe(catchError(this.handleError));
 	}

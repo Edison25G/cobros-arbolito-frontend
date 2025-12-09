@@ -37,6 +37,14 @@ export default [
 				canActivate: [RoleGuard],
 				data: { roles: [RolUsuario.ADMIN, RolUsuario.TESORERO] },
 			},
+
+			{
+				path: 'socios/detalle/:id',
+				loadComponent: () =>
+					import('./pages/socios/detalle-socio/detalle-socio.component').then((m) => m.DetalleSocioComponent),
+				canActivate: [RoleGuard],
+				data: { roles: [RolUsuario.ADMIN, RolUsuario.TESORERO] },
+			},
 			{
 				path: 'lecturas',
 				// El Guard protege toda la sección
@@ -88,9 +96,11 @@ export default [
 			},
 			{
 				path: 'mingas/asistencia/:id',
+				// Según tu imagen 1, la carpeta 'asistencia' está directo en 'pages', así que esto está bien:
 				loadComponent: () => import('./pages/asistencia/asistencia.component').then((m) => m.AsistenciaComponent),
 				canActivate: [RoleGuard],
-				data: { roles: [RolUsuario.ADMIN, RolUsuario.OPERADOR] }, // Tesorero no suele tomar lista, pero puedes agregarlo
+				// ¡IMPORTANTE! Agregamos RolUsuario.TESORERO para que no lo bloquee si entra con ese rol
+				data: { roles: [RolUsuario.ADMIN, RolUsuario.OPERADOR, RolUsuario.TESORERO] },
 			},
 			// --- Rutas de Admin ---
 			{

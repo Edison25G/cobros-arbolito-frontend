@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { HttpClientModule } from '@angular/common/http';
 import { ReactiveFormsModule, FormBuilder, Validators, FormGroup } from '@angular/forms';
 import { Observable, catchError, of, tap } from 'rxjs';
-
+import { Router } from '@angular/router';
 // Importaciones con las rutas correctas según tu arquitectura
 import { Socio } from '../../../core/models/socio.interface';
 import { SocioService } from '../../../core/services/socio.service';
@@ -57,7 +57,7 @@ export class SociosComponent implements OnInit {
 	private fb = inject(FormBuilder);
 	private messageService = inject(MessageService);
 	private confirmationService = inject(ConfirmationService);
-
+	private router = inject(Router);
 	// Estado del componente
 	socios: Socio[] = [];
 	isLoading = true;
@@ -132,6 +132,9 @@ export class SociosComponent implements OnInit {
 		this.showSocioModal = true;
 	}
 
+	verDetalle(id: number) {
+		this.router.navigate(['/dashboard/socios/detalle', id]);
+	}
 	openEditSocioModal(socio: Socio): void {
 		this.isEditMode = true;
 		this.currentSocioId = socio.id;

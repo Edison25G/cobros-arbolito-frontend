@@ -1,0 +1,146 @@
+<p-toast></p-toast>
+
+<div *ngIf="isLoading" class="card p-6 bg-white rounded-xl shadow-sm border border-gray-100 animate-pulse">
+	<div class="flex gap-4 mb-6">
+		<p-skeleton shape="circle" size="5rem"></p-skeleton>
+		<div class="flex-1 space-y-2">
+			<p-skeleton width="50%" height="2rem"></p-skeleton>
+			<p-skeleton width="30%"></p-skeleton>
+		</div>
+	</div>
+	<p-skeleton height="150px"></p-skeleton>
+</div>
+
+<div *ngIf="!isLoading && socio" class="card p-6 bg-white rounded-xl shadow-sm border border-gray-100 animate-fade-in">
+	<div class="flex flex-col md:flex-row gap-6 items-start mb-6">
+		<div class="flex-shrink-0">
+			<p-avatar
+				icon="pi pi-user"
+				size="xlarge"
+				shape="circle"
+				styleClass="bg-green-100 text-green-700 w-24 h-24 text-4xl shadow-sm"
+			>
+			</p-avatar>
+		</div>
+
+		<div class="flex-grow w-full">
+			<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+				<div>
+					<h1 class="text-3xl font-bold text-gray-800">{{ socio.nombres }} {{ socio.apellidos }}</h1>
+					<div class="text-gray-500 text-lg flex items-center gap-2 mt-1">
+						<i class="pi pi-id-card text-green-600"></i>
+						<span class="font-medium">{{ socio.cedula }}</span>
+					</div>
+				</div>
+
+				<p-tag
+					[value]="socio.esta_activo ? 'ACTIVO' : 'INACTIVO'"
+					[severity]="socio.esta_activo ? 'success' : 'danger'"
+					class="text-base px-3 py-1"
+				>
+				</p-tag>
+			</div>
+
+			<p-divider></p-divider>
+
+			<div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm">
+				<div class="p-3 bg-gray-50 rounded-lg border border-gray-100">
+					<span class="block text-gray-500 font-medium mb-1">Barrio</span>
+					<span class="text-gray-800 font-bold text-base">{{ socio.barrio }}</span>
+				</div>
+				<div class="p-3 bg-gray-50 rounded-lg border border-gray-100">
+					<span class="block text-gray-500 font-medium mb-1">Rol</span>
+					<p-tag [value]="socio.rol" [severity]="socio.rol === 'Administrador' ? 'danger' : 'info'"></p-tag>
+				</div>
+				<div class="p-3 bg-gray-50 rounded-lg border border-gray-100">
+					<span class="block text-gray-500 font-medium mb-1">Contacto</span>
+					<div class="text-gray-800 font-semibold">
+						<div class="flex items-center gap-2"><i class="pi pi-envelope text-xs"></i> {{ socio.email || 'N/A' }}</div>
+						<div class="flex items-center gap-2 mt-1">
+							<i class="pi pi-phone text-xs"></i> {{ socio.telefono || 'N/A' }}
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<p-tabs value="0">
+		<p-tablist>
+			<p-tab value="0">Historial de Pagos</p-tab>
+			<p-tab value="1">Medidores</p-tab>
+		</p-tablist>
+
+		<p-tabpanels>
+			<p-tabpanel value="0">
+				<p-table [value]="historialPagos" styleClass="p-datatable-sm p-datatable-striped" [rowHover]="true">
+					<ng-template pTemplate="header">
+						<tr>
+							<th>Concepto</th>
+							<th>Mes</th>
+							<th>Monto</th>
+							<th>Estado</th>
+							<th>Fecha</th>
+						</tr>
+					</ng-template>
+					<ng-template pTemplate="body" let-pago>
+						<tr>
+							<td class="font-medium">Consumo Agua</td>
+							<td>{{ pago.mes }}</td>
+							<td class="font-bold text-gray-700">{{ pago.monto | currency }}</td>
+							<td>
+								<p-tag
+									[value]="pago.estado"
+									[severity]="pago.estado === 'PAGADO' ? 'success' : 'warn'"
+									[rounded]="true"
+								></p-tag>
+							</td>
+							<td class="text-sm text-gray-500">{{ pago.fecha_pago || '---' }}</td>
+						</tr>
+					</ng-template>
+					<ng-template pTemplate="emptymessage">
+						<tr>
+							<td colspan="5" class="text-center p-4">Sin historial.</td>
+						</tr>
+					</ng-template>
+				</p-table>
+			</p-tabpanel>
+
+			<p-tabpanel value="1">
+				<p-table [value]="misMedidores" styleClass="p-datatable-sm" [rowHover]="true">
+					<ng-template pTemplate="header">
+						<tr>
+							<th>Código</th>
+							<th>Ubicación</th>
+							<th>Tipo</th>
+							<th>Estado</th>
+						</tr>
+					</ng-template>
+					<ng-template pTemplate="body" let-med>
+						<tr>
+							<td class="font-bold text-gray-800">{{ med.codigo }}</td>
+							<td>{{ med.ubicacion }}</td>
+							<td>
+								<span class="text-xs font-semibold px-2 py-1 rounded bg-blue-50 text-blue-600">{{ med.tipo }}</span>
+							</td>
+							<td>
+								<span *ngIf="med.estado === 'Activo'" class="text-green-600 font-bold text-xs">● Activo</span>
+								<span *ngIf="med.estado !== 'Activo'" class="text-gray-400 font-bold text-xs">● Inactivo</span>
+							</td>
+						</tr>
+					</ng-template>
+				</p-table>
+			</p-tabpanel>
+		</p-tabpanels>
+	</p-tabs>
+
+	<div class="flex justify-end mt-6 pt-4 border-t border-gray-100">
+		<p-button
+			label="Volver"
+			icon="pi pi-arrow-left"
+			[outlined]="true"
+			severity="secondary"
+			(onClick)="volver()"
+		></p-button>
+	</div>
+</div>
