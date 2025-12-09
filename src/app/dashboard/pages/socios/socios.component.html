@@ -1,242 +1,207 @@
-<!-- Toast y ConfirmDialog (Igual que en tu componente de usuarios) -->
 <p-toast></p-toast>
 <p-confirmDialog [style]="{ width: '450px' }"></p-confirmDialog>
 
-<!-- Botón "Nuevo Socio" (Estilo copiado de tu botón de usuarios) -->
-<section class="flex justify-start mb-6">
-	<button
-		type="button"
-		(click)="openNewSocioModal()"
-		class="px-6 py-3 rounded-full flex items-center gap-2 bg-[#23A455] shadow-lg transition-colors duration-300 group"
-	>
-		<i class="pi pi-user-plus text-[22px]" style="color: #ffffff"></i>
-		<span class="text-black font-semibold transition-colors duration-300 group-hover:text-[#ffffff]">
-			Nuevo Socio
-		</span>
-	</button>
-</section>
+<div class="card p-4 bg-white rounded-xl shadow-sm border border-gray-100 animate-fade-in">
+	<div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+		<div>
+			<h2 class="text-2xl font-bold text-gray-800">Gestión de Socios</h2>
+			<p class="text-sm text-gray-500">Administra el padrón de usuarios y sus roles</p>
+		</div>
 
-<!-- Tabla de Socios (Usando p-table) -->
-<div class="p-6 rounded-2xl shadow border border-gray-200 bg-white">
-	<p-table
-		#dt
-		[value]="socios"
-		[loading]="isLoading"
-		[paginator]="true"
-		[rows]="10"
-		[rowsPerPageOptions]="[5, 10, 20]"
-		[globalFilterFields]="['cedula', 'nombres', 'apellidos', 'barrio', 'rol']"
-		dataKey="id"
-		[rowHover]="true"
-		currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} registros"
-		[showCurrentPageReport]="true"
-		[tableStyle]="{ 'min-width': '75rem' }"
-	>
-		<ng-template pTemplate="caption">
-			<div class="flex items-center justify-between">
-				<span class="text-xl font-semibold text-black">Gestión de Socios</span>
-				<p-iconfield>
-					<p-inputicon styleClass="pi pi-search" />
-					<input
-						pInputText
-						type="text"
-						placeholder="Buscar por cédula, nombre, barrio..."
-						(input)="filterGlobal($event, dt)"
-						class="w-full sm:w-64 text-black"
-					/>
-				</p-iconfield>
-			</div>
-		</ng-template>
+		<div class="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+			<p-iconfield class="w-full sm:w-64">
+				<p-inputicon styleClass="pi pi-search" />
+				<input
+					pInputText
+					type="text"
+					(input)="dt.filterGlobal($any($event.target).value, 'contains')"
+					placeholder="Buscar socio..."
+					class="w-full"
+				/>
+			</p-iconfield>
 
-		<ng-template pTemplate="header">
-			<tr>
-				<th pSortableColumn="cedula">Cédula <p-sortIcon field="cedula" /></th>
-				<th pSortableColumn="nombres">Nombre Completo <p-sortIcon field="nombres" /></th>
-				<th pSortableColumn="barrio">Barrio <p-sortIcon field="barrio" /></th>
-				<th pSortableColumn="rol">Rol <p-sortIcon field="rol" /></th>
-				<th pSortableColumn="esta_activo">Estado <p-sortIcon field="esta_activo" /></th>
-				<th>Acciones</th>
-			</tr>
-		</ng-template>
+			<p-button
+				label="Nuevo Socio"
+				icon="pi pi-user-plus"
+				(onClick)="openNewSocioModal()"
+				styleClass="w-full sm:w-auto"
+			></p-button>
+		</div>
+	</div>
 
-		<ng-template pTemplate="body" let-socio>
-			<tr>
-				<td class="font-medium text-black">{{ socio.cedula }}</td>
-				<td>
-					<div class="text-black">{{ socio.nombres }} {{ socio.apellidos }}</div>
-					<div class="text-xs text-gray-600">{{ socio.email || socio.telefono || 'Sin contacto' }}</div>
-				</td>
-				<td class="text-black">{{ socio.barrio }}</td>
-				<td>
-					<p-tag [value]="socio.rol" [severity]="socio.rol === 'Administrador' ? 'danger' : 'info'"></p-tag>
-				</td>
-				<td>
-					<p-tag
-						[value]="socio.esta_activo ? 'Activo' : 'Inactivo'"
-						[severity]="socio.esta_activo ? 'success' : 'warn'"
-					>
-					</p-tag>
-				</td>
-				<td class="flex gap-2">
-					<p-button icon="pi pi-pencil" rounded outlined size="small" (click)="openEditSocioModal(socio)"></p-button>
-					<p-button
-						icon="pi pi-trash"
-						severity="danger"
-						rounded
-						outlined
-						size="small"
-						pTooltip="Eliminar (Desactivar)"
-						tooltipPosition="top"
-						(click)="deleteSocio(socio.id)"
-					></p-button>
-				</td>
-			</tr>
-		</ng-template>
+	<div class="overflow-x-auto">
+		<p-table
+			#dt
+			[value]="socios"
+			[loading]="isLoading"
+			[paginator]="true"
+			[rows]="10"
+			[rowsPerPageOptions]="[5, 10, 20]"
+			[globalFilterFields]="['cedula', 'nombres', 'apellidos', 'barrio', 'rol']"
+			dataKey="id"
+			[rowHover]="true"
+			[showCurrentPageReport]="true"
+			currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords}"
+			styleClass="p-datatable-sm min-w-[800px]"
+		>
+			<ng-template pTemplate="header">
+				<tr>
+					<th pSortableColumn="cedula" style="width: 15%">Cédula <p-sortIcon field="cedula" /></th>
+					<th pSortableColumn="nombres" style="width: 25%">Nombre Completo <p-sortIcon field="nombres" /></th>
+					<th pSortableColumn="barrio" style="width: 20%">Barrio <p-sortIcon field="barrio" /></th>
+					<th pSortableColumn="rol" style="width: 15%">Rol <p-sortIcon field="rol" /></th>
+					<th pSortableColumn="esta_activo" style="width: 10%">Estado <p-sortIcon field="esta_activo" /></th>
+					<th class="text-center" style="width: 15%">Acciones</th>
+				</tr>
+			</ng-template>
 
-		<ng-template pTemplate="emptymessage">
-			<tr>
-				<td colspan="6" class="text-black text-center p-4">No hay socios registrados.</td>
-			</tr>
-		</ng-template>
-	</p-table>
+			<ng-template pTemplate="body" let-socio>
+				<tr>
+					<td class="font-medium text-gray-900">{{ socio.cedula }}</td>
+					<td>
+						<div class="font-bold text-gray-800">{{ socio.nombres }} {{ socio.apellidos }}</div>
+						<div class="text-xs text-gray-500">{{ socio.email || socio.telefono || 'Sin contacto' }}</div>
+					</td>
+					<td class="text-gray-700">{{ socio.barrio }}</td>
+					<td>
+						<p-tag
+							[value]="socio.rol"
+							[severity]="socio.rol === 'Administrador' ? 'danger' : 'info'"
+							[rounded]="true"
+						></p-tag>
+					</td>
+					<td>
+						<p-tag
+							[value]="socio.esta_activo ? 'Activo' : 'Inactivo'"
+							[severity]="socio.esta_activo ? 'success' : 'warn'"
+							[rounded]="true"
+						></p-tag>
+					</td>
+					<td class="text-center">
+						<div class="flex justify-center gap-2">
+							<p-button
+								icon="pi pi-pencil"
+								[rounded]="true"
+								[outlined]="true"
+								size="small"
+								(onClick)="openEditSocioModal(socio)"
+							></p-button>
+							<p-button
+								icon="pi pi-trash"
+								severity="danger"
+								[rounded]="true"
+								[text]="true"
+								size="small"
+								pTooltip="Eliminar"
+								tooltipPosition="top"
+								(onClick)="deleteSocio(socio.id)"
+							></p-button>
+						</div>
+					</td>
+				</tr>
+			</ng-template>
+
+			<ng-template pTemplate="emptymessage">
+				<tr>
+					<td colspan="6" class="text-center p-6 text-gray-500">No se encontraron socios.</td>
+				</tr>
+			</ng-template>
+		</p-table>
+	</div>
 </div>
 
-<!-- MODAL (p-dialog) para Crear/Editar Socio -->
 <p-dialog
 	[(visible)]="showSocioModal"
 	[modal]="true"
-	[closable]="true"
 	header="{{ isEditMode ? 'Editar Socio' : 'Registrar Socio' }}"
-	[style]="{ width: '700px', maxWidth: '90vw' }"
-	[contentStyle]="{ 'max-height': '75vh', overflow: 'auto' }"
+	[breakpoints]="{ '960px': '75vw', '640px': '95vw' }"
+	[style]="{ width: '700px' }"
+	styleClass="p-fluid"
+	[draggable]="false"
+	[resizable]="false"
 	(onHide)="closeSocioModal()"
 >
-	<form [formGroup]="socioForm" (ngSubmit)="saveSocio()" class="space-y-4 p-4">
-		<!-- Fila 1: Cédula y Barrio -->
+	<form [formGroup]="socioForm" (ngSubmit)="saveSocio()" class="flex flex-col gap-5 pt-2">
 		<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-			<div>
-				<label for="cedula" class="block text-sm font-medium mb-1">Cédula</label>
+			<div class="flex flex-col gap-2">
+				<span class="font-bold text-sm text-gray-700">Cédula</span>
 				<input
 					pInputText
-					id="cedula"
 					formControlName="cedula"
 					placeholder="Ej: 0501234567"
 					class="w-full"
-					[invalid]="f['cedula'].invalid && f['cedula'].touched"
+					[ngClass]="{ 'ng-invalid ng-dirty': f['cedula'].invalid && f['cedula'].touched }"
 				/>
-				<!-- Mensajes de error para Cédula -->
-				<small *ngIf="f['cedula'].invalid && f['cedula'].touched" class="p-error block">
-					<span *ngIf="f['cedula'].errors?.['required']">Cédula es requerida.</span>
-					<span *ngIf="f['cedula'].errors?.['pattern']">Debe tener 10 dígitos.</span>
+				<small *ngIf="f['cedula'].invalid && f['cedula'].touched" class="text-red-500 text-xs">
+					Cédula inválida (10 dígitos).
 				</small>
 			</div>
-			<div>
-				<label for="barrio" class="block text-sm font-medium mb-1">Barrio</label>
-				<input
-					pInputText
-					id="barrio"
-					formControlName="barrio"
-					placeholder="Ej: Centro"
-					class="w-full"
-					[invalid]="f['barrio'].invalid && f['barrio'].touched"
-				/>
-				<small *ngIf="f['barrio'].invalid && f['barrio'].touched" class="p-error block"> Barrio es requerido. </small>
+			<div class="flex flex-col gap-2">
+				<span class="font-bold text-sm text-gray-700">Barrio</span>
+				<input pInputText formControlName="barrio" placeholder="Ej: Centro" class="w-full" />
 			</div>
 		</div>
 
-		<!-- Fila 2: Nombres y Apellidos -->
 		<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-			<div>
-				<label for="nombres" class="block text-sm font-medium mb-1">Nombres</label>
-				<input
-					pInputText
-					id="nombres"
-					formControlName="nombres"
-					placeholder="Ej: Juan José"
-					class="w-full"
-					[invalid]="f['nombres'].invalid && f['nombres'].touched"
-				/>
-				<small *ngIf="f['nombres'].invalid && f['nombres'].touched" class="p-error block">
-					Nombres son requeridos.
-				</small>
+			<div class="flex flex-col gap-2">
+				<span class="font-bold text-sm text-gray-700">Nombres</span>
+				<input pInputText formControlName="nombres" placeholder="Ej: Juan José" class="w-full" />
 			</div>
-			<div>
-				<label for="apellidos" class="block text-sm font-medium mb-1">Apellidos</label>
-				<input
-					pInputText
-					id="apellidos"
-					formControlName="apellidos"
-					placeholder="Ej: Pérez García"
-					class="w-full"
-					[invalid]="f['apellidos'].invalid && f['apellidos'].touched"
-				/>
-				<small *ngIf="f['apellidos'].invalid && f['apellidos'].touched" class="p-error block">
-					Apellidos son requeridos.
-				</small>
+			<div class="flex flex-col gap-2">
+				<span class="font-bold text-sm text-gray-700">Apellidos</span>
+				<input pInputText formControlName="apellidos" placeholder="Ej: Pérez García" class="w-full" />
 			</div>
 		</div>
 
-		<!-- Fila 3: Email y Teléfono (Opcionales) -->
 		<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-			<div>
-				<label for="email" class="block text-sm font-medium mb-1">Email (Opcional)</label>
-				<input
-					pInputText
-					id="email"
-					formControlName="email"
-					placeholder="Ej: juan.perez@correo.com"
-					class="w-full"
-					[invalid]="f['email'].invalid && f['email'].touched"
-				/>
-				<small *ngIf="f['email'].invalid && f['email'].touched" class="p-error block"> Email no válido. </small>
+			<div class="flex flex-col gap-2">
+				<span class="font-bold text-sm text-gray-700">Email (Opcional)</span>
+				<input pInputText formControlName="email" placeholder="Ej: juan@correo.com" class="w-full" />
 			</div>
-			<div>
-				<label for="telefono" class="block text-sm font-medium mb-1">Teléfono (Opcional)</label>
-				<input pInputText id="telefono" formControlName="telefono" placeholder="Ej: 0991234567" class="w-full" />
+			<div class="flex flex-col gap-2">
+				<span class="font-bold text-sm text-gray-700">Teléfono (Opcional)</span>
+				<input pInputText formControlName="telefono" placeholder="Ej: 0991234567" class="w-full" />
 			</div>
 		</div>
 
-		<!-- Fila 4: Rol y Estado (Activo) -->
-		<div class="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
-			<div>
-				<label for="rol" class="block text-sm font-medium mb-1">Rol del Usuario</label>
-				<!--
-          *** ¡CORRECCIÓN v20! ***
-          Se reemplaza <p-dropdown> por <p-select>
-        -->
+		<div class="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
+			<div class="flex flex-col gap-2">
+				<span class="font-bold text-sm text-gray-700">Rol del Usuario</span>
 				<p-select
-					id="rol"
 					formControlName="rol"
 					[options]="rolesOptions"
 					optionLabel="label"
 					optionValue="value"
-					placeholder="Seleccione un rol"
+					placeholder="Seleccione rol"
 					appendTo="body"
-					class="w-full"
-					[invalid]="f['rol'].invalid && f['rol'].touched"
+					styleClass="w-full"
+					[style]="{ width: '100%' }"
 				></p-select>
 			</div>
 
-			<!-- 'Esta Activo' solo se muestra en modo edición (como en tu serializer) -->
-			<div *ngIf="isEditMode" class="pt-6">
-				<label for="esta_activo" class="mr-3 font-medium">Socio Activo:</label>
-				<!--
-          *** ¡CORRECCIÓN v20! ***
-          Se reemplaza <p-inputSwitch> por <p-toggleSwitch>
-        -->
-				<p-toggleSwitch id="esta_activo" formControlName="esta_activo"></p-toggleSwitch>
+			<div *ngIf="isEditMode" class="flex items-center gap-3 pb-2">
+				<span class="font-bold text-sm text-gray-700">¿Socio Activo?</span>
+				<p-toggleSwitch formControlName="esta_activo"></p-toggleSwitch>
 			</div>
 		</div>
+	</form>
 
-		<!-- Botones del Footer del Modal -->
-		<div class="flex justify-end gap-3 pt-6">
-			<p-button label="Cancelar" type="button" (click)="closeSocioModal()" [text]="true" severity="danger"></p-button>
+	<ng-template pTemplate="footer">
+		<div class="flex justify-end gap-2 mt-4">
+			<p-button
+				label="Cancelar"
+				icon="pi pi-times"
+				[text]="true"
+				severity="secondary"
+				(onClick)="closeSocioModal()"
+			></p-button>
 			<p-button
 				label="{{ isEditMode ? 'Actualizar' : 'Guardar' }}"
-				type="submit"
+				icon="pi pi-check"
+				(onClick)="saveSocio()"
 				[loading]="isLoading"
 				[disabled]="socioForm.invalid"
 			></p-button>
 		</div>
-	</form>
+	</ng-template>
 </p-dialog>

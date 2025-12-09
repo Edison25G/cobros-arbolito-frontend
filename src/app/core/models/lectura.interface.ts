@@ -18,3 +18,14 @@ export interface LecturaResponse {
 	medidor_id: number;
 	consumo_del_mes: number;
 }
+
+export interface LecturaView {
+	id: number;
+	medidor_codigo: string;
+	socio_nombre: string;
+	fecha: string;
+	lectura_anterior: number;
+	lectura_actual: number;
+	consumo: number;
+	estado: 'Registrada' | 'Facturada';
+}

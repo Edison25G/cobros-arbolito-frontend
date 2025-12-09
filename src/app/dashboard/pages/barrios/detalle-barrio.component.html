@@ -1,0 +1,84 @@
+<p-toast></p-toast>
+<!-- ✅ Toast para mensajes -->
+
+<div class="card p-4 bg-white rounded-xl shadow-sm border border-gray-100 animate-fade-in">
+	<!-- Encabezado con Botón Volver -->
+	<div class="flex items-center gap-4 mb-6 pb-4 border-b border-gray-100">
+		<p-button
+			icon="pi pi-arrow-left"
+			[rounded]="true"
+			[text]="true"
+			severity="secondary"
+			routerLink="/dashboard/barrios"
+		>
+		</p-button>
+		<div>
+			<h2 class="text-2xl font-bold text-gray-800">Barrio: {{ nombreBarrio }}</h2>
+			<p class="text-sm text-gray-500">Listado de socios residentes en este sector</p>
+		</div>
+	</div>
+
+	<!-- Tabla Filtrada -->
+	<p-table
+		#dt
+		[value]="sociosDelBarrio"
+		[loading]="loading"
+		[paginator]="true"
+		[rows]="10"
+		[globalFilterFields]="['nombres', 'apellidos', 'cedula']"
+		styleClass="p-datatable-sm"
+		[rowHover]="true"
+	>
+		<ng-template pTemplate="caption">
+			<div class="flex justify-end">
+				<p-iconfield iconPosition="left" class="w-full sm:w-auto">
+					<p-inputicon styleClass="pi pi-search" />
+					<input
+						pInputText
+						type="text"
+						(input)="dt.filterGlobal($any($event.target).value, 'contains')"
+						placeholder="Buscar socio en este barrio..."
+						class="w-full sm:w-64"
+					/>
+				</p-iconfield>
+			</div>
+		</ng-template>
+
+		<ng-template pTemplate="header">
+			<tr>
+				<th pSortableColumn="cedula">Cédula <p-sortIcon field="cedula"></p-sortIcon></th>
+				<th pSortableColumn="nombres">Nombre <p-sortIcon field="nombres"></p-sortIcon></th>
+				<th pSortableColumn="esta_activo">Estado <p-sortIcon field="esta_activo"></p-sortIcon></th>
+				<th class="text-center">Acciones</th>
+			</tr>
+		</ng-template>
+
+		<ng-template pTemplate="body" let-socio>
+			<tr>
+				<td>{{ socio.cedula }}</td>
+				<td class="font-bold text-gray-700">{{ socio.nombres }} {{ socio.apellidos }}</td>
+				<td>
+					<p-tag
+						[value]="socio.esta_activo ? 'Activo' : 'Inactivo'"
+						[severity]="socio.esta_activo ? 'success' : 'danger'"
+						[rounded]="true"
+					>
+					</p-tag>
+				</td>
+				<td class="text-center">
+					<!-- Botón visual para ver detalles -->
+					<p-button icon="pi pi-eye" [rounded]="true" [text]="true" severity="secondary" pTooltip="Ver detalles">
+					</p-button>
+				</td>
+			</tr>
+		</ng-template>
+
+		<ng-template pTemplate="emptymessage">
+			<tr>
+				<td colspan="4" class="text-center p-6 text-gray-500">
+					No hay socios registrados en el barrio {{ nombreBarrio }}.
+				</td>
+			</tr>
+		</ng-template>
+	</p-table>
+</div>

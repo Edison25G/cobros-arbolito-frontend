@@ -3,24 +3,18 @@ import { Injectable, inject } from '@angular/core';
 import { Observable, throwError, map, catchError, tap } from 'rxjs';
 import { environment } from './../../environments/environment.development';
 import { ErrorService } from '../../auth/core/services/error.service';
+import { LoginRequest, UserData } from '../../core/interfaces/auth.interface';
 
-// ⬅️ CAMBIO: Importamos 'TokenResponse' y quitamos 'LoginResponse'
-import { LoginRequest, TokenResponse, UserData } from '../../core/interfaces/auth.interface';
-
-// =================================================================
-// 2. SERVICE IMPLEMENTATION
-// =================================================================
+// Nota: Ya no importamos RolUsuario para lógica, solo para tipado si es necesario.
 
 @Injectable({
 	providedIn: 'root',
 })
 export class AuthService {
-	// Propiedades
 	private currentUser: UserData | null = null;
 	private http = inject(HttpClient);
 	private errorService = inject(ErrorService);
 
-	// CONSTRUCTOR: Carga el estado del usuario al iniciar la app
 	constructor() {
 		const userJson = localStorage.getItem('user');
 		if (userJson) {
@@ -28,24 +22,14 @@ export class AuthService {
 		}
 	}
 
-	// ---------------------------------------------------------------
-	// MÉTODOS AUXILIARES (Actualizados para JWT)
-	// ---------------------------------------------------------------
-
+	// --- MÉTODOS AUXILIARES ---
 	isAuthenticated(): boolean {
-		// ⬅️ CAMBIO: Es más seguro verificar la existencia del token
 		return !!localStorage.getItem('token');
 	}
 
 	getRole(): string | null {
-		// (Este método sigue funcionando porque 'login' sigue guardando 'user')
 		if (this.currentUser && this.currentUser.rol) {
 			return this.currentUser.rol;
-		}
-		const userJson = localStorage.getItem('user');
-		if (userJson) {
-			const user = JSON.parse(userJson);
-			return user.rol || null;
 		}
 		return null;
 	}
@@ -53,69 +37,67 @@ export class AuthService {
 	logout(): void {
 		this.currentUser = null;
 		localStorage.removeItem('user');
-		localStorage.removeItem('token'); // ⬅️ CAMBIO: Asegúrate de borrar el token
+		localStorage.removeItem('token');
 	}
 
-	// ---------------------------------------------------------------
-	// MÉTODO PRINCIPAL DE LOGIN (Actualizado para JWT)
-	// ---------------------------------------------------------------
+	// 👇 1. FUNCIÓN PARA LEER EL INTERIOR DEL TOKEN
+	private decodeToken(token: string): any {
+		try {
+			const base64Url = token.split('.')[1];
+			const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+			const jsonPayload = decodeURIComponent(
+				window
+					.atob(base64)
+					.split('')
+					.map(function (c) {
+						return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+					})
+					.join(''),
+			);
+			return JSON.parse(jsonPayload);
+		} catch (e) {
+			console.error('Error decodificando token', e);
+			return {};
+		}
+	}
 
+	// --- LOGIN ---
 	login(credentials: LoginRequest): Observable<UserData> {
-		// ⬅️ CAMBIO: Apunta al endpoint de JWT
 		const loginUrl = `${environment.apiUrl}/token/`;
 
-		// ⬅️ CAMBIO: Espera una TokenResponse
-		return this.http.post<TokenResponse>(loginUrl, credentials).pipe(
-			// 1. Mapeo de la respuesta
+		return this.http.post<any>(loginUrl, credentials).pipe(
 			map((response) => {
-				// ⬅️ CAMBIO: Guardamos el token real
-				localStorage.setItem('token', response.access);
+				// Guardamos Token
+				if (response.access) {
+					localStorage.setItem('token', response.access);
+				}
 
-				// --- SIMULACIÓN DE USUARIO Y ROL ---
-				// (Usamos 'credentials' porque 'response' ya no trae el 'user')
-				const rol = credentials.username === 'admin' ? 'Administrador' : 'Socio';
+				// 2. EXTRAEMOS LA INFORMACIÓN DEL TOKEN
+				const payload = this.decodeToken(response.access);
 
-				// (Creamos un usuario simulado para que getRole() siga funcionando)
+				// 3. ASIGNAMOS DIRECTAMENTE LO QUE VIENE EN EL TOKEN
+				// Intentamos leer 'rol', 'role' o 'tipo_usuario' por si acaso el nombre varía
+				const rolDelToken = payload.rol || payload.role || payload.tipo_usuario || 'Socio';
+
 				this.currentUser = {
-					id: 0, // No lo tenemos, pero lo simulamos
-					username: credentials.username,
-					first_name: '',
-					last_name: '',
-					email: '',
-					rol: rol,
+					id: payload.user_id || 0,
+					username: payload.username || credentials.username,
+					first_name: payload.first_name || '', // Si el token lo trae, genial
+					last_name: payload.last_name || '',
+					email: payload.email || '',
+					rol: rolDelToken, // ✅ AQUÍ SE ASIGNA EL ROL REAL
 				};
+
 				localStorage.setItem('user', JSON.stringify(this.currentUser));
-
-				return this.currentUser;
+				return this.currentUser as UserData;
 			}),
 
-			// 2. Muestra mensaje de éxito (Tap)
-			tap(() => {
-				this.errorService.loginSuccess();
-			}),
+			tap(() => this.errorService.loginSuccess()),
 
-			// 3. Maneja los errores (CatchError)
 			catchError((error: HttpErrorResponse) => {
-				let errorMessage: string;
-
-				// 1. Si es error 401 (Fallo de autenticación)
-				if (error.status === 401) {
-					// NO leemos error.error.detail. FORZAMOS nuestro mensaje.
-					errorMessage = 'Credenciales inválidas.';
-				}
-				// 2. Si es error 400 (Petición mal formada)
-				else if (error.status === 400) {
-					errorMessage = 'Faltan datos de usuario o contraseña.';
-				}
-				// 3. Cualquier otro error (Servidor caído, sin internet, 500)
-				else {
-					errorMessage = 'Error de conexión con el servidor.';
-				}
-
-				// Mostramos la notificación con TU mensaje personalizado
+				let errorMessage = 'Error de conexión.';
+				if (error.status === 401) errorMessage = 'Credenciales inválidas.';
 				this.errorService.loginError(errorMessage);
-
-				// Devolvemos el error para que el componente detenga el "Loading..."
 				return throwError(() => new Error(errorMessage));
 			}),
 		);

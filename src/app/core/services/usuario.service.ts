@@ -1,58 +1,32 @@
-import { Injectable } from '@angular/core';
-import { Observable, timer } from 'rxjs';
-import { map } from 'rxjs/operators';
-import { Usuario } from '../models/usuario.interface';
-import { RolUsuario } from '../models/role.enum';
+import { Injectable, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { environment } from './../../environments/environment.development';
 
-// --- DATOS FALSOS (MOCK DATA) ---
-const MOCK_USUARIOS: Usuario[] = [
-	{
-		id: 1,
-		username: 'admin',
-		email: 'admin@el-arbolito.com',
-		role: RolUsuario.ADMIN,
-		activo: true,
-	},
-	{
-		id: 2,
-		username: 'secretario1',
-		email: 'secretario.juan@el-arbolito.com',
-		role: RolUsuario.TESORERO,
-		activo: true,
-	},
-	{
-		id: 3,
-		username: 'secretario2',
-		email: 'secretaria.ana@el-arbolito.com',
-		role: RolUsuario.TESORERO,
-		activo: false, // Un usuario inactivo
-	},
-	// (Los 'Socios' no son usuarios del sistema, son clientes)
-];
-// --- FIN DE LOS DATOS FALSOS ---
+// ✅ IMPORTAMOS LA INTERFAZ Y EL ENUM
+import { Usuario } from '../models/usuario.interface';
 
 @Injectable({
 	providedIn: 'root',
 })
 export class UsuarioService {
-	constructor() {}
+	private http = inject(HttpClient);
+	// Asegúrate de que este endpoint coincida con tu backend (ej. /usuarios/ o /users/)
+	private apiUrl = `${environment.apiUrl}/usuarios/`;
 
-	/**
-	 * Simula una llamada API para obtener todos los usuarios del sistema.
-	 * Tarda 500ms en responder.
-	 */
-	getUsuarios(): Observable<Usuario[]> {
-		console.log('UsuarioService: Simulando carga de usuarios...');
-
-		return timer(500).pipe(
-			map(() => {
-				console.log('UsuarioService: Carga simulada completa.');
-				return MOCK_USUARIOS;
-			}),
-		);
+	getAll(): Observable<Usuario[]> {
+		return this.http.get<Usuario[]>(this.apiUrl);
 	}
 
-	// (Aquí irían los métodos simulados de create, update, delete)
-	// crearUsuario(usuario: any): Observable<any> { ... }
-	// actualizarUsuario(id: number, usuario: any): Observable<any> { ... }
+	create(usuario: Usuario): Observable<Usuario> {
+		return this.http.post<Usuario>(this.apiUrl, usuario);
+	}
+
+	update(id: number, usuario: Partial<Usuario>): Observable<Usuario> {
+		return this.http.patch<Usuario>(`${this.apiUrl}${id}/`, usuario);
+	}
+
+	delete(id: number): Observable<void> {
+		return this.http.delete<void>(`${this.apiUrl}${id}/`);
+	}
 }

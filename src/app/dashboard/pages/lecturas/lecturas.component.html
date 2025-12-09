@@ -1,105 +1,175 @@
 <p-toast></p-toast>
 
-<div class="flex items-center justify-center">
-	<div class="w-full max-w-2xl p-8 bg-white rounded-2xl shadow-lg border border-gray-100">
-		<!-- Encabezado -->
-		<div class="text-center mb-8">
-			<h2 class="text-3xl font-extrabold text-gray-900">Registro de Lecturas</h2>
-			<p class="mt-2 text-gray-600">Ingrese los datos del medidor para registrar el consumo.</p>
+<div class="flex items-center justify-center min-h-[80vh] p-4 animate-fade-in">
+	<div class="w-full max-w-2xl bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+		<!-- Encabezado con Botón de Retorno -->
+		<div class="bg-gray-50 px-8 py-6 border-b border-gray-100 flex items-center gap-4">
+			<p-button
+				icon="pi pi-arrow-left"
+				[rounded]="true"
+				[text]="true"
+				severity="secondary"
+				pTooltip="Volver al historial"
+				tooltipPosition="bottom"
+				routerLink="/dashboard/lecturas"
+			>
+			</p-button>
+
+			<div class="flex-1 text-center pr-12">
+				<h2 class="text-2xl font-extrabold text-gray-800 m-0">Registro de Lecturas</h2>
+				<p class="text-sm text-gray-500 mt-1">Organización por Barrios</p>
+			</div>
 		</div>
 
-		<!-- Formulario de Registro -->
-		<form [formGroup]="lecturaForm" (ngSubmit)="onSubmit()" class="space-y-6">
-			<!-- Fila 1: Seleccionar Medidor -->
-			<div>
-				<label for="medidor" class="block text-sm font-medium text-gray-700 mb-1">Medidor (Socio)</label>
-				<p-select
-					id="medidor"
-					formControlName="medidor"
-					[options]="medidores$ | async"
-					optionLabel="codigo"
-					placeholder="Seleccione un medidor (busque por código o socio)"
-					[filter]="true"
-					filterBy="codigo,socio_data.nombres,socio_data.apellidos,socio_data.cedula"
-					appendTo="body"
-					class="w-full"
-					[invalid]="f['medidor'].invalid && f['medidor'].touched"
-				>
-					<!-- Plantilla para mostrar Socio y Código en el dropdown -->
-					<ng-template let-medidor pTemplate="item">
-						<div class="flex justify-between items-center">
-							<div>
-								<div class="font-bold">{{ medidor.codigo }}</div>
-								<small class="text-gray-500"
-									>{{ medidor.socio_data?.nombres }} {{ medidor.socio_data?.apellidos }}</small
-								>
-							</div>
-							<small class="text-gray-400">{{ medidor.socio_data?.cedula }}</small>
-						</div>
-					</ng-template>
-					<ng-template let-medidor pTemplate="selectedItem">
-						<div>
-							<div class="font-bold">{{ medidor.codigo }}</div>
-							<small class="text-gray-500">{{ medidor.socio_data?.nombres }} {{ medidor.socio_data?.apellidos }}</small>
-						</div>
-					</ng-template>
-				</p-select>
-				<small *ngIf="f['medidor'].invalid && f['medidor'].touched" class="p-error block mt-1">
-					Debe seleccionar un medidor.
-				</small>
-			</div>
-
-			<!-- Fila 2: Lectura Actual y Fecha -->
-			<div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-				<div>
-					<label for="lectura_actual_m3" class="block text-sm font-medium text-gray-700 mb-1"
-						>Lectura Actual (m³)</label
-					>
-					<p-inputNumber
-						id="lectura_actual_m3"
-						formControlName="lectura_actual_m3"
-						mode="decimal"
-						[minFractionDigits]="0"
-						[maxFractionDigits]="0"
-						[min]="0"
-						placeholder="Ej: 500"
+		<!-- Cuerpo del Formulario -->
+		<div class="p-8">
+			<form [formGroup]="lecturaForm" (ngSubmit)="onSubmit()" class="space-y-6">
+				<!-- SECCIÓN DE FILTRO -->
+				<div class="bg-blue-50 p-4 rounded-xl border border-blue-100 mb-6">
+					<label for="barrio" class="block text-sm font-bold text-blue-800 mb-2">
+						<i class="pi pi-map-marker mr-1"></i> 1. Primero seleccione el Barrio
+					</label>
+					<p-select
+						id="barrio"
+						formControlName="barrio"
+						[options]="barrios"
+						optionLabel="label"
+						optionValue="value"
+						placeholder="Todos los barrios"
+						[showClear]="true"
 						styleClass="w-full"
-						inputStyleClass="w-full"
-						[invalid]="f['lectura_actual_m3'].invalid && f['lectura_actual_m3'].touched"
-					></p-inputNumber>
-					<small *ngIf="f['lectura_actual_m3'].invalid && f['lectura_actual_m3'].touched" class="p-error block mt-1">
-						Lectura requerida (mínimo 0).
-					</small>
+						appendTo="body"
+					>
+					</p-select>
 				</div>
 
+				<!-- Fila 1: Seleccionar Medidor -->
 				<div>
-					<label for="fecha_lectura" class="block text-sm font-medium text-gray-700 mb-1">Fecha de Lectura</label>
-					<p-datePicker
-						id="fecha_lectura"
-						formControlName="fecha_lectura"
-						dateFormat="dd/mm/yy"
+					<label for="medidor" class="block text-sm font-medium text-gray-700 mb-1">
+						2. Seleccione el Medidor
+						<span *ngIf="f['barrio'].value" class="text-xs text-blue-600 font-normal ml-2">
+							(Mostrando solo barrio: {{ f['barrio'].value }})
+						</span>
+					</label>
+
+					<p-select
+						id="medidor"
+						formControlName="medidor"
+						[options]="medidoresFiltrados"
+						optionLabel="codigo"
+						[placeholder]="
+							medidoresFiltrados.length === 0 ? 'No hay medidores en este barrio' : 'Busque por código o nombre'
+						"
+						[filter]="true"
+						filterBy="codigo,socio_data.nombres,socio_data.apellidos,socio_data.cedula"
 						appendTo="body"
 						styleClass="w-full"
-						inputStyleClass="w-full"
-						[invalid]="f['fecha_lectura'].invalid && f['fecha_lectura'].touched"
-					></p-datePicker>
-					<small *ngIf="f['fecha_lectura'].invalid && f['fecha_lectura'].touched" class="p-error block mt-1">
-						La fecha es requerida.
+						[invalid]="f['medidor'].invalid && f['medidor'].touched"
+						[emptyMessage]="'No se encontraron medidores'"
+					>
+						<!-- Template para cada item de la lista -->
+						<ng-template let-medidor pTemplate="item">
+							<div class="flex justify-between items-center w-full">
+								<div>
+									<div class="font-bold text-gray-800">{{ medidor.codigo }}</div>
+									<div class="text-xs text-gray-500">
+										{{ medidor.socio_data?.nombres }} {{ medidor.socio_data?.apellidos }}
+									</div>
+								</div>
+								<div class="text-right">
+									<span class="block text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full mb-1">
+										{{ medidor.socio_data?.cedula }}
+									</span>
+									<!-- Mostramos el barrio pequeño para confirmar -->
+									<span class="text-[10px] text-gray-400">{{ medidor.socio_data?.barrio }}</span>
+								</div>
+							</div>
+						</ng-template>
+
+						<!-- Template para el item seleccionado -->
+						<ng-template let-medidor pTemplate="selectedItem">
+							<div class="flex items-center gap-2" *ngIf="medidor">
+								<span class="font-bold text-gray-900">{{ medidor.codigo }}</span>
+								<span class="text-gray-500"
+									>- {{ medidor.socio_data?.nombres }} {{ medidor.socio_data?.apellidos }}</span
+								>
+							</div>
+						</ng-template>
+					</p-select>
+
+					<small *ngIf="f['medidor'].invalid && f['medidor'].touched" class="p-error block mt-1 text-red-500">
+						<i class="pi pi-exclamation-circle mr-1"></i> Debe seleccionar un medidor.
 					</small>
 				</div>
-			</div>
 
-			<!-- Botón de Enviar -->
-			<div class="pt-4 text-center">
-				<p-button
-					label="Registrar Lectura"
-					type="submit"
-					[loading]="isLoading"
-					[disabled]="lecturaForm.invalid || isLoading"
-					styleClass="w-full sm:w-auto"
-					icon="pi pi-camera"
-				></p-button>
-			</div>
-		</form>
+				<!-- Fila 2: Lectura Actual y Fecha -->
+				<div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+					<div>
+						<label for="lectura_actual_m3" class="block text-sm font-medium text-gray-700 mb-1"
+							>3. Lectura Actual (m³)</label
+						>
+						<p-inputNumber
+							id="lectura_actual_m3"
+							formControlName="lectura_actual_m3"
+							mode="decimal"
+							[minFractionDigits]="0"
+							[maxFractionDigits]="2"
+							[min]="0"
+							placeholder="Ej: 500"
+							styleClass="w-full"
+							inputStyleClass="w-full"
+							[invalid]="f['lectura_actual_m3'].invalid && f['lectura_actual_m3'].touched"
+						></p-inputNumber>
+						<small
+							*ngIf="f['lectura_actual_m3'].invalid && f['lectura_actual_m3'].touched"
+							class="p-error block mt-1 text-red-500"
+						>
+							Lectura requerida.
+						</small>
+					</div>
+
+					<div>
+						<label for="fecha_lectura" class="block text-sm font-medium text-gray-700 mb-1">Fecha de Lectura</label>
+						<p-datepicker
+							id="fecha_lectura"
+							formControlName="fecha_lectura"
+							dateFormat="dd/mm/yy"
+							appendTo="body"
+							styleClass="w-full"
+							inputStyleClass="w-full"
+							[showIcon]="true"
+							[invalid]="f['fecha_lectura'].invalid && f['fecha_lectura'].touched"
+						></p-datepicker>
+						<small
+							*ngIf="f['fecha_lectura'].invalid && f['fecha_lectura'].touched"
+							class="p-error block mt-1 text-red-500"
+						>
+							La fecha es requerida.
+						</small>
+					</div>
+				</div>
+
+				<!-- Botones de Acción (Footer) -->
+				<div class="pt-6 border-t border-gray-50 flex justify-end gap-3">
+					<p-button
+						label="Cancelar"
+						icon="pi pi-times"
+						[text]="true"
+						severity="secondary"
+						routerLink="/dashboard/lecturas"
+					>
+					</p-button>
+
+					<p-button
+						label="Registrar Lectura"
+						type="submit"
+						[loading]="isLoading"
+						[disabled]="lecturaForm.invalid || isLoading"
+						icon="pi pi-check"
+						styleClass="px-4"
+					></p-button>
+				</div>
+			</form>
+		</div>
 	</div>
 </div>

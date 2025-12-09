@@ -97,14 +97,17 @@ export default class LoginComponent implements OnInit {
 
 	// src/app/auth/components/login/login.component.ts
 
+	// ✅ REDIRECCIÓN BASADA EN RolUsuario
 	private redirectByRole(role: RolUsuario): void {
 		switch (role) {
 			case RolUsuario.ADMIN:
-				// ⬅️ CAMBIO AQUÍ: Apunta a 'home' en lugar de 'reportes'
 				this.router.navigate(['/dashboard/home']);
 				break;
 			case RolUsuario.TESORERO:
 				this.router.navigate(['/dashboard/socios']);
+				break;
+			case RolUsuario.OPERADOR:
+				this.router.navigate(['/dashboard/lecturas']);
 				break;
 			case RolUsuario.SOCIO:
 				this.router.navigate(['/dashboard/pagos']);

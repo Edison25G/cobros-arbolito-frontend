@@ -39,9 +39,22 @@ export default [
 			},
 			{
 				path: 'lecturas',
-				loadComponent: () => import('./pages/lecturas/lecturas.component').then((m) => m.LecturasComponent),
+				// El Guard protege toda la sección
 				canActivate: [RoleGuard],
 				data: { roles: [RolUsuario.ADMIN, RolUsuario.TESORERO, RolUsuario.OPERADOR] },
+				children: [
+					// 1. Ruta base (/dashboard/lecturas): Muestra el HISTORIAL (Tabla)
+					{
+						path: '',
+						loadComponent: () =>
+							import('./pages/lecturas/historial-lecturas.component').then((m) => m.HistorialLecturasComponent),
+					},
+					// 2. Ruta hija (/dashboard/lecturas/registro): Muestra el FORMULARIO
+					{
+						path: 'registro',
+						loadComponent: () => import('./pages/lecturas/lecturas.component').then((m) => m.LecturasComponent),
+					},
+				],
 			},
 			{
 				path: 'facturacion',
@@ -49,7 +62,36 @@ export default [
 				canActivate: [RoleGuard],
 				data: { roles: [RolUsuario.ADMIN, RolUsuario.TESORERO] },
 			},
-
+			{
+				path: 'barrios',
+				canActivate: [RoleGuard], // Visible para todos los roles administrativos + socio si quieres
+				data: { roles: [RolUsuario.ADMIN, RolUsuario.TESORERO, RolUsuario.OPERADOR] },
+				children: [
+					// 1. Ruta base (/dashboard/barrios): Muestra el listado de Barrios
+					{
+						path: '',
+						loadComponent: () => import('./pages/barrios/barrios.component').then((m) => m.BarriosComponent),
+					}, // 2. Ruta hija (/dashboard/barrios/detalle/:nombre): Muestra la tabla de socios
+					{
+						path: 'detalle/:nombre',
+						loadComponent: () =>
+							import('./pages/barrios/detalle-barrio.component').then((m) => m.DetalleBarrioComponent),
+					},
+				],
+			},
+			{
+				path: 'mingas',
+				loadComponent: () => import('./pages/mingas/gestion-mingas.component').then((m) => m.GestionMingasComponent),
+				canActivate: [RoleGuard],
+				// Visible para Admin, Tesorero (que cobra) y quizá Operador
+				data: { roles: [RolUsuario.ADMIN, RolUsuario.TESORERO] },
+			},
+			{
+				path: 'mingas/asistencia/:id',
+				loadComponent: () => import('./pages/asistencia/asistencia.component').then((m) => m.AsistenciaComponent),
+				canActivate: [RoleGuard],
+				data: { roles: [RolUsuario.ADMIN, RolUsuario.OPERADOR] }, // Tesorero no suele tomar lista, pero puedes agregarlo
+			},
 			// --- Rutas de Admin ---
 			{
 				path: 'usuarios',

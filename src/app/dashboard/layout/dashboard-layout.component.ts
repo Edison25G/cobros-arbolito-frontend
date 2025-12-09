@@ -1,67 +1,52 @@
 import { Component, OnInit, HostListener, inject } from '@angular/core';
 import { Router, RouterModule, RouterOutlet } from '@angular/router';
-import { CommonModule } from '@angular/common'; // <-- 1. IMPORTAR COMMON MODULE
+import { CommonModule } from '@angular/common';
 
-// --- Imports de PrimeNG ---
+// PrimeNG
 import { PopoverModule } from 'primeng/popover';
 import { AvatarModule } from 'primeng/avatar';
 
-// --- Imports Locales ---
-// (Asegúrate que la ruta a FooterComponent sea correcta)
+// Componentes y Servicios
 import { FooterComponent } from '../../common/components/footer/footer.component';
-
-// --- Imports de la Tesis (Core) ---
 import { AuthService } from '../../core/services/auth.service';
-import { RolUsuario } from '../../core/models/role.enum';
+import { RolUsuario } from '../../core/models/role.enum'; // ✅ USAMOS RolUsuario
 
-// --- Interfaz actualizada con Roles ---
 interface SideNavItem {
 	label: string;
 	icon: string;
 	link: string;
-	roles: RolUsuario[]; // Qué roles pueden ver este enlace
+	roles: RolUsuario[];
 }
 
 @Component({
-	selector: 'ca-dashboard-layout', // (O 'amc-dashboard-layout' si usas ese)
+	selector: 'ca-dashboard-layout',
 	standalone: true,
-	imports: [
-		RouterOutlet,
-		CommonModule, // <-- 2. AÑADIRLO A LOS IMPORTS
-		RouterModule,
-		PopoverModule,
-		FooterComponent,
-		AvatarModule,
-	],
+	imports: [RouterOutlet, CommonModule, RouterModule, PopoverModule, FooterComponent, AvatarModule],
 	templateUrl: './dashboard-layout.component.html',
 	styleUrls: ['./dashboard-layout.component.css'],
 })
 export class DashboardLayoutComponent implements OnInit {
-	// --- Inyección de dependencias ---
 	private router = inject(Router);
 	private authService = inject(AuthService);
 
-	// --- Estado del Layout ---
 	menuOpen = false;
 	isMobile = false;
 
-	// --- Datos del Usuario (Cargados de AuthService) ---
 	currentUser!: string;
-	currentRole: RolUsuario | null = null;
+	currentRole: RolUsuario | null = null; // ✅ TIPO CORRECTO
 
-	// Hacemos el Enum 'Role' público para poder usarlo en el *ngIf del HTML
-	public roleEnum = RolUsuario;
+	public roleEnum = RolUsuario; // Para usar en el HTML
 
-	// --- Menú actualizado para "El Arbolito" ---
+	// ✅ MENÚ CONFIGURADO CON RolUsuario
 	menuItems: SideNavItem[] = [
-		// --- Menú Común (Todos los roles) ---
+		// --- TODOS ---
 		{
 			label: 'Resumen',
 			icon: 'pi pi-home',
 			link: '/dashboard/home',
 			roles: [RolUsuario.ADMIN, RolUsuario.TESORERO, RolUsuario.OPERADOR, RolUsuario.SOCIO],
 		},
-		// --- Menú de Socio ---
+		// --- SOCIO ---
 		{
 			label: 'Mis Pagos',
 			icon: 'pi pi-dollar',
@@ -74,32 +59,48 @@ export class DashboardLayoutComponent implements OnInit {
 			link: '/dashboard/medidor',
 			roles: [RolUsuario.SOCIO],
 		},
-		// --- Menú de Secretario ---
+		{
+			label: 'Gestión de Mingas',
+			icon: 'pi pi-calendar',
+			link: '/dashboard/mingas',
+			roles: [RolUsuario.ADMIN, RolUsuario.OPERADOR, RolUsuario.TESORERO],
+		},
+		// --- TESORERO / ADMIN ---
 		{
 			label: 'Gestión de Socios',
 			icon: 'pi pi-users',
 			link: '/dashboard/socios',
-			roles: [RolUsuario.ADMIN, RolUsuario.TESORERO], // <-- El Socio NO debe ver esto
+			roles: [RolUsuario.TESORERO, RolUsuario.ADMIN],
 		},
+
 		{
-			label: 'Registro de Lecturas',
-			icon: 'pi pi-camera',
-			link: '/dashboard/lecturas',
+			label: 'Barrios / Zonas',
+			icon: 'pi pi-map', // Icono de mapa
+			link: '/dashboard/barrios',
 			roles: [RolUsuario.ADMIN, RolUsuario.TESORERO, RolUsuario.OPERADOR],
 		},
+
 		{
 			label: 'Generar Facturación',
 			icon: 'pi pi-file-edit',
 			link: '/dashboard/facturacion',
 			roles: [RolUsuario.TESORERO, RolUsuario.ADMIN],
 		},
+		// --- TESORERO ---
 		{
 			label: 'Registro de Pagos',
 			icon: 'pi pi-money-bill',
 			link: '/dashboard/pagos-registro',
 			roles: [RolUsuario.TESORERO],
 		},
-		// --- Menú de Administrador ---
+		// --- OPERADOR ---
+		{
+			label: 'Registro de Lecturas',
+			icon: 'pi pi-camera',
+			link: '/dashboard/lecturas',
+			roles: [RolUsuario.OPERADOR, RolUsuario.ADMIN],
+		},
+		// --- ADMIN ---
 		{
 			label: 'Gestión de Usuarios',
 			icon: 'pi pi-shield',
@@ -110,13 +111,12 @@ export class DashboardLayoutComponent implements OnInit {
 			label: 'Gestión de Medidores',
 			icon: 'pi pi-gauge',
 			link: '/dashboard/medidores',
-			roles: [RolUsuario.ADMIN, RolUsuario.TESORERO], // <-- El Socio NO debe ver esto
+			roles: [RolUsuario.ADMIN, RolUsuario.OPERADOR],
 		},
 		{
-			label: 'Reportes', // <-- Este se queda
+			label: 'Reportes',
 			icon: 'pi pi-chart-bar',
 			link: '/dashboard/reportes',
-			// Solo Admin y Tesorero ven reportes detallados
 			roles: [RolUsuario.ADMIN, RolUsuario.TESORERO],
 		},
 		{
@@ -127,22 +127,16 @@ export class DashboardLayoutComponent implements OnInit {
 		},
 	];
 
-	constructor() {}
-
-	// En src/app/dashboard/layout/dashboard-layout.component.ts
-
 	ngOnInit(): void {
 		this.checkScreen();
 
-		// ⬅️ CAMBIO AQUÍ: Añade 'as Role | null'
-		// Esto fuerza al string "Administrador" a ser tratado como el tipo Role.Admin
-		this.currentRole = this.authService.getRole() as RolUsuario | null;
+		// ✅ OBTENCIÓN Y CASTING DEL ROL
+		const roleString = this.authService.getRole();
+		this.currentRole = roleString as RolUsuario | null;
 
-		// Esto ahora funcionará
-		this.currentUser = this.currentRole || 'Usuario';
-
-		// Para depurar, puedes dejar esto:
-		console.log('Rol cargado en el Layout:', this.currentRole);
+		// Nombre para el Avatar
+		// Si roleString es 'Administrador', eso mostramos. Si es null, mostramos 'Usuario'
+		this.currentUser = roleString || 'Usuario';
 	}
 
 	onMenuClick(): void {
@@ -153,15 +147,12 @@ export class DashboardLayoutComponent implements OnInit {
 
 	logout(): void {
 		this.authService.logout();
-		this.router.navigate(['/login']);
+		this.router.navigate(['/auth/login']); // Asegúrate que la ruta sea correcta
 	}
 
-	/**
-	 * Helper para verificar roles en el HTML
-	 */
 	hasAccess(itemRoles: RolUsuario[]): boolean {
 		if (!this.currentRole) {
-			return false; // Si no hay rol, no mostrar nada
+			return false;
 		}
 		return itemRoles.includes(this.currentRole);
 	}

@@ -1,0 +1,63 @@
+<p-toast></p-toast>
+<!-- ✅ Toast para mensajes -->
+
+<div class="p-4 animate-fade-in">
+	<div class="mb-6">
+		<h2 class="text-2xl font-bold text-gray-800">Organización por Barrios</h2>
+		<p class="text-sm text-gray-500">Seleccione un barrio para ver el listado de socios residentes.</p>
+	</div>
+
+	<!-- Loading Skeletons -->
+	<div *ngIf="loading" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+		<!-- NgFor en <p-skeleton> está bien aquí para la carga -->
+		<p-skeleton height="150px" styleClass="rounded-xl" *ngFor="let i of [1, 2, 3, 4]"></p-skeleton>
+	</div>
+
+	<!-- Lista de Barrios (Cards) -->
+	<div *ngIf="!loading" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+		<!-- CORRECCIONES DE ACCESIBILIDAD -->
+		<div
+			*ngFor="let barrio of barrios"
+			class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-all duration-300 cursor-pointer group relative overflow-hidden"
+			(click)="verDetalle(barrio.nombre)"
+			[tabindex]="0"
+			(keydown.enter)="verDetalle(barrio.nombre)"
+			role="button"
+		>
+			<!-- Decoración de fondo -->
+			<div
+				class="absolute top-0 right-0 w-24 h-24 bg-blue-50 rounded-full -mr-10 -mt-10 transition-transform group-hover:scale-150"
+			></div>
+
+			<div class="relative z-10">
+				<div class="flex items-center justify-between mb-4">
+					<div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center text-xl">
+						<i class="pi pi-map-marker"></i>
+					</div>
+					<span class="bg-gray-100 text-gray-600 text-xs font-bold px-2 py-1 rounded-full">
+						{{ barrio.cantidadSocios }} Socios
+					</span>
+				</div>
+
+				<h3 class="text-lg font-bold text-gray-800 mb-1">{{ barrio.nombre }}</h3>
+
+				<div class="flex gap-3 text-xs mt-3">
+					<span class="text-green-600 flex items-center gap-1">
+						<i class="pi pi-check-circle"></i> {{ barrio.activos }} Activos
+					</span>
+					<span class="text-red-500 flex items-center gap-1" *ngIf="barrio.inactivos > 0">
+						<i class="pi pi-times-circle"></i> {{ barrio.inactivos }} Inactivos
+					</span>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Estado Vacío -->
+	<div *ngIf="!loading && barrios.length === 0" class="text-center py-10">
+		<div class="flex flex-col items-center justify-center text-gray-500">
+			<i class="pi pi-map text-4xl mb-2"></i>
+			<p>No se encontraron barrios registrados.</p>
+		</div>
+	</div>
+</div>
