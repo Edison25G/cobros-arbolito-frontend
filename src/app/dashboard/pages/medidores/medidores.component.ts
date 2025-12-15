@@ -1,38 +1,35 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { HttpClientModule } from '@angular/common/http';
 import { ReactiveFormsModule, FormBuilder, Validators, FormGroup } from '@angular/forms';
 import { Observable, catchError, of, tap } from 'rxjs';
 
 // Modelos y Servicios
 import { Medidor } from '../../../core/models/medidor.interface';
 import { Socio } from '../../../core/models/socio.interface';
-import { MedidorService } from '../../../core/services/medidor.service'; // <-- El servicio SIMULADO
+import { MedidorService } from '../../../core/services/medidor.service'; // ✅ Servicio REAL
 
 // Componentes PrimeNG v20
 import { TableModule, Table } from 'primeng/table';
 import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
-import { SelectModule } from 'primeng/select'; // Dropdown
-import { ToggleSwitchModule } from 'primeng/toggleswitch'; // Switch
+import { SelectModule } from 'primeng/select';
+import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { ToastModule } from 'primeng/toast';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
-import { TextareaModule } from 'primeng/textarea'; // Para observaciones
+import { TextareaModule } from 'primeng/textarea';
 import { MessageService, ConfirmationService } from 'primeng/api';
 
 @Component({
-	selector: 'amc-medidores', // Nombre del selector
+	selector: 'amc-medidores',
 	standalone: true,
 	imports: [
 		CommonModule,
-		HttpClientModule, // Necesario para que SocioService (inyectado en MedidorService) funcione
 		ReactiveFormsModule,
-		// Componentes PrimeNG
 		TableModule,
 		DialogModule,
 		ButtonModule,
@@ -47,26 +44,22 @@ import { MessageService, ConfirmationService } from 'primeng/api';
 		InputIconModule,
 		TextareaModule,
 	],
-	providers: [
-		MessageService,
-		ConfirmationService,
-		// No proveemos MedidorService aquí porque ya está en 'root'
-	],
+	providers: [MessageService, ConfirmationService],
 	templateUrl: './medidores.component.html',
 })
 export class MedidoresComponent implements OnInit {
-	// Inyección de dependencias
+	// Inyecciones
 	private medidorService = inject(MedidorService);
 	private fb = inject(FormBuilder);
 	private messageService = inject(MessageService);
 	private confirmationService = inject(ConfirmationService);
 
-	// Estado del componente
+	// Estado
 	medidores: Medidor[] = [];
-	socios$: Observable<Socio[]>; // Observable para el dropdown
+	socios$: Observable<Socio[]>;
 	isLoading = true;
 
-	// Control del Modal
+	// Modal
 	showMedidorModal = false;
 	isEditMode = false;
 	currentMedidorId: number | null = null;
@@ -76,22 +69,18 @@ export class MedidoresComponent implements OnInit {
 
 	constructor() {
 		this.medidorForm = this.fb.group({
-			socio: [null, [Validators.required]], // Guardará el objeto Socio completo
+			socio: [null, [Validators.required]], // Guardará el Objeto Socio completo (para el dropdown)
 			codigo: ['', [Validators.required]],
 			observacion: [''],
 			tiene_medidor_fisico: [true],
-			esta_activo: [true], // Solo visible en edición
+			esta_activo: [true],
 		});
 
-		// Inicializamos el observable de socios
+		// Cargar socios para el Dropdown
 		this.socios$ = this.medidorService.getSociosParaDropdown().pipe(
-			catchError((_err) => {
-				this.messageService.add({
-					severity: 'error',
-					summary: 'Error',
-					detail: 'No se pudieron cargar los socios para el formulario.',
-				});
-				return of([]); // Devuelve vacío si falla
+			catchError(() => {
+				this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se cargaron los socios.' });
+				return of([]);
 			}),
 		);
 	}
@@ -109,16 +98,16 @@ export class MedidoresComponent implements OnInit {
 					this.medidores = data;
 					this.isLoading = false;
 				}),
-				catchError((_err) => {
-					this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Error al cargar medidores.' });
+				catchError(() => {
 					this.isLoading = false;
+					// El servicio ya maneja el error por consola, aquí solo notificamos visualmente si quieres
 					return of([]);
 				}),
 			)
 			.subscribe();
 	}
 
-	// --- MÉTODOS DEL MODAL ---
+	// --- MODAL ---
 
 	openNewMedidorModal(): void {
 		this.isEditMode = false;
@@ -130,7 +119,7 @@ export class MedidoresComponent implements OnInit {
 			tiene_medidor_fisico: true,
 			esta_activo: true,
 		});
-		this.f['socio'].enable(); // Habilita el dropdown de socio
+		this.f['socio'].enable();
 		this.showMedidorModal = true;
 	}
 
@@ -138,14 +127,18 @@ export class MedidoresComponent implements OnInit {
 		this.isEditMode = true;
 		this.currentMedidorId = medidor.id;
 
-		// Asigna el objeto Socio completo al dropdown
+		// ✅ CORRECCIÓN CLAVE:
+		// El formulario espera un objeto Socio en el campo 'socio'.
+		// Gracias al forkJoin del servicio, tenemos 'medidor.socio_data'.
 		this.medidorForm.patchValue({
-			...medidor,
-			socio: medidor.socio_data,
+			codigo: medidor.codigo,
+			observacion: medidor.observacion,
+			tiene_medidor_fisico: medidor.tiene_medidor_fisico,
+			esta_activo: medidor.esta_activo,
+			socio: medidor.socio_data, // Asignamos el objeto socio completo al dropdown
 		});
 
-		// No se puede cambiar el socio de un medidor (regla de negocio)
-		this.f['socio'].disable();
+		this.f['socio'].disable(); // No permitimos cambiar de dueño en edición
 		this.showMedidorModal = true;
 	}
 
@@ -153,25 +146,24 @@ export class MedidoresComponent implements OnInit {
 		this.showMedidorModal = false;
 	}
 
-	// --- MÉTODOS CRUD (Simulados) ---
+	// --- CRUD REAL ---
 
 	saveMedidor(): void {
 		if (this.medidorForm.invalid) {
 			this.medidorForm.markAllAsTouched();
-			this.messageService.add({
-				severity: 'warn',
-				summary: 'Formulario Inválido',
-				detail: 'Revise los campos requeridos.',
-			});
+			this.messageService.add({ severity: 'warn', summary: 'Atención', detail: 'Revise los campos requeridos.' });
 			return;
 		}
 
 		const formData = this.medidorForm.getRawValue();
 
-		// Preparamos los datos para el servicio (solo enviamos el ID del socio)
+		// ✅ MAPEO PARA EL BACKEND (Django espera socio_id)
 		const datosParaApi = {
-			...formData,
-			socio: formData.socio.id, // Extraemos el ID del objeto Socio
+			codigo: formData.codigo,
+			observacion: formData.observacion,
+			tiene_medidor_fisico: formData.tiene_medidor_fisico,
+			esta_activo: formData.esta_activo,
+			socio_id: formData.socio.id, // Extraemos solo el ID del objeto socio seleccionado
 		};
 
 		let request$: Observable<Medidor>;
@@ -179,7 +171,7 @@ export class MedidoresComponent implements OnInit {
 		if (this.isEditMode && this.currentMedidorId) {
 			request$ = this.medidorService.updateMedidor(this.currentMedidorId, datosParaApi);
 		} else {
-			delete datosParaApi.esta_activo; // El servicio simulado lo pone en 'true'
+			// Al crear, Django suele poner esta_activo=True por defecto, pero enviarlo no daña nada
 			request$ = this.medidorService.createMedidor(datosParaApi);
 		}
 
@@ -189,12 +181,13 @@ export class MedidoresComponent implements OnInit {
 					this.messageService.add({
 						severity: 'success',
 						summary: 'Éxito',
-						detail: `Medidor ${this.isEditMode ? 'actualizado' : 'creado'} (Simulación).`,
+						detail: `Medidor ${this.isEditMode ? 'actualizado' : 'creado'} correctamente.`,
 					});
-					this.loadMedidores();
+					this.loadMedidores(); // Recargar tabla
 					this.closeMedidorModal();
 				}),
 				catchError((err) => {
+					// Mostramos el mensaje de error que configuramos en el servicio (handleError)
 					this.messageService.add({ severity: 'error', summary: 'Error', detail: err.message });
 					return of(null);
 				}),
@@ -204,21 +197,18 @@ export class MedidoresComponent implements OnInit {
 
 	deleteMedidor(id: number): void {
 		this.confirmationService.confirm({
-			message: '¿Está seguro de desactivar este medidor? (Simulación)',
-			header: 'Confirmar Desactivación',
+			message:
+				'¿Está seguro de eliminar este medidor? Esta acción podría no ser reversible si tiene lecturas asociadas.',
+			header: 'Confirmar Eliminación',
 			icon: 'pi pi-exclamation-triangle',
-			acceptLabel: 'Sí, desactivar',
+			acceptLabel: 'Sí, eliminar',
 			rejectLabel: 'Cancelar',
 			accept: () => {
 				this.medidorService
 					.deleteMedidor(id)
 					.pipe(
 						tap(() => {
-							this.messageService.add({
-								severity: 'success',
-								summary: 'Éxito',
-								detail: 'Medidor marcado como inactivo (Simulación).',
-							});
+							this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Medidor eliminado.' });
 							this.loadMedidores();
 						}),
 						catchError((err) => {
@@ -231,7 +221,7 @@ export class MedidoresComponent implements OnInit {
 		});
 	}
 
-	// --- Helpers ---
+	// Helpers
 	get f() {
 		return this.medidorForm.controls;
 	}

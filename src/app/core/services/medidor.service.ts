@@ -1,117 +1,99 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable, of, throwError, delay, map } from 'rxjs';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { Observable, throwError, forkJoin } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
+import { environment } from '../../environments/environment.development';
 import { Medidor } from '../models/medidor.interface';
-import { SocioService } from './socio.service'; // Importamos el servicio REAL
-import { Socio } from '../models/socio.interface';
+import { Socio } from '../models/socio.interface'; // Importamos la interfaz Socio
+import { SocioService } from './socio.service'; // Importamos el servicio de Socios
 
 @Injectable({
 	providedIn: 'root',
 })
 export class MedidorService {
-	// Usamos el SocioService real para poder listar socios en el formulario
-	private socioService = inject(SocioService);
+	private http = inject(HttpClient);
+	private socioService = inject(SocioService); // Inyectamos el servicio de socios
 
-	// --- BASE DE DATOS FALSA (MOCK) ---
-	private medidoresMock: Medidor[] = [
-		{
-			id: 101,
-			socio: 1, // Asumimos que el Socio con ID 1 existe
-			codigo: 'MED-001',
-			esta_activo: true,
-			observacion: 'Instalado en lote 5',
-			tiene_medidor_fisico: true,
-		},
-		{
-			id: 102,
-			socio: 2, // Asumimos que el Socio con ID 2 existe
-			codigo: 'MED-002',
-			esta_activo: true,
-			observacion: 'Casa principal',
-			tiene_medidor_fisico: true,
-		},
-		{
-			id: 103,
-			socio: 1, // El socio 1 tiene un segundo medidor
-			codigo: 'MED-003-SIN',
-			esta_activo: true,
-			observacion: 'Tarifa fija para la granja',
-			tiene_medidor_fisico: false, // ¡Importante!
-		},
-	];
-	// ---------------------------------
+	// URL del Backend
+	private baseUrl = `${environment.apiUrl}/medidores/`;
+
+	constructor() {}
 
 	/**
-	 * Obtiene la lista de medidores (Simulado)
-	 * ¡Enriquece los datos con la info del socio!
+	 * 1. LISTAR MEDIDORES (Con "Join" de Frontend)
+	 * Trae medidores y socios al mismo tiempo y los une.
 	 */
 	getMedidores(): Observable<Medidor[]> {
-		return this.socioService.getSocios().pipe(
-			map((socios) => {
-				// "Joins" los datos falsos del medidor con los datos reales del socio
-				return this.medidoresMock.map((medidor) => ({
-					...medidor,
-					socio_data: socios.find((s) => s.id === medidor.socio),
-				}));
+		const medidores$ = this.http.get<Medidor[]>(this.baseUrl);
+		const socios$ = this.socioService.getSocios();
+
+		return forkJoin([medidores$, socios$]).pipe(
+			map(([medidores, socios]) => {
+				return medidores.map((medidor) => {
+					// Buscamos el socio dueño de este medidor por ID
+					const socioEncontrado = socios.find((s) => s.id === medidor.socio_id);
+					return {
+						...medidor,
+						socio_data: socioEncontrado, // Rellenamos el dato extra para la tabla
+					};
+				});
 			}),
-			delay(500), // Simula tiempo de red
+			catchError(this.handleError),
 		);
 	}
 
 	/**
-	 * Crea un nuevo medidor (Simulado)
+	 * 2. OBTENER UN MEDIDOR POR ID
+	 */
+	getMedidorById(id: number): Observable<Medidor> {
+		return this.http.get<Medidor>(`${this.baseUrl}${id}/`).pipe(catchError(this.handleError));
+	}
+
+	/**
+	 * 3. CREAR MEDIDOR
 	 */
 	createMedidor(medidorData: any): Observable<Medidor> {
-		const newId = Math.floor(Math.random() * 1000) + 200;
-		const nuevoMedidor: Medidor = {
-			id: newId,
-			socio: medidorData.socio, // El formulario envía el ID del socio
-			codigo: medidorData.codigo,
-			esta_activo: true, // Siempre activo al crear
-			observacion: medidorData.observacion,
-			tiene_medidor_fisico: medidorData.tiene_medidor_fisico,
+		// Aseguramos enviar 'socio_id' al backend
+		const payload = {
+			...medidorData,
+			socio_id: medidorData.socio || medidorData.socio_id,
 		};
-
-		this.medidoresMock.push(nuevoMedidor);
-		return of(nuevoMedidor).pipe(delay(500));
+		return this.http.post<Medidor>(this.baseUrl, payload).pipe(catchError(this.handleError));
 	}
 
 	/**
-	 * Actualiza un medidor (Simulado)
+	 * 4. ACTUALIZAR MEDIDOR
 	 */
 	updateMedidor(id: number, medidorData: any): Observable<Medidor> {
-		const index = this.medidoresMock.findIndex((m) => m.id === id);
-		if (index === -1) {
-			return throwError(() => new Error('Medidor no encontrado en el mock'));
-		}
-
-		const medidorActualizado = {
-			...this.medidoresMock[index], // Mantiene el ID
-			...medidorData, // Sobrescribe con los datos del form
+		const payload = {
+			...medidorData,
+			...(medidorData.socio && { socio_id: medidorData.socio }),
 		};
-
-		this.medidoresMock[index] = medidorActualizado;
-		return of(medidorActualizado).pipe(delay(500));
+		return this.http.patch<Medidor>(`${this.baseUrl}${id}/`, payload).pipe(catchError(this.handleError));
 	}
 
 	/**
-	 * Elimina (desactiva) un medidor (Simulado)
+	 * 5. ELIMINAR MEDIDOR
 	 */
 	deleteMedidor(id: number): Observable<void> {
-		const index = this.medidoresMock.findIndex((m) => m.id === id);
-		if (index === -1) {
-			return throwError(() => new Error('Medidor no encontrado en el mock'));
-		}
-
-		// Simula el "soft delete" del backend
-		this.medidoresMock[index].esta_activo = false;
-		return of(void 0).pipe(delay(500));
+		return this.http.delete<void>(`${this.baseUrl}${id}/`).pipe(catchError(this.handleError));
 	}
 
 	/**
-	 * (REAL) Obtiene los socios para el dropdown
+	 * ✅ 6. OBTENER SOCIOS PARA EL DROPDOWN (EL QUE FALTABA)
+	 * Simplemente reutiliza el servicio de socios que ya inyectamos.
 	 */
 	getSociosParaDropdown(): Observable<Socio[]> {
-		// Llama al servicio real de Socios
 		return this.socioService.getSocios();
+	}
+
+	// Manejo de errores
+	private handleError(error: HttpErrorResponse) {
+		let errorMessage = 'Error desconocido';
+		if (error.error) {
+			errorMessage = JSON.stringify(error.error);
+		}
+		console.error('Backend Error:', error);
+		return throwError(() => new Error(errorMessage));
 	}
 }
