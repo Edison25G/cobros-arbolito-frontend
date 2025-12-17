@@ -8,7 +8,8 @@ import { Router } from '@angular/router';
 import { Socio } from '../../../core/models/socio.interface';
 import { SocioService } from '../../../core/services/socio.service';
 import { RolUsuario } from '../../../core/models/role.enum';
-
+import { BarriosService } from '../../../core/services/barrios.service'; // Ajusta la ruta
+import { Barrio } from '../../../core/interfaces/barrio.interface';
 // ==========================================================
 // ¡CORRECCIÓN DE PRIMENG v20! (Basado en tus imágenes)
 // ==========================================================
@@ -54,12 +55,15 @@ import { MessageService, ConfirmationService } from 'primeng/api';
 export class SociosComponent implements OnInit {
 	// Inyección de dependencias
 	private socioService = inject(SocioService);
+	private barriosService = inject(BarriosService);
 	private fb = inject(FormBuilder);
 	private messageService = inject(MessageService);
 	private confirmationService = inject(ConfirmationService);
 	private router = inject(Router);
+
 	// Estado del componente
 	socios: Socio[] = [];
+	listaBarrios: Barrio[] = [];
 	isLoading = true;
 
 	// Control del Modal
@@ -95,6 +99,7 @@ export class SociosComponent implements OnInit {
 
 	ngOnInit(): void {
 		this.loadSocios();
+		this.cargarBarrios();
 	}
 
 	loadSocios(): void {
@@ -118,7 +123,23 @@ export class SociosComponent implements OnInit {
 			)
 			.subscribe();
 	}
-
+	cargarBarrios() {
+		this.barriosService.getBarrios().subscribe({
+			next: (data) => {
+				// Solo mostramos los barrios activos para que no registren en uno borrado
+				// Asegúrate de que tu interfaz Barrio tenga la propiedad 'activo'
+				this.listaBarrios = data.filter((b) => b.activo);
+			},
+			error: (err) => {
+				console.error('Error cargando barrios', err);
+				this.messageService.add({
+					severity: 'error',
+					summary: 'Error',
+					detail: 'No se pudieron cargar los barrios.',
+				});
+			},
+		});
+	}
 	// --- MÉTODOS DEL MODAL ---
 
 	openNewSocioModal(): void {
