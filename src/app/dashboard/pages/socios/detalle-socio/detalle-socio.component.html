@@ -45,7 +45,7 @@
 
 			<div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm">
 				<div class="p-3 bg-gray-50 rounded-lg border border-gray-100">
-					<span class="block text-gray-500 font-medium mb-1">Barrio</span>
+					<span class="block text-gray-500 font-medium mb-1">Barrio (Domicilio)</span>
 					<span class="text-gray-800 font-bold text-base">{{ socio.barrio }}</span>
 				</div>
 				<div class="p-3 bg-gray-50 rounded-lg border border-gray-100">
@@ -65,10 +65,79 @@
 		</div>
 	</div>
 
+	<p-divider></p-divider>
+
+	<div class="mt-6 mb-8 animate-fade-in-up">
+		<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
+			<div>
+				<h3 class="text-xl font-bold text-gray-800 m-0">Propiedades Registradas</h3>
+				<p class="text-gray-500 text-sm">Administra los terrenos y medidores asignados a este socio.</p>
+			</div>
+
+			<p-button
+				label="Agregar Terreno"
+				icon="pi pi-plus"
+				[rounded]="true"
+				severity="primary"
+				(onClick)="abrirModalTerreno()"
+			>
+			</p-button>
+		</div>
+
+		<div class="card bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+			<p-table [value]="terrenos" [tableStyle]="{ 'min-width': '50rem' }">
+				<ng-template pTemplate="header">
+					<tr>
+						<th>Barrio / Sector</th>
+						<th>Dirección / Referencia</th>
+						<th>Servicio (Medidor)</th>
+						<th class="text-center">Acciones</th>
+					</tr>
+				</ng-template>
+
+				<ng-template pTemplate="body" let-terreno>
+					<tr>
+						<td class="font-bold">{{ terreno.barrio }}</td>
+						<td>{{ terreno.direccion }}</td>
+						<td>
+							<p-tag
+								[severity]="terreno.tiene_medidor ? 'info' : 'warn'"
+								[value]="terreno.tiene_medidor ? '💧 Medidor: ' + terreno.codigo_medidor : '🚫 Solo Cometida'"
+								[rounded]="true"
+							>
+							</p-tag>
+						</td>
+						<td class="text-center">
+							<p-button
+								icon="pi pi-pencil"
+								[text]="true"
+								[rounded]="true"
+								severity="secondary"
+								pTooltip="Editar terreno"
+								tooltipPosition="top"
+							></p-button>
+						</td>
+					</tr>
+				</ng-template>
+
+				<ng-template pTemplate="emptymessage">
+					<tr>
+						<td colspan="4" class="text-center p-8">
+							<div class="flex flex-col items-center justify-center text-gray-400">
+								<i class="pi pi-home text-4xl mb-2"></i>
+								<p>Este socio aún no tiene terrenos registrados.</p>
+								<p class="text-sm">Haz clic en "Agregar Terreno" para registrar uno.</p>
+							</div>
+						</td>
+					</tr>
+				</ng-template>
+			</p-table>
+		</div>
+	</div>
+
 	<p-tabs value="0">
 		<p-tablist>
 			<p-tab value="0">Historial de Pagos</p-tab>
-			<p-tab value="1">Medidores</p-tab>
 		</p-tablist>
 
 		<p-tabpanels>
@@ -105,32 +174,6 @@
 					</ng-template>
 				</p-table>
 			</p-tabpanel>
-
-			<p-tabpanel value="1">
-				<p-table [value]="misMedidores" styleClass="p-datatable-sm" [rowHover]="true">
-					<ng-template pTemplate="header">
-						<tr>
-							<th>Código</th>
-							<th>Ubicación</th>
-							<th>Tipo</th>
-							<th>Estado</th>
-						</tr>
-					</ng-template>
-					<ng-template pTemplate="body" let-med>
-						<tr>
-							<td class="font-bold text-gray-800">{{ med.codigo }}</td>
-							<td>{{ med.ubicacion }}</td>
-							<td>
-								<span class="text-xs font-semibold px-2 py-1 rounded bg-blue-50 text-blue-600">{{ med.tipo }}</span>
-							</td>
-							<td>
-								<span *ngIf="med.estado === 'Activo'" class="text-green-600 font-bold text-xs">● Activo</span>
-								<span *ngIf="med.estado !== 'Activo'" class="text-gray-400 font-bold text-xs">● Inactivo</span>
-							</td>
-						</tr>
-					</ng-template>
-				</p-table>
-			</p-tabpanel>
 		</p-tabpanels>
 	</p-tabs>
 
@@ -144,3 +187,71 @@
 		></p-button>
 	</div>
 </div>
+
+<p-dialog
+	header="Registrar Nuevo Terreno"
+	[(visible)]="mostrarModalTerreno"
+	[modal]="true"
+	[style]="{ width: '450px' }"
+	[draggable]="false"
+	[resizable]="false"
+>
+	<form [formGroup]="terrenoForm" class="flex flex-col gap-4 mt-2">
+		<div class="field flex flex-col gap-2">
+			<span class="font-bold text-sm">Barrio / Sector *</span>
+			<p-select
+				[options]="listaBarrios"
+				formControlName="barrio"
+				optionLabel="nombre"
+				optionValue="nombre"
+				placeholder="Seleccione el sector"
+				appendTo="body"
+				[style]="{ width: '100%' }"
+				[showClear]="true"
+				emptyMessage="No hay barrios activos"
+			>
+			</p-select>
+			<small
+				*ngIf="terrenoForm.get('barrio')?.invalid && terrenoForm.get('barrio')?.touched"
+				class="text-red-500 text-xs"
+			>
+				El barrio es obligatorio.
+			</small>
+		</div>
+
+		<div class="field flex flex-col gap-2">
+			<span class="font-bold text-sm">Dirección / Referencia *</span>
+			<input pInputText formControlName="direccion" placeholder="Ej: Frente a la escuela, casa verde" class="w-full" />
+			<small
+				*ngIf="terrenoForm.get('direccion')?.invalid && terrenoForm.get('direccion')?.touched"
+				class="text-red-500 text-xs"
+			>
+				La dirección es obligatoria.
+			</small>
+		</div>
+
+		<div class="field flex items-center justify-between bg-gray-50 p-3 rounded-lg border border-gray-200">
+			<div class="flex flex-col">
+				<span class="font-bold text-sm text-gray-800">¿Tiene Medidor?</span>
+				<span class="text-xs text-gray-500">Activar si el terreno posee medidor de agua.</span>
+			</div>
+			<p-toggleswitch formControlName="tiene_medidor"></p-toggleswitch>
+		</div>
+
+		<div *ngIf="terrenoForm.get('tiene_medidor')?.value" class="field flex flex-col gap-2 animate-fade-in">
+			<span class="font-bold text-sm text-blue-700">Código del Medidor *</span>
+			<input pInputText formControlName="codigo_medidor" placeholder="Ej: MED-2024-001" class="w-full" />
+			<small
+				*ngIf="terrenoForm.get('codigo_medidor')?.invalid && terrenoForm.get('codigo_medidor')?.touched"
+				class="text-red-500 text-xs"
+			>
+				El código es obligatorio si hay medidor.
+			</small>
+		</div>
+	</form>
+
+	<ng-template pTemplate="footer">
+		<p-button label="Cancelar" icon="pi pi-times" [text]="true" (onClick)="mostrarModalTerreno = false"></p-button>
+		<p-button label="Guardar Propiedad" icon="pi pi-check" [loading]="false" (onClick)="guardarTerreno()"></p-button>
+	</ng-template>
+</p-dialog>
