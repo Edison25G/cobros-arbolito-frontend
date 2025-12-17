@@ -1,165 +1,218 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
-import { ReactiveFormsModule, FormBuilder, Validators, FormGroup } from '@angular/forms';
+import { FormsModule } from '@angular/forms'; // ✅ Importante para los inputs de la tabla
 import { RouterModule, Router } from '@angular/router';
-import { finalize } from 'rxjs/operators';
+import { forkJoin, of } from 'rxjs';
+import { catchError, finalize } from 'rxjs/operators';
 
 // Modelos y Servicios
 import { Medidor } from '../../../core/models/medidor.interface';
 import { RegistrarLecturaDTO } from '../../../core/models/lectura.interface';
 import { MedidorService } from '../../../core/services/medidor.service';
 import { LecturaService } from '../../../core/services/lectura.service';
+import { BarriosService } from '../../../core/services/barrios.service'; // ✅ Nuevo servicio
 import { ErrorService } from '../../../auth/core/services/error.service';
 
-// Componentes PrimeNG
+// PrimeNG
 import { ButtonModule } from 'primeng/button';
 import { InputNumberModule } from 'primeng/inputnumber';
-import { SelectModule } from 'primeng/select';
+import { SelectModule } from 'primeng/select'; // O DropdownModule según tu versión
 import { DatePickerModule } from 'primeng/datepicker';
+import { TableModule } from 'primeng/table'; // ✅ Para la tabla masiva
 import { ToastModule } from 'primeng/toast';
 import { TooltipModule } from 'primeng/tooltip';
+import { TagModule } from 'primeng/tag';
 import { MessageService } from 'primeng/api';
+
+// Interfaz local para manejar la fila de la tabla
+interface FilaLectura {
+	medidor: Medidor;
+	lecturaAnterior: number;
+	lecturaActual: number | null;
+	consumo: number;
+	error?: string; // Para validar si lecturaActual < lecturaAnterior
+	procesado?: boolean; // Para marcar si ya se guardó
+}
 
 @Component({
 	selector: 'amc-lecturas',
 	standalone: true,
 	imports: [
 		CommonModule,
-		ReactiveFormsModule,
+		FormsModule, // ✅ Necesario para [(ngModel)] en la tabla
 		RouterModule,
 		ButtonModule,
 		InputNumberModule,
 		SelectModule,
 		DatePickerModule,
+		TableModule, // ✅
 		ToastModule,
 		TooltipModule,
+		TagModule,
 	],
 	providers: [MessageService, DatePipe],
 	templateUrl: './lecturas.component.html',
 })
 export class LecturasComponent implements OnInit {
-	private fb = inject(FormBuilder);
 	private medidorService = inject(MedidorService);
 	private lecturaService = inject(LecturaService);
+	private barriosService = inject(BarriosService); // ✅ Inyección
 	private errorService = inject(ErrorService);
 	private router = inject(Router);
+	private messageService = inject(MessageService);
 
-	lecturaForm: FormGroup;
 	isLoading = false;
+	guardando = false;
 
-	// Listas de datos
-	todosLosMedidores: Medidor[] = []; // Copia completa de la BD
-	medidoresFiltrados: Medidor[] = []; // Lo que se muestra en el dropdown
-	barrios: any[] = []; // Lista de barrios para el filtro
+	// Filtros Globales
+	fechaLectura: Date = new Date();
+	barrioSeleccionado: string | null = null;
 
-	constructor() {
-		this.lecturaForm = this.fb.group({
-			barrio: [null], // Nuevo campo para el filtro (no es requerido para enviar, solo para filtrar)
-			medidor: [null, [Validators.required]],
-			lectura_actual_m3: [null, [Validators.required, Validators.min(0)]],
-			fecha_lectura: [new Date(), [Validators.required]],
-		});
-	}
+	// Datos
+	barrios: any[] = [];
+	filas: FilaLectura[] = []; // Los datos de la tabla
 
 	ngOnInit(): void {
-		this.cargarDatosIniciales();
-
-		// Escuchamos cambios en el selector de Barrio
-		this.lecturaForm.get('barrio')?.valueChanges.subscribe((barrioSeleccionado) => {
-			this.filtrarMedidores(barrioSeleccionado);
-		});
+		this.cargarBarrios();
 	}
 
-	cargarDatosIniciales() {
-		// Obtenemos todos los medidores físicos
-		this.medidorService.getMedidores().subscribe({
+	cargarBarrios() {
+		// ✅ Usamos el servicio de barrios para asegurar que salgan los 3 (Latacunga, Alpamalag, etc.)
+		this.barriosService.getBarrios().subscribe({
 			next: (data) => {
-				// 1. Guardamos solo los que tienen medidor físico
-				this.todosLosMedidores = data.filter((m) => m.tiene_medidor_fisico);
-
-				// 2. Inicialmente mostramos todos en el dropdown
-				this.medidoresFiltrados = this.todosLosMedidores;
-
-				// 3. Extraer lista única de barrios para el filtro
-				// Usamos un Set para eliminar duplicados automáticamente
-				const barriosUnicos = [...new Set(this.todosLosMedidores.map((m) => m.socio_data?.barrio).filter((b) => !!b))];
-
-				// Formateamos para PrimeNG ({label, value})
-				this.barrios = barriosUnicos
-					.map((b) => ({ label: b, value: b }))
-					.sort((a, b) => a.label!.localeCompare(b.label!));
+				// Mapeamos para el dropdown de PrimeNG (label/value) y solo activos
+				this.barrios = data.filter((b) => b.activo).map((b) => ({ label: b.nombre, value: b.nombre }));
 			},
-			error: (err) => {
-				this.errorService.showError('No se pudieron cargar los medidores.');
-				console.error(err);
-			},
+			error: (err) => console.error('Error cargando barrios', err),
 		});
 	}
 
-	filtrarMedidores(barrio: string | null) {
-		// Limpiamos la selección anterior para evitar errores (medidor de otro barrio)
-		this.lecturaForm.patchValue({ medidor: null });
-
-		if (!barrio) {
-			// Si borran el filtro, mostramos todos
-			this.medidoresFiltrados = this.todosLosMedidores;
-		} else {
-			// Filtramos por el nombre del barrio del socio
-			this.medidoresFiltrados = this.todosLosMedidores.filter((m) => m.socio_data?.barrio === barrio);
-		}
-	}
-
-	get f() {
-		return this.lecturaForm.controls;
-	}
-
-	onSubmit(): void {
-		if (this.lecturaForm.invalid) {
-			this.lecturaForm.markAllAsTouched();
-			this.errorService.requiredFields();
+	cargarPlanilla() {
+		if (!this.barrioSeleccionado) {
+			this.filas = [];
 			return;
 		}
 
 		this.isLoading = true;
-		const formData = this.lecturaForm.value;
+		this.medidorService.getMedidores().subscribe({
+			next: (medidores) => {
+				// 1. Filtramos por barrio y solo medidores físicos
+				const filtrados = medidores.filter(
+					(m) => m.tiene_medidor_fisico && m.socio_data?.barrio === this.barrioSeleccionado,
+				);
 
-		const fecha = new Date(formData.fecha_lectura);
-		const fechaISO =
-			fecha.getFullYear() +
-			'-' +
-			String(fecha.getMonth() + 1).padStart(2, '0') +
-			'-' +
-			String(fecha.getDate()).padStart(2, '0');
+				// 2. Transformamos a formato de "Fila de Trabajo"
+				this.filas = filtrados.map((m) => ({
+					medidor: m,
+					// ⚠️ OJO: Aquí asumimos que el backend trae 'ultima_lectura'.
+					// Si no la trae, ponemos 0 por defecto.
+					lecturaAnterior: (m as any).ultima_lectura || 0,
+					lecturaActual: null, // Vacío para que el operador escriba
+					consumo: 0,
+				}));
 
+				this.isLoading = false;
+			},
+			error: (_err) => {
+				this.errorService.showError('No se pudieron cargar los medidores del barrio.');
+				this.isLoading = false;
+			},
+		});
+	}
+
+	// ✅ Cálculos en tiempo real
+	calcularConsumo(fila: FilaLectura) {
+		if (fila.lecturaActual === null) {
+			fila.consumo = 0;
+			fila.error = undefined;
+			return;
+		}
+
+		if (fila.lecturaActual < fila.lecturaAnterior) {
+			fila.error = 'La lectura no puede ser menor a la anterior';
+			fila.consumo = 0;
+		} else {
+			fila.error = undefined;
+			fila.consumo = fila.lecturaActual - fila.lecturaAnterior;
+		}
+	}
+
+	// ✅ Guardado Masivo
+	guardarPlanilla() {
+		// 1. Filtrar solo los que tienen datos válidos
+		const lecturasParaGuardar = this.filas.filter((f) => f.lecturaActual !== null && !f.error && !f.procesado);
+
+		if (lecturasParaGuardar.length === 0) {
+			this.messageService.add({
+				severity: 'warn',
+				summary: 'Atención',
+				detail: 'No hay lecturas nuevas válidas para guardar.',
+			});
+			return;
+		}
+
+		this.guardando = true;
 		const user = JSON.parse(localStorage.getItem('user') || '{}');
 		const operadorId = user.id && user.id > 0 ? user.id : 1;
 
-		const dto: RegistrarLecturaDTO = {
-			medidor_id: formData.medidor.id,
-			lectura_actual_m3: formData.lectura_actual_m3,
-			fecha_lectura: fechaISO,
-			operador_id: operadorId,
-		};
+		// Convertir fecha a string ISO (YYYY-MM-DD)
+		const fechaISO = this.fechaLectura.toISOString().split('T')[0];
 
-		this.lecturaService
-			.registrarLectura(dto)
-			.pipe(finalize(() => (this.isLoading = false)))
-			.subscribe({
-				next: (response) => {
-					this.errorService.showSuccess(`Lectura registrada. Consumo: ${response.consumo_del_mes} m³`);
+		// 2. Creamos un array de peticiones (Observables)
+		const peticiones = lecturasParaGuardar.map((fila) => {
+			const dto: RegistrarLecturaDTO = {
+				medidor_id: fila.medidor.id!,
+				lectura_actual_m3: fila.lecturaActual!,
+				fecha_lectura: fechaISO,
+				operador_id: operadorId,
+			};
 
-					// Reseteamos el formulario, pero mantenemos el barrio y la fecha para agilizar el siguiente registro
-					const barrioActual = this.lecturaForm.get('barrio')?.value;
-					this.lecturaForm.reset({
-						barrio: barrioActual,
-						fecha_lectura: new Date(),
+			// Retornamos la petición atrapando errores individuales para que no se caiga todo el proceso
+			return this.lecturaService
+				.registrarLectura(dto)
+				.pipe(catchError((_error) => of({ error: true, medidor: fila.medidor.codigo })));
+		});
+
+		// 3. Ejecutamos todas las peticiones en paralelo (Batch Frontend)
+		forkJoin(peticiones)
+			.pipe(finalize(() => (this.guardando = false)))
+			.subscribe((resultados) => {
+				let exitos = 0;
+				let fallos = 0;
+
+				resultados.forEach((res, index) => {
+					if ((res as any).error) {
+						fallos++;
+					} else {
+						exitos++;
+						// Marcamos la fila como procesada visualmente (verde)
+						lecturasParaGuardar[index].procesado = true;
+					}
+				});
+
+				if (exitos > 0) {
+					this.messageService.add({
+						severity: 'success',
+						summary: 'Proceso Finalizado',
+						detail: `Se registraron ${exitos} lecturas correctamente.`,
 					});
-				},
-				error: (err) => {
-					// El errorService ya muestra el mensaje en el catchError del servicio,
-					// pero si el servicio propaga el error, lo atrapamos aquí.
-					if (err.message) this.errorService.showError(err.message);
-				},
+				}
+				if (fallos > 0) {
+					this.messageService.add({
+						severity: 'error',
+						summary: 'Errores',
+						detail: `Hubo ${fallos} lecturas que no se pudieron guardar.`,
+					});
+				}
+
+				// Opcional: Recargar la tabla automáticamente si todo salió bien
+				if (fallos === 0) {
+					setTimeout(() => {
+						// Limpiamos o recargamos según prefieras
+						// this.filas = [];
+						// this.barrioSeleccionado = null;
+					}, 1500);
+				}
 			});
 	}
 }
