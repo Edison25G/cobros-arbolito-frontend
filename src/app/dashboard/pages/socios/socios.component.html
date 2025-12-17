@@ -2,6 +2,7 @@
 <p-confirmDialog [style]="{ width: '450px' }"></p-confirmDialog>
 
 <div class="card p-4 bg-white rounded-xl shadow-sm border border-gray-100 animate-fade-in">
+	<!-- Encabezado y Buscador -->
 	<div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
 		<div>
 			<h2 class="text-2xl font-bold text-gray-800">Gestión de Socios</h2>
@@ -29,6 +30,7 @@
 		</div>
 	</div>
 
+	<!-- Tabla de Socios -->
 	<div class="overflow-x-auto">
 		<p-table
 			#dt
@@ -121,6 +123,7 @@
 	</div>
 </div>
 
+<!-- Modal de Registro/Edición -->
 <p-dialog
 	[(visible)]="showSocioModal"
 	[modal]="true"
@@ -133,6 +136,7 @@
 	(onHide)="closeSocioModal()"
 >
 	<form [formGroup]="socioForm" (ngSubmit)="saveSocio()" class="flex flex-col gap-5 pt-2">
+		<!-- Fila 1: Cédula y Barrio -->
 		<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
 			<div class="flex flex-col gap-2">
 				<span class="font-bold text-sm text-gray-700">Cédula</span>
@@ -147,12 +151,30 @@
 					Cédula inválida (10 dígitos).
 				</small>
 			</div>
+
+			<!-- ✅ CAMPO BARRIO CON DROPDOWN (INTEGRADO AQUÍ) -->
 			<div class="flex flex-col gap-2">
-				<span class="font-bold text-sm text-gray-700">Barrio</span>
-				<input pInputText formControlName="barrio" placeholder="Ej: Centro" class="w-full" />
+				<label for="barrio" class="font-bold text-sm text-gray-700">Barrio</label>
+				<p-select
+					[options]="listaBarrios"
+					formControlName="barrio"
+					optionLabel="nombre"
+					optionValue="nombre"
+					placeholder="Seleccione un barrio"
+					[showClear]="true"
+					appendTo="body"
+					styleClass="w-full"
+					emptyMessage="No hay barrios registrados"
+				>
+				</p-select>
+				<!-- Validación visual para barrio -->
+				<small *ngIf="f['barrio'].invalid && f['barrio'].touched" class="text-red-500 text-xs">
+					El barrio es obligatorio.
+				</small>
 			</div>
 		</div>
 
+		<!-- Fila 2: Nombres y Apellidos -->
 		<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
 			<div class="flex flex-col gap-2">
 				<span class="font-bold text-sm text-gray-700">Nombres</span>
@@ -164,6 +186,7 @@
 			</div>
 		</div>
 
+		<!-- Fila 3: Email y Teléfono -->
 		<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
 			<div class="flex flex-col gap-2">
 				<span class="font-bold text-sm text-gray-700">Email (Opcional)</span>
@@ -175,6 +198,7 @@
 			</div>
 		</div>
 
+		<!-- Fila 4: Rol y Estado -->
 		<div class="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
 			<div class="flex flex-col gap-2">
 				<span class="font-bold text-sm text-gray-700">Rol del Usuario</span>
@@ -186,13 +210,12 @@
 					placeholder="Seleccione rol"
 					appendTo="body"
 					styleClass="w-full"
-					[style]="{ width: '100%' }"
 				></p-select>
 			</div>
 
 			<div *ngIf="isEditMode" class="flex items-center gap-3 pb-2">
 				<span class="font-bold text-sm text-gray-700">¿Socio Activo?</span>
-				<p-toggleSwitch formControlName="esta_activo"></p-toggleSwitch>
+				<p-toggleswitch formControlName="esta_activo"></p-toggleswitch>
 			</div>
 		</div>
 	</form>
