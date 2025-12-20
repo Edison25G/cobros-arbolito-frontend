@@ -93,6 +93,12 @@ export class DashboardLayoutComponent implements OnInit {
 			link: '/dashboard/pagos-registro',
 			roles: [RolUsuario.TESORERO],
 		},
+		{
+			label: 'Caja / Recaudación', // Nombre más profesional
+			icon: 'pi pi-wallet', // Icono de billetera
+			link: '/dashboard/caja', // Debe coincidir con el path del routes
+			roles: [RolUsuario.TESORERO, RolUsuario.ADMIN],
+		},
 		// --- OPERADOR ---
 		{
 			label: 'Registro de Lecturas',
