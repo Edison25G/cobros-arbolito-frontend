@@ -70,6 +70,14 @@ export default [
 				canActivate: [RoleGuard],
 				data: { roles: [RolUsuario.ADMIN, RolUsuario.TESORERO] },
 			},
+
+			{
+				path: 'caja',
+				loadComponent: () => import('./pages/caja/caja.component').then((m) => m.CajaComponent),
+				canActivate: [RoleGuard],
+				// Acceso para Tesorero (obvio) y Admin (por si acaso)
+				data: { roles: [RolUsuario.ADMIN, RolUsuario.TESORERO] },
+			},
 			{
 				path: 'barrios',
 				canActivate: [RoleGuard], // Visible para todos los roles administrativos + socio si quieres
