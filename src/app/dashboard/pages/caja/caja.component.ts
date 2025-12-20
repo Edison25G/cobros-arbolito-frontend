@@ -17,6 +17,7 @@ import { ImageModule } from 'primeng/image'; // Para ver la foto del comprobante
 
 // Servicio
 import { CajaService } from '../../../core/services/caja.service';
+import { ComprobanteService } from '../../../core/services/comprobante.service';
 
 @Component({
 	selector: 'app-caja',
@@ -43,7 +44,7 @@ export class CajaComponent implements OnInit {
 	private cajaService = inject(CajaService);
 	private messageService = inject(MessageService);
 	private confirmationService = inject(ConfirmationService);
-
+	private comprobanteService = inject(ComprobanteService);
 	// Variables Ventanilla
 	terminoBusqueda = '';
 	buscando = false;
@@ -121,12 +122,19 @@ export class CajaComponent implements OnInit {
 		this.procesandoPago = true;
 		const ids = items.map((i) => i.id);
 
-		this.cajaService.procesarPago(ids, 'EFECTIVO').subscribe(() => {
-			this.messageService.add({
-				severity: 'success',
-				summary: 'Pago Exitoso',
-				detail: 'Transacción registrada correctamente.',
-			});
+		// Guardamos referencia al socio y total ANTES de limpiar las variables
+		const socioActual = { ...this.socioEncontrado };
+		const totalCobrado = this.totalAPagar;
+		const itemsCobrados = [...items];
+
+		this.cajaService.procesarPago(ids, 'EFECTIVO').subscribe((resp: any) => {
+			this.messageService.add({ severity: 'success', summary: 'Pago Exitoso', detail: 'Generando recibo...' });
+
+			// ✅ GENERAMOS EL PDF AQUÍ
+			// Usamos el ticket que devuelve el backend (o generamos uno temporal)
+			const nroTicket = resp.ticket || 'TKT-' + Math.floor(Math.random() * 10000);
+
+			this.comprobanteService.generarRecibo(socioActual, itemsCobrados, totalCobrado, nroTicket);
 
 			// Limpiamos pantalla
 			this.procesandoPago = false;
