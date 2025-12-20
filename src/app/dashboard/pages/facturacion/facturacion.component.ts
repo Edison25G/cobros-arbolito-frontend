@@ -1,127 +1,146 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { CommonModule, DatePipe } from '@angular/common'; // Importar DatePipe
-import { HttpClientModule } from '@angular/common/http';
-import { catchError, of, tap } from 'rxjs';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 
-// Modelos y Servicios
-import { LecturaPendiente, GenerarFacturaDTO } from '../../../core/interfaces/factura.interface';
-import { FacturaService } from '../../../core/services/facturacion.service.js';
-import { ErrorService } from '../../../auth/core/services/error.service';
-
-// Componentes PrimeNG v20
+// --- PrimeNG Imports ---
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
 import { ToastModule } from 'primeng/toast';
-import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { IconFieldModule } from 'primeng/iconfield';
-import { InputIconModule } from 'primeng/inputicon';
-import { InputTextModule } from 'primeng/inputtext';
-import { MessageService, ConfirmationService } from 'primeng/api';
+import { DatePickerModule } from 'primeng/datepicker';
+import { CardModule } from 'primeng/card';
+import { TagModule } from 'primeng/tag';
+import { TooltipModule } from 'primeng/tooltip';
+import { MessageService } from 'primeng/api';
+
+// --- Servicios y Modelos ---
+// Asegúrate de que la ruta sea correcta según tu estructura
+import { FacturacionService } from '../../../core/services/facturacion.service';
+import { LecturaPendiente } from '../../../core/interfaces/factura.interface';
 
 @Component({
-	selector: 'amc-facturacion',
+	selector: 'app-factura', // Selector ajustado al nombre del componente
 	standalone: true,
 	imports: [
 		CommonModule,
-		HttpClientModule,
-		// PrimeNG Módulos
+		FormsModule,
 		TableModule,
 		ButtonModule,
 		ToastModule,
-		ConfirmDialogModule,
-		IconFieldModule,
-		InputIconModule,
-		InputTextModule,
+		DatePickerModule,
+		CardModule,
+		TagModule,
+		TooltipModule,
 	],
-	providers: [MessageService, ConfirmationService, DatePipe], // Añadir DatePipe
+	providers: [MessageService],
 	templateUrl: './facturacion.component.html',
 })
 export class FacturacionComponent implements OnInit {
-	// Inyección de dependencias
-	private facturaService = inject(FacturaService);
-	private errorService = inject(ErrorService);
-	private confirmationService = inject(ConfirmationService);
-	private datePipe = inject(DatePipe); // Para formatear la fecha
+	// Inyecciones
+	private messageService = inject(MessageService);
+	private facturacionService = inject(FacturacionService);
 
-	// Estado del componente
+	// Variables
+	fechaEmision: Date = new Date(); // Fecha seleccionada (Mes/Año)
+
+	// ✅ Usamos la interfaz correcta para evitar errores de tipo
 	lecturasPendientes: LecturaPendiente[] = [];
-	isLoading = true;
-	isGenerating = false; // Estado para el botón "Generar"
 
-	constructor() {}
+	isLoading = false;
+	isProcessing = false; // Loading para el botón de generar
 
-	ngOnInit(): void {
-		this.loadLecturasPendientes();
+	// Totales para las tarjetas (KPIs)
+	totalPlanillas = 0;
+	totalAgua = 0;
+	totalMultas = 0;
+	granTotal = 0;
+
+	ngOnInit() {
+		// Cargar datos al iniciar
+		this.buscarPendientes();
 	}
 
-	/**
-	 * Carga la lista de lecturas simuladas
-	 */
-	loadLecturasPendientes(): void {
+	buscarPendientes() {
 		this.isLoading = true;
-		this.facturaService
-			.getLecturasPendientes()
-			.pipe(
-				tap((data) => {
-					this.lecturasPendientes = data;
-					this.isLoading = false;
-				}),
-				catchError((err) => {
-					this.isLoading = false;
-					this.errorService.showError('Error al cargar lecturas simuladas: ' + err.message);
-					return of([]);
-				}),
-			)
-			.subscribe();
+
+		// AQUÍ SIMULAMOS LA RESPUESTA DEL BACKEND
+		// (Luego usarás: this.facturacionService.getPendientes(...))
+		setTimeout(() => {
+			this.lecturasPendientes = [
+				{
+					id: 101,
+					fecha_lectura: '2025-11-28',
+					medidor: 'MED-001', // Puede ser string o objeto, la interfaz lo permite
+					socio: 'Juan Perez', // Puede ser string o objeto
+					cedula: '0551478018',
+					lectura_anterior: 450,
+					lectura_actual: 465,
+					consumo: 15,
+					// Datos financieros
+					monto_agua: 3.5,
+					multas_mingas: 0,
+					detalle_multas: [],
+					total_pagar: 3.5,
+				},
+				{
+					id: 102,
+					fecha_lectura: '2025-11-28',
+					medidor: 'MED-002',
+					socio: 'Maria Lopez',
+					cedula: '0502002413',
+					lectura_anterior: 1200,
+					lectura_actual: 1250,
+					consumo: 50,
+					monto_agua: 21.0,
+					multas_mingas: 10.0,
+					detalle_multas: ['Minga Limpieza Canales'],
+					total_pagar: 31.0,
+				},
+				{
+					id: 103,
+					fecha_lectura: '2025-11-28',
+					medidor: 'MED-003',
+					socio: 'Carlos Vives',
+					cedula: '1718929921',
+					lectura_anterior: 100,
+					lectura_actual: 110,
+					consumo: 10,
+					monto_agua: 3.5,
+					multas_mingas: 5.0,
+					detalle_multas: ['Reunión General'],
+					total_pagar: 8.5,
+				},
+			];
+
+			this.calcularResumen();
+			this.isLoading = false;
+		}, 800);
 	}
 
-	/**
-	 * Se llama al hacer clic en "Generar Factura"
-	 */
-	onGenerarFactura(lectura: LecturaPendiente): void {
-		this.confirmationService.confirm({
-			message: `¿Desea generar la factura para el medidor <strong>${lectura.medidor.codigo}</strong> (Socio: ${lectura.socio.nombres})?`,
-			header: 'Confirmar Generación',
-			icon: 'pi pi-file-export',
-			acceptLabel: 'Sí, generar',
-			rejectLabel: 'Cancelar',
-			accept: () => {
-				this.generarFactura(lectura);
-			},
-		});
+	calcularResumen() {
+		this.totalPlanillas = this.lecturasPendientes.length;
+		// Usamos reduce para sumar (si monto_agua es undefined, suma 0)
+		this.totalAgua = this.lecturasPendientes.reduce((acc, item) => acc + (item.monto_agua || 0), 0);
+		this.totalMultas = this.lecturasPendientes.reduce((acc, item) => acc + (item.multas_mingas || 0), 0);
+		this.granTotal = this.totalAgua + this.totalMultas;
 	}
 
-	/**
-	 * Llama a la API REAL para crear la factura
-	 */
-	private generarFactura(lectura: LecturaPendiente): void {
-		this.isGenerating = true;
+	generarEmisionMasiva() {
+		if (this.totalPlanillas === 0) return;
 
-		// Formateamos la fecha de hoy a YYYY-MM-DD
-		const hoy = this.datePipe.transform(new Date(), 'yyyy-MM-dd')!;
+		this.isProcessing = true;
 
-		const dto: GenerarFacturaDTO = {
-			lectura_id: lectura.id,
-			fecha_emision: hoy,
-			// (La fecha de vencimiento se calcula en el backend)
-		};
+		// Simulación de llamada al servicio
+		setTimeout(() => {
+			this.messageService.add({
+				severity: 'success',
+				summary: 'Emisión Exitosa',
+				detail: `Se generaron ${this.totalPlanillas} facturas por un total de $${this.granTotal.toFixed(2)}. Estado: PENDIENTE`,
+			});
 
-		this.facturaService
-			.generarFactura(dto)
-			.pipe(
-				tap((response) => {
-					this.isGenerating = false;
-					this.errorService.showSuccess(`¡Factura #${response.id} generada por $${response.total}!`);
-
-					// Quitamos la lectura de la lista de pendientes (simulación)
-					this.lecturasPendientes = this.lecturasPendientes.filter((l) => l.id !== lectura.id);
-				}),
-				catchError((err) => {
-					this.isGenerating = false;
-					this.errorService.showError(err.message);
-					return of(null);
-				}),
-			)
-			.subscribe();
+			// Limpiar tabla (simulando que ya se procesaron y ya no están pendientes)
+			this.lecturasPendientes = [];
+			this.calcularResumen();
+			this.isProcessing = false;
+		}, 1500);
 	}
 }
