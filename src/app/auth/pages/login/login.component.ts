@@ -1,10 +1,7 @@
-// src/app/auth/components/login.component.ts
-
 import { Component, OnInit, inject } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { finalize } from 'rxjs/operators';
 
 // PrimeNG
 import { ButtonModule } from 'primeng/button';
@@ -15,11 +12,8 @@ import { FloatLabelModule } from 'primeng/floatlabel';
 import { ToastModule } from 'primeng/toast';
 import { MessageModule } from 'primeng/message';
 
-// Servicios y Tipos
+// Servicios
 import { ErrorService } from '../../core/services/error.service';
-import { AuthService } from '../../../core/services/auth.service';
-import { LoadingService } from '../../../core/services/loading.service';
-import { RolUsuario } from '../../../core/models/role.enum'; // Asumimos esta ruta
 
 @Component({
 	selector: 'amc-login',
@@ -41,14 +35,17 @@ import { RolUsuario } from '../../../core/models/role.enum'; // Asumimos esta ru
 })
 export default class LoginComponent implements OnInit {
 	loginForm!: FormGroup;
-	// La variable isLoading se puede dejar, aunque LoadingService la gestiona globalmente
 	isLoading = false;
 
 	private fb = inject(FormBuilder);
 	private router = inject(Router);
 	private errorService = inject(ErrorService);
-	private authService = inject(AuthService);
-	private loadingService = inject(LoadingService); // ⬅️ Inyección del servicio
+
+	// Usuario simulado
+	private readonly mockUser = {
+		username: 'admin',
+		password: '123456',
+	};
 
 	ngOnInit(): void {
 		this.loginForm = this.fb.group({
@@ -64,56 +61,25 @@ export default class LoginComponent implements OnInit {
 			return;
 		}
 
+		const { username, password } = this.loginForm.value;
+
 		this.isLoading = true;
-		this.loadingService.show();
 
-		this.authService
-			.login(this.loginForm.value)
-			.pipe(
-				finalize(() => {
-					this.isLoading = false;
-					this.loadingService.hide(); // Oculta el loading al finalizar (éxito o error)
-				}),
-			)
-			.subscribe({
-				next: (user) => {
-					// ⬅️ LÓGICA CORREGIDA: El AuthService ya maneja el éxito y devuelve el usuario
-					if (user && user.rol) {
-						// Ya se mostró el mensaje de éxito en el AuthService
-						this.redirectByRole(user.rol as RolUsuario); // Redirige usando el rol
-					} else {
-						// Esto solo ocurriría si el Backend devuelve un objeto vacío (caso raro)
-						this.errorService.loginError('Respuesta de usuario incompleta.');
-					}
-				},
-				error: (err) => {
-					// El AuthService YA LLAMÓ a this.errorService.loginError() en el catchError.
-					// Aquí solo necesitamos manejar la acción de reseteo si queremos.
-					this.loginForm.reset();
-					console.error('Error en el componente login:', err);
-				},
-			});
-	}
+		setTimeout(() => {
+			this.isLoading = false;
 
-	// src/app/auth/components/login/login.component.ts
+			if (username === this.mockUser.username && password === this.mockUser.password) {
+				// Login correcto
+				this.errorService.loginSuccess();
 
-	// ✅ REDIRECCIÓN BASADA EN RolUsuario
-	private redirectByRole(role: RolUsuario): void {
-		switch (role) {
-			case RolUsuario.ADMIN:
+				// Redirección al home
 				this.router.navigate(['/dashboard/home']);
-				break;
-			case RolUsuario.TESORERO:
-				this.router.navigate(['/dashboard/socios']);
-				break;
-			case RolUsuario.OPERADOR:
-				this.router.navigate(['/dashboard/lecturas']);
-				break;
-			case RolUsuario.SOCIO:
-				this.router.navigate(['/dashboard/pagos']);
-				break;
-			default:
-				this.router.navigate(['/dashboard/home']);
-		}
+			} else {
+				// Login incorrecto
+				this.errorService.loginError('Usuario o contraseña incorrectos.');
+				// Limpiar inputs
+				this.loginForm.reset();
+			}
+		}, 1000); // Simulamos 1s de carga
 	}
 }

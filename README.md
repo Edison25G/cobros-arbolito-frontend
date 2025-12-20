@@ -1,97 +1,67 @@
-Aplicación Web para la Gestión de Cobros "El Arbolito" (Tesis)
+# Aplicación Web para la Gestión de Cobros "El Arbolito" (Tesis)
 
-Este proyecto fue generado utilizando Angular CLI v20.0.1.
-La aplicación corresponde al frontend del sistema de gestión de cobros desarrollado como parte de la tesis "Desarrollo de una aplicación web para la gestión de cobros utilizando herramientas de inteligencia artificial generativa".
+This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 20.0.1.
 
-🚀 Requisitos Previos
+## Development server
 
-Asegúrate de tener instalados:
+To start a local development server, run:
 
-Node.js 18+
+```bash
+ng serve
+```
 
-Angular CLI 20+
+Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
 
-Git
+## Code scaffolding
 
-🧩 Instalación del Proyecto
+Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
 
-1. Clonar el repositorio (solo la primera vez)
+```bash
+ng generate component component-name
+```
+
+For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+
+```bash
+ng generate --help
+```
+
+## Building
+
+To build the project run:
+
+```bash
+ng build
+```
+
+This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+
+## Running unit tests
+
+To execute unit tests with the [Karma](https://karma-runner.github.io) test runner, use the following command:
+
+```bash
+ng test
+```
+
+## Running end-to-end tests
+
+For end-to-end (e2e) testing, run:
+
+```bash
+ng e2e
+```
+
+Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+
+## Additional Resources
+
+For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+
+1. Clonar el Proyecto (Solo la primera vez)
    git clone https://github.com/Edison25G/sigaf-frontend.git
    cd sigaf-frontend
-
-2. Instalar dependencias (solo la primera vez)
+2. Instalar Dependencias (Solo la primera vez)
    npm install
-
-3. Moverse a la rama develop (IMPORTANTE)
-
-Todos los desarrolladores deben trabajar SIEMPRE desde la rama develop.
-
-git checkout develop
-
-🪄 Scripts principales
-▶️ Iniciar servidor de desarrollo
-ng serve
-
-Luego abre en el navegador:
-
-http://localhost:4200/
-
-🏗️ Construir la aplicación
-ng build
-
-Los archivos generados estarán en la carpeta dist/.
-
-🛠️ Generar componentes, servicios, módulos, etc.
-ng generate component nombre-componente
-
-Ver más opciones:
-
-ng generate --help
-
-🌲 Flujo de trabajo con Git (Recomendado)
-🔹 1. Actualizar rama develop
-git checkout develop
-git pull
-
-🔹 2. Crear una rama para tu tarea
-git checkout -b feature/nombre-de-la-tarea
-
-🔹 3. Subir los cambios
-git add .
-git commit -m "Descripción clara del cambio"
-git push --set-upstream origin feature/nombre-de-la-tarea
-
-🔹 4. Crear un Pull Request → hacia develop
-
-Nunca subas cambios directamente a main.
-
-🧪 Pruebas
-Unit Tests
-ng test
-
-End-to-End (E2E)
-ng e2e
-
-📁 Estructura Recomendada del Proyecto
-src/
-└── app/
-├── core/ # Servicios, interceptores, guardias
-├── shared/ # Componentes reutilizables
-├── auth/ # Login / Registro
-└── features/ # Módulos funcionales del sistema
-
-🧑‍🤝‍🧑 Colaboración
-
-La rama main se usa SOLO para versiones estables.
-
-La rama develop es la base de trabajo del equipo.
-
-Cada colaborador debe crear ramas nuevas para sus tareas.
-
-📚 Recursos Útiles
-
-Documentación Angular CLI:
-https://angular.dev/tools/cli
-
-Documentación PrimeNG:
-https://primeng.org/
+3. Moverse a la Rama develop (¡El paso clave!) Ellos nunca deben trabajar en main. Deben empezar desde develop.
+   git checkout develop
