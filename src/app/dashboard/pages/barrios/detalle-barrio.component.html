@@ -1,0 +1,123 @@
+<p-toast></p-toast>
+<div class="card p-4 bg-white rounded-xl shadow-sm border border-gray-100 animate-fade-in">
+	<div class="flex items-start sm:items-center gap-4 mb-6 pb-4 border-b border-gray-100">
+		<p-button
+			icon="pi pi-arrow-left"
+			[rounded]="true"
+			[text]="true"
+			severity="secondary"
+			pTooltip="Volver al listado de barrios"
+			tooltipPosition="bottom"
+			(onClick)="goBack()"
+		>
+		</p-button>
+
+		<div class="flex-1">
+			<div class="flex flex-col gap-1">
+				<h2 class="text-2xl font-bold text-gray-800 m-0">Barrio: {{ nombreBarrio }}</h2>
+
+				<div class="flex flex-wrap gap-2 text-sm mt-1" *ngIf="!loading">
+					<span class="text-gray-600 font-bold bg-gray-100 px-2 py-1 rounded-md border border-gray-200">
+						Total: {{ stats.total }}
+					</span>
+					<span class="text-green-700 font-bold bg-green-50 px-2 py-1 rounded-md border border-green-100">
+						<i class="pi pi-check-circle text-xs mr-1"></i>{{ stats.activos }} Activos
+					</span>
+					<span
+						class="text-red-600 font-bold bg-red-50 px-2 py-1 rounded-md border border-red-100"
+						*ngIf="stats.inactivos > 0"
+					>
+						<i class="pi pi-exclamation-circle text-xs mr-1"></i>{{ stats.inactivos }} Inactivos
+					</span>
+				</div>
+			</div>
+			<p class="text-sm text-gray-500 mt-2">Listado de socios residentes en este sector</p>
+		</div>
+	</div>
+
+	<p-table
+		#dt
+		[value]="sociosDelBarrio"
+		[loading]="loading"
+		[paginator]="true"
+		[rows]="10"
+		[globalFilterFields]="['nombres', 'apellidos', 'cedula']"
+		styleClass="p-datatable-sm"
+		[rowHover]="true"
+		[tableStyle]="{ 'min-width': '50rem' }"
+	>
+		<ng-template pTemplate="caption">
+			<div class="flex justify-end">
+				<p-iconfield iconPosition="left" class="w-full sm:w-auto">
+					<p-inputicon styleClass="pi pi-search" />
+					<input
+						pInputText
+						type="text"
+						(input)="dt.filterGlobal($any($event.target).value, 'contains')"
+						placeholder="Buscar socio en este barrio..."
+						class="w-full sm:w-64"
+					/>
+				</p-iconfield>
+			</div>
+		</ng-template>
+
+		<ng-template pTemplate="header">
+			<tr>
+				<th pSortableColumn="cedula">Cédula <p-sortIcon field="cedula"></p-sortIcon></th>
+				<th pSortableColumn="nombres">Nombre <p-sortIcon field="nombres"></p-sortIcon></th>
+				<th pSortableColumn="esta_activo">Estado <p-sortIcon field="esta_activo"></p-sortIcon></th>
+				<th class="text-center">Acciones</th>
+			</tr>
+		</ng-template>
+
+		<ng-template pTemplate="body" let-socio>
+			<tr>
+				<td class="font-medium text-gray-600">{{ socio.cedula }}</td>
+
+				<td class="font-bold text-gray-800">
+					{{ socio.nombres }} {{ socio.apellidos }}
+					<div class="text-xs text-gray-400 font-normal" *ngIf="socio.telefono">
+						<i class="pi pi-phone text-[10px]"></i> {{ socio.telefono }}
+					</div>
+				</td>
+
+				<td>
+					<p-tag
+						[value]="socio.esta_activo ? 'Activo' : 'Inactivo'"
+						[severity]="socio.esta_activo ? 'success' : 'danger'"
+						[rounded]="true"
+					>
+					</p-tag>
+				</td>
+
+				<td class="text-center">
+					<p-button
+						icon="pi pi-eye"
+						rounded
+						outlined
+						severity="help"
+						size="small"
+						pTooltip="Ver perfil completo"
+						tooltipPosition="top"
+						(onClick)="verPerfilSocio(socio.id)"
+					>
+					</p-button>
+				</td>
+			</tr>
+		</ng-template>
+
+		<ng-template pTemplate="emptymessage">
+			<tr>
+				<td colspan="4" class="text-center p-8">
+					<div class="flex flex-col items-center justify-center text-gray-500">
+						<i class="pi pi-users text-4xl mb-2 text-gray-300"></i>
+						<p>
+							No se encontraron socios en el barrio <strong>{{ nombreBarrio }}</strong
+							>.
+						</p>
+					</div>
+				</td>
+			</tr>
+		</ng-template>
+	</p-table>
+</div>

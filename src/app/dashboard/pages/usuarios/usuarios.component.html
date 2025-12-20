@@ -1,0 +1,231 @@
+<!-- Toast y ConfirmDialog -->
+<p-toast></p-toast>
+<p-confirmDialog [style]="{ width: '450px' }"></p-confirmDialog>
+
+<!-- Encabezado y Botón "Nuevo Usuario" (Estilo Socios) -->
+<section class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+	<div>
+		<h2 class="text-2xl font-bold text-gray-800">Gestión de Personal</h2>
+		<p class="text-sm text-gray-500">Administra las cuentas de acceso al sistema</p>
+	</div>
+
+	<button
+		type="button"
+		(click)="openNew()"
+		class="px-6 py-3 rounded-full flex items-center gap-2 bg-[#23A455] shadow-lg transition-colors duration-300 group hover:bg-[#1b8744]"
+	>
+		<i class="pi pi-user-plus text-[20px]" style="color: #ffffff"></i>
+		<span class="text-white font-semibold">Nuevo Usuario</span>
+	</button>
+</section>
+
+<!-- Tabla de Usuarios -->
+<div class="p-1 rounded-2xl shadow-sm border border-gray-200 bg-white">
+	<p-table
+		#dt
+		[value]="usuarios"
+		[loading]="loading"
+		[paginator]="true"
+		[rows]="10"
+		[rowsPerPageOptions]="[5, 10, 20]"
+		[globalFilterFields]="['username', 'first_name', 'last_name', 'email', 'rol']"
+		dataKey="id"
+		[rowHover]="true"
+		currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} usuarios"
+		[showCurrentPageReport]="true"
+		[tableStyle]="{ 'min-width': '60rem' }"
+	>
+		<!-- Caption con Buscador -->
+		<ng-template pTemplate="caption">
+			<div class="flex flex-col sm:flex-row items-center justify-between gap-3 p-2">
+				<span class="text-xl font-semibold text-gray-800">Listado de Usuarios</span>
+				<p-iconfield iconPosition="left" class="w-full sm:w-auto">
+					<p-inputicon styleClass="pi pi-search" />
+					<input
+						pInputText
+						type="text"
+						placeholder="Buscar usuario, nombre..."
+						(input)="dt.filterGlobal($any($event.target).value, 'contains')"
+						class="w-full sm:w-72"
+					/>
+				</p-iconfield>
+			</div>
+		</ng-template>
+
+		<!-- Encabezados -->
+		<ng-template pTemplate="header">
+			<tr>
+				<th pSortableColumn="username" style="width: 20%">Usuario <p-sortIcon field="username" /></th>
+				<th pSortableColumn="first_name" style="width: 25%">Nombre Completo <p-sortIcon field="first_name" /></th>
+				<th pSortableColumn="rol" style="width: 15%">Rol <p-sortIcon field="rol" /></th>
+				<th pSortableColumn="is_active" style="width: 15%">Estado <p-sortIcon field="is_active" /></th>
+				<th style="width: 25%" class="text-center">Acciones</th>
+			</tr>
+		</ng-template>
+
+		<!-- Cuerpo de la Tabla -->
+		<ng-template pTemplate="body" let-user>
+			<tr>
+				<td>
+					<span class="font-bold text-gray-800">{{ user.username }}</span>
+					<div class="text-xs text-gray-500">{{ user.email || 'Sin correo' }}</div>
+				</td>
+				<td class="text-gray-700">{{ user.first_name }} {{ user.last_name }}</td>
+				<td>
+					<p-tag
+						[value]="user.rol"
+						[severity]="user.rol === 'Administrador' ? 'danger' : user.rol === 'Tesorero' ? 'warn' : 'info'"
+						[rounded]="true"
+					>
+					</p-tag>
+				</td>
+				<td>
+					<p-tag
+						[value]="user.is_active ? 'Activo' : 'Inactivo'"
+						[severity]="user.is_active ? 'success' : 'secondary'"
+						icon="{{ user.is_active ? 'pi pi-check' : 'pi pi-times' }}"
+					>
+					</p-tag>
+				</td>
+				<td class="flex justify-center gap-2">
+					<p-button
+						icon="pi pi-pencil"
+						[rounded]="true"
+						[text]="true"
+						severity="secondary"
+						pTooltip="Editar"
+						tooltipPosition="top"
+						(onClick)="editUsuario(user)"
+					>
+					</p-button>
+					<p-button
+						icon="pi pi-trash"
+						[rounded]="true"
+						[text]="true"
+						severity="danger"
+						pTooltip="Eliminar"
+						tooltipPosition="top"
+						(onClick)="deleteUsuario(user)"
+					>
+					</p-button>
+				</td>
+			</tr>
+		</ng-template>
+
+		<!-- Mensaje Vacío -->
+		<ng-template pTemplate="emptymessage">
+			<tr>
+				<td colspan="5" class="text-center p-8">
+					<div class="flex flex-col items-center justify-center text-gray-500">
+						<i class="pi pi-users text-4xl mb-2"></i>
+						<p>No se encontraron usuarios registrados.</p>
+					</div>
+				</td>
+			</tr>
+		</ng-template>
+	</p-table>
+</div>
+
+<!-- MODAL DE REGISTRO/EDICIÓN -->
+<p-dialog
+	[(visible)]="dialogVisible"
+	[modal]="true"
+	[closable]="true"
+	header="{{ isEditMode ? 'Editar Usuario' : 'Registrar Nuevo Usuario' }}"
+	[style]="{ width: '600px', maxWidth: '90vw' }"
+	[draggable]="false"
+	[resizable]="false"
+	styleClass="p-fluid"
+>
+	<form [formGroup]="userForm" class="flex flex-col gap-5 pt-2">
+		<!-- Fila 1: Nombres y Apellidos -->
+		<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+			<div class="flex flex-col gap-2">
+				<label for="first_name" class="font-semibold text-gray-700">Nombres</label>
+				<input pInputText id="first_name" formControlName="first_name" placeholder="Ej. Juan Andrés" />
+				<small *ngIf="userForm.get('first_name')?.invalid && userForm.get('first_name')?.touched" class="text-red-500">
+					Nombres requeridos.
+				</small>
+			</div>
+			<div class="flex flex-col gap-2">
+				<label for="last_name" class="font-semibold text-gray-700">Apellidos</label>
+				<input pInputText id="last_name" formControlName="last_name" placeholder="Ej. Pérez Loor" />
+				<small *ngIf="userForm.get('last_name')?.invalid && userForm.get('last_name')?.touched" class="text-red-500">
+					Apellidos requeridos.
+				</small>
+			</div>
+		</div>
+
+		<!-- Fila 2: Usuario y Email -->
+		<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+			<div class="flex flex-col gap-2">
+				<label for="username" class="font-semibold text-gray-700">Nombre de Usuario</label>
+				<input pInputText id="username" formControlName="username" placeholder="Ej. tesorero2025" />
+				<small *ngIf="userForm.get('username')?.invalid && userForm.get('username')?.touched" class="text-red-500">
+					Usuario requerido.
+				</small>
+			</div>
+			<div class="flex flex-col gap-2">
+				<label for="email" class="font-semibold text-gray-700">Correo Electrónico</label>
+				<input pInputText id="email" formControlName="email" placeholder="correo@ejemplo.com" />
+			</div>
+		</div>
+
+		<!-- Fila 3: Rol (Select) -->
+		<div class="flex flex-col gap-2">
+			<label for="rol" class="font-semibold text-gray-700">Rol en el Sistema</label>
+			<p-select
+				[options]="roles"
+				formControlName="rol"
+				optionLabel="label"
+				optionValue="value"
+				placeholder="Seleccione un rol de acceso"
+				appendTo="body"
+				styleClass="w-full"
+			>
+			</p-select>
+			<small *ngIf="userForm.get('rol')?.invalid && userForm.get('rol')?.touched" class="text-red-500">
+				Debe asignar un rol.
+			</small>
+		</div>
+
+		<!-- Fila 4: Contraseña (Solo si no es edición o si quieres permitir cambiarla) -->
+		<div class="flex flex-col gap-2" *ngIf="!isEditMode">
+			<label for="password" class="font-semibold text-gray-700">Contraseña</label>
+			<p-password
+				id="password"
+				formControlName="password"
+				[toggleMask]="true"
+				[feedback]="true"
+				placeholder="Ingrese una contraseña segura"
+				styleClass="w-full"
+				[inputStyle]="{ width: '100%' }"
+			>
+			</p-password>
+			<small *ngIf="userForm.get('password')?.invalid && userForm.get('password')?.touched" class="text-red-500">
+				Mínimo 6 caracteres.
+			</small>
+		</div>
+	</form>
+
+	<ng-template pTemplate="footer">
+		<div class="flex justify-end gap-2 mt-4">
+			<p-button
+				label="Cancelar"
+				icon="pi pi-times"
+				[text]="true"
+				severity="secondary"
+				(onClick)="dialogVisible = false"
+			>
+			</p-button>
+			<p-button
+				label="{{ isEditMode ? 'Actualizar' : 'Guardar' }}"
+				icon="pi pi-check"
+				[loading]="loading && dialogVisible"
+				(onClick)="saveUsuario()"
+				[disabled]="userForm.invalid"
+			>
+			</p-button>
+		</div>
+	</ng-template>
+</p-dialog>

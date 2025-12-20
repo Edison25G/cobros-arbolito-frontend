@@ -1,0 +1,6 @@
+<div
+	*ngIf="isLoading$ | async"
+	class="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-900/60 backdrop-blur-sm"
+>
+	<p-progressSpinner styleClass="w-16 h-16" strokeWidth="4" animationDuration="1s"></p-progressSpinner>
+</div>

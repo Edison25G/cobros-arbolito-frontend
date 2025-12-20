@@ -1,40 +1,40 @@
+// src/app/app.config.ts
+
 import { ApplicationConfig, provideZoneChangeDetection } from '@angular/core';
-import { provideRouter, withHashLocation } from '@angular/router';
+// 1. ELIMINAMOS 'withHashLocation' de aquí
+import { provideRouter, withViewTransitions } from '@angular/router';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
-import {
-  provideHttpClient,
-  withInterceptorsFromDi,
-} from '@angular/common/http';
-import { HTTP_INTERCEPTORS } from '@angular/common/http';
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
+
 import { MessageService } from 'primeng/api';
-// import { TokenInterceptor } from './interceptors/token.interceptor';
 import { providePrimeNG } from 'primeng/config';
-import Aura from '@primeng/themes/aura';
-import { routes } from './app.routes';
 import { DialogService } from 'primeng/dynamicdialog';
+import Aura from '@primeuix/themes/aura';
+
+import { routes } from './app.routes';
+import { tokenInterceptor } from './interceptors/token-interceptor';
 
 export const appConfig: ApplicationConfig = {
-  providers: [
-    provideZoneChangeDetection({ eventCoalescing: true }),
-    provideRouter(routes, withHashLocation()),
-    provideAnimationsAsync(),
-    provideHttpClient(),
-    provideHttpClient(withInterceptorsFromDi()),
+	providers: [
+		provideZoneChangeDetection({ eventCoalescing: true }),
 
-    // {
-    //   provide: HTTP_INTERCEPTORS,
-    //   useClass: TokenInterceptor,
-    //   multi: true, // 👈 Necesario para poder registrar múltiples interceptores
-    // },
-    providePrimeNG({
-      theme: {
-        preset: Aura,
-        options: {
-          darkModeSelector: '.my-app-dark',
-        },
-      },
-    }),
-    MessageService,
-    DialogService,
-  ],
+		// 2. CORRECCIÓN: Dejamos solo 'routes' (y opcionalmente withViewTransitions para suavidad)
+		// ¡Adios al withHashLocation()!
+		provideRouter(routes, withViewTransitions()),
+
+		provideAnimationsAsync(),
+		provideHttpClient(withInterceptors([tokenInterceptor])),
+
+		providePrimeNG({
+			theme: {
+				preset: Aura,
+				options: {
+					darkModeSelector: '.my-app-dark',
+				},
+			},
+		}),
+
+		MessageService,
+		DialogService,
+	],
 };

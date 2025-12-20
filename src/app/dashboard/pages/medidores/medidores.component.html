@@ -1,0 +1,221 @@
+<p-toast></p-toast>
+<p-confirmDialog [style]="{ width: '450px' }"></p-confirmDialog>
+
+<div class="card p-4 bg-white rounded-xl shadow-sm border border-gray-100 animate-fade-in">
+	<div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+		<div>
+			<h2 class="text-2xl font-bold text-gray-800">Gestión de Medidores</h2>
+			<p class="text-sm text-gray-500">Administra los medidores y su asignación a socios</p>
+		</div>
+
+		<div class="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+			<p-iconfield class="w-full sm:w-64">
+				<p-inputicon styleClass="pi pi-search" />
+				<input
+					pInputText
+					type="text"
+					(input)="dt.filterGlobal($any($event.target).value, 'contains')"
+					placeholder="Buscar medidor..."
+					class="w-full"
+				/>
+			</p-iconfield>
+
+			<p-button
+				label="Nuevo Medidor"
+				icon="pi pi-plus"
+				(onClick)="openNewMedidorModal()"
+				styleClass="w-full sm:w-auto"
+			></p-button>
+		</div>
+	</div>
+
+	<div class="overflow-x-auto">
+		<p-table
+			#dt
+			[value]="medidores"
+			[loading]="isLoading"
+			[paginator]="true"
+			[rows]="10"
+			[rowsPerPageOptions]="[5, 10, 20]"
+			[globalFilterFields]="['codigo', 'socio_data.nombres', 'socio_data.cedula', 'observacion']"
+			dataKey="id"
+			[rowHover]="true"
+			[showCurrentPageReport]="true"
+			currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords}"
+			styleClass="p-datatable-sm min-w-[800px]"
+		>
+			<ng-template pTemplate="header">
+				<tr>
+					<th pSortableColumn="codigo" style="width: 15%">Código <p-sortIcon field="codigo" /></th>
+					<th pSortableColumn="socio_data.nombres" style="width: 30%">
+						Socio Asignado <p-sortIcon field="socio_data.nombres" />
+					</th>
+					<th pSortableColumn="tiene_medidor_fisico" style="width: 15%">
+						Tipo <p-sortIcon field="tiene_medidor_fisico" />
+					</th>
+					<th pSortableColumn="esta_activo" style="width: 15%">Estado <p-sortIcon field="esta_activo" /></th>
+					<th class="text-center" style="width: 15%">Acciones</th>
+				</tr>
+			</ng-template>
+
+			<ng-template pTemplate="body" let-medidor>
+				<tr>
+					<td class="font-bold text-gray-900">{{ medidor.codigo }}</td>
+					<td>
+						<div class="font-semibold text-gray-800">
+							{{ medidor.socio_data?.nombres }} {{ medidor.socio_data?.apellidos }}
+						</div>
+						<div class="text-xs text-gray-500">
+							<i class="pi pi-id-card text-[10px] mr-1"></i>
+							{{ medidor.socio_data?.cedula || 'Sin asignar' }}
+						</div>
+					</td>
+					<td>
+						<p-tag
+							[value]="medidor.tiene_medidor_fisico ? 'Físico' : 'Tarifa Fija'"
+							[severity]="medidor.tiene_medidor_fisico ? 'info' : 'secondary'"
+							[rounded]="true"
+						></p-tag>
+					</td>
+					<td>
+						<p-tag
+							[value]="medidor.esta_activo ? 'Activo' : 'Inactivo'"
+							[severity]="medidor.esta_activo ? 'success' : 'warn'"
+							[rounded]="true"
+						></p-tag>
+					</td>
+					<td class="text-center">
+						<div class="flex justify-center gap-2">
+							<p-button
+								icon="pi pi-pencil"
+								[rounded]="true"
+								[outlined]="true"
+								size="small"
+								(onClick)="openEditMedidorModal(medidor)"
+							>
+							</p-button>
+							<p-button
+								icon="pi pi-trash"
+								severity="danger"
+								[rounded]="true"
+								[text]="true"
+								size="small"
+								pTooltip="Desactivar"
+								tooltipPosition="top"
+								(onClick)="deleteMedidor(medidor.id)"
+							>
+							</p-button>
+						</div>
+					</td>
+				</tr>
+			</ng-template>
+
+			<ng-template pTemplate="emptymessage">
+				<tr>
+					<td colspan="5" class="text-center p-6 text-gray-500">No hay medidores registrados.</td>
+				</tr>
+			</ng-template>
+		</p-table>
+	</div>
+</div>
+
+<p-dialog
+	[(visible)]="showMedidorModal"
+	[modal]="true"
+	header="{{ isEditMode ? 'Editar Medidor' : 'Registrar Medidor' }}"
+	[breakpoints]="{ '960px': '75vw', '640px': '95vw' }"
+	[style]="{ width: '500px' }"
+	styleClass="p-fluid"
+	[draggable]="false"
+	[resizable]="false"
+	(onHide)="closeMedidorModal()"
+>
+	<form [formGroup]="medidorForm" (ngSubmit)="saveMedidor()" class="flex flex-col gap-5 pt-2">
+		<div class="flex flex-col gap-2">
+			<span class="font-bold text-sm text-gray-700">Asignar a Socio</span>
+			<p-select
+				formControlName="socio"
+				[options]="socios$ | async"
+				optionLabel="nombres"
+				placeholder="Seleccione un socio"
+				[filter]="true"
+				filterBy="nombres,apellidos,cedula"
+				appendTo="body"
+				styleClass="w-full"
+				[style]="{ width: '100%' }"
+				[ngClass]="{ 'ng-invalid ng-dirty': f['socio'].invalid && f['socio'].touched }"
+			>
+				<ng-template let-socio pTemplate="item">
+					<div class="flex flex-col">
+						<span class="font-semibold">{{ socio.nombres }} {{ socio.apellidos }}</span>
+						<span class="text-xs text-gray-500">{{ socio.cedula }}</span>
+					</div>
+				</ng-template>
+				<ng-template let-socio pTemplate="selectedItem">
+					<div class="flex flex-col">
+						<span>{{ socio.nombres }} {{ socio.apellidos }}</span>
+					</div>
+				</ng-template>
+			</p-select>
+			<small *ngIf="f['socio'].invalid && f['socio'].touched" class="text-red-500 text-xs">
+				Debe seleccionar un socio.
+			</small>
+		</div>
+
+		<div class="flex flex-col gap-2">
+			<span class="font-bold text-sm text-gray-700">Código del Medidor</span>
+			<input pInputText formControlName="codigo" placeholder="Ej: MED-004" class="w-full" />
+			<small *ngIf="f['codigo'].invalid && f['codigo'].touched" class="text-red-500 text-xs">
+				El código es requerido.
+			</small>
+		</div>
+
+		<div class="flex flex-col gap-2">
+			<span class="font-bold text-sm text-gray-700">Observación (Opcional)</span>
+			<textarea
+				pTextarea
+				formControlName="observacion"
+				rows="3"
+				class="w-full"
+				placeholder="Ej: Lote 5, casa esquinera..."
+			></textarea>
+		</div>
+
+		<div class="flex flex-col sm:flex-row gap-6 pt-2">
+			<div class="flex items-center gap-3">
+				<p-toggleSwitch inputId="switch_fisico" formControlName="tiene_medidor_fisico"></p-toggleSwitch>
+
+				<label for="switch_fisico" class="font-bold text-sm text-gray-700 cursor-pointer select-none">
+					¿Tiene medidor físico?
+				</label>
+			</div>
+
+			<div *ngIf="isEditMode" class="flex items-center gap-3">
+				<p-toggleSwitch inputId="switch_activo" formControlName="esta_activo"></p-toggleSwitch>
+
+				<label for="switch_activo" class="font-bold text-sm text-gray-700 cursor-pointer select-none">
+					¿Está activo?
+				</label>
+			</div>
+		</div>
+	</form>
+
+	<ng-template pTemplate="footer">
+		<div class="flex justify-end gap-2 mt-4">
+			<p-button
+				label="Cancelar"
+				icon="pi pi-times"
+				[text]="true"
+				severity="secondary"
+				(onClick)="closeMedidorModal()"
+			></p-button>
+			<p-button
+				label="{{ isEditMode ? 'Actualizar' : 'Guardar' }}"
+				icon="pi pi-check"
+				(onClick)="saveMedidor()"
+				[loading]="isLoading"
+				[disabled]="medidorForm.invalid"
+			></p-button>
+		</div>
+	</ng-template>
+</p-dialog>

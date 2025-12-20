@@ -1,1 +1,115 @@
-<p>reportes works!</p>
+<!-- p-toast es necesario para que funcione el ErrorService -->
+<p-toast></p-toast>
+
+<div class="animate-fade-in">
+	<!-- Encabezado -->
+	<div class="mb-6">
+		<h2 class="text-3xl font-extrabold text-gray-800 tracking-tight">Reportes y Estadísticas</h2>
+		<p class="text-lg text-gray-500 mt-1">Resumen general del estado del sistema.</p>
+	</div>
+
+	<!--
+    CASO 1: Cargando datos (isLoading = true)
+    Muestra "esqueletos" (skeletons) para evitar saltos de contenido.
+  -->
+	<div *ngIf="isLoading; else dataView">
+		<!-- Skeletons para las 4 tarjetas -->
+		<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+			<p-skeleton height="9rem" borderRadius="1rem" styleClass="w-full"></p-skeleton>
+			<p-skeleton height="9rem" borderRadius="1rem" styleClass="w-full"></p-skeleton>
+			<p-skeleton height="9rem" borderRadius="1rem" styleClass="w-full"></p-skeleton>
+			<p-skeleton height="9rem" borderRadius="1rem" styleClass="w-full"></p-skeleton>
+		</div>
+		<!-- Skeleton para el gráfico -->
+		<p-skeleton height="25rem" borderRadius="1rem" styleClass="w-full"></p-skeleton>
+	</div>
+
+	<!--
+    CASO 2: Datos cargados (isLoading = false)
+  -->
+	<ng-template #dataView>
+		<!--
+      CASO 2A: Hay datos (reporteData NO es null)
+    -->
+		<div *ngIf="reporteData; else emptyView" class="space-y-6">
+			<!-- Fila de Tarjetas (Cards) con Estadísticas -->
+			<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+				<!-- Card: Socios Activos -->
+				<p-card class="shadow-lg border-t-4 border-blue-500 rounded-xl">
+					<div class="flex items-center justify-between">
+						<div>
+							<span class="text-sm font-medium text-gray-500">Socios Activos</span>
+							<div class="text-3xl font-bold text-gray-800 mt-1">{{ reporteData.sociosActivos }}</div>
+						</div>
+						<div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
+							<i class="pi pi-users text-2xl text-blue-600"></i>
+						</div>
+					</div>
+				</p-card>
+
+				<!-- Card: Socios en Mora -->
+				<p-card class="shadow-lg border-t-4 border-red-500 rounded-xl">
+					<div class="flex items-center justify-between">
+						<div>
+							<span class="text-sm font-medium text-gray-500">Socios en Mora</span>
+							<div class="text-3xl font-bold text-red-600 mt-1">{{ reporteData.sociosEnMora }}</div>
+						</div>
+						<div class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
+							<i class="pi pi-exclamation-triangle text-2xl text-red-600"></i>
+						</div>
+					</div>
+				</p-card>
+
+				<!-- Card: Total Recaudado (Mes) -->
+				<p-card class="shadow-lg border-t-4 border-emerald-500 rounded-xl">
+					<div class="flex items-center justify-between">
+						<div>
+							<span class="text-sm font-medium text-gray-500">Recaudado (Mes)</span>
+							<div class="text-3xl font-bold text-emerald-600 mt-1">
+								{{ reporteData.totalRecaudadoMes | currency: 'USD' }}
+							</div>
+						</div>
+						<div class="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center">
+							<i class="pi pi-dollar text-2xl text-emerald-600"></i>
+						</div>
+					</div>
+				</p-card>
+
+				<!-- Card: Deuda Total -->
+				<p-card class="shadow-lg border-t-4 border-orange-500 rounded-xl">
+					<div class="flex items-center justify-between">
+						<div>
+							<span class="text-sm font-medium text-gray-500">Deuda Total (Global)</span>
+							<div class="text-3xl font-bold text-orange-600 mt-1">{{ reporteData.totalDeuda | currency: 'USD' }}</div>
+						</div>
+						<div class="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center">
+							<i class="pi pi-wallet text-2xl text-orange-600"></i>
+						</div>
+					</div>
+				</p-card>
+			</div>
+
+			<!-- Fila del Gráfico de Barras -->
+			<p-card class="shadow-lg rounded-xl">
+				<ng-template pTemplate="title">
+					<h3 class="text-xl font-bold text-gray-800">Recaudación Últimos 6 Meses</h3>
+				</ng-template>
+				<div class="relative h-96">
+					<p-chart type="bar" [data]="barChartData" [options]="barChartOptions" height="100%" width="100%"></p-chart>
+				</div>
+			</p-card>
+		</div>
+	</ng-template>
+
+	<!--
+    CASO 2B: No hay datos (isLoading = false Y reporteData es null)
+    (Esto solo pasaría si el servicio falla y devuelve null)
+  -->
+	<ng-template #emptyView>
+		<div class="text-center p-12 bg-white rounded-xl shadow-md border border-gray-100">
+			<i class="pi pi-info-circle text-6xl text-gray-300"></i>
+			<h3 class="text-xl font-bold text-gray-700 mt-4">No hay datos disponibles</h3>
+			<p class="text-gray-500">No se pudo cargar la información del reporte en este momento.</p>
+		</div>
+	</ng-template>
+</div>
