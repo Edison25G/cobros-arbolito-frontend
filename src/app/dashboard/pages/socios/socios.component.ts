@@ -83,7 +83,8 @@ export class SociosComponent implements OnInit {
 			cedula: ['', [Validators.required, Validators.pattern(/^\d{10}$/)]],
 			nombres: ['', Validators.required],
 			apellidos: ['', Validators.required],
-			barrio: ['', Validators.required],
+			barrio_id: [null, Validators.required],
+			direccion: ['', Validators.required],
 			rol: [RolUsuario.SOCIO, Validators.required],
 			email: ['', [Validators.email]],
 			telefono: [''],
@@ -255,5 +256,15 @@ export class SociosComponent implements OnInit {
 
 	filterGlobal(event: Event, dt: Table) {
 		dt.filterGlobal((event.target as HTMLInputElement).value, 'contains');
+	}
+	getNombreBarrio(id: any): string {
+		// Si la lista no ha cargado o el id es nulo
+		if (!this.listaBarrios || !id) return '---';
+
+		// Buscamos el barrio en la lista que ya tienes descargada
+		// Nota: Asegúrate que tu interfaz Barrio tenga 'id' y 'nombre'
+		const barrioEncontrado = this.listaBarrios.find((b) => b.id === Number(id));
+
+		return barrioEncontrado ? barrioEncontrado.nombre : 'Desconocido';
 	}
 }

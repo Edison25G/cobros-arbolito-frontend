@@ -146,14 +146,16 @@ export class DetalleSocioComponent implements OnInit {
 			this.terrenoForm.markAllAsTouched();
 			return;
 		}
-
+		const formValue = this.terrenoForm.value;
 		// Preparamos los datos para enviar al Backend
 		const datosParaEnviar = {
 			...this.terrenoForm.value,
-			socio: this.socioId, // ⚠️ IMPORTANTE: Hay que decirle de quién es el terreno
-
+			socio_id: this.socioId, // ⚠️ IMPORTANTE: Hay que decirle de quién es el terreno
+			barrio_id: formValue.barrio, // Aquí ahora va el ID gracias al cambio en el HTML
+			direccion: formValue.direccion,
 			// NOTA: Revisa con tu backend si quiere el NOMBRE ('Alpamalag') o el ID (1) del barrio.
 			// Si tu dropdown tiene optionValue="nombre", enviará el nombre.
+			codigo_medidor: formValue.tiene_medidor ? formValue.codigo_medidor : null,
 		};
 
 		this.terrenoService.createTerreno(datosParaEnviar).subscribe({
@@ -163,16 +165,17 @@ export class DetalleSocioComponent implements OnInit {
 					summary: 'Éxito',
 					detail: 'Propiedad registrada correctamente',
 				});
-
-				// Cerramos el modal
 				this.mostrarModalTerreno = false;
-
-				// Recargamos la lista para ver el nuevo terreno
 				this.cargarTerrenos();
 			},
 			error: (err) => {
 				console.error(err);
-				this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo guardar el terreno.' });
+				// Mensaje más descriptivo por si falla
+				this.messageService.add({
+					severity: 'error',
+					summary: 'Error',
+					detail: 'No se pudo guardar. Verifique que el código de medidor no esté repetido.',
+				});
 			},
 		});
 	}
@@ -203,5 +206,11 @@ export class DetalleSocioComponent implements OnInit {
 
 	volver(): void {
 		this.router.navigate(['/dashboard/socios']);
+	}
+
+	getNombreBarrio(id: any): string {
+		if (!this.listaBarrios || !id) return '---';
+		const barrioEncontrado = this.listaBarrios.find((b) => b.id === Number(id));
+		return barrioEncontrado ? barrioEncontrado.nombre : 'Desconocido';
 	}
 }

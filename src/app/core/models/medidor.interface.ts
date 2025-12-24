@@ -1,14 +1,25 @@
+import { Terreno } from '../interfaces/terreno.interface';
 import { Socio } from './socio.interface';
 
 export interface Medidor {
-	id: number;
-	// CAMBIO CLAVE: El backend manda 'socio_id', no 'socio'
-	socio_id: number;
+	id?: number;
 	codigo: string;
-	esta_activo: boolean;
-	observacion: string | null;
-	tiene_medidor_fisico: boolean;
+	estado: string; // 'ACTIVO' | 'INACTIVO' | 'DANADO'
+	lectura_inicial: number;
+	marca?: string;
+	observacion?: string;
 
-	// OPCIONAL: Esto lo llenaremos nosotros en el frontend
+	// Relación
+	terreno_id?: number;
+
+	// --- CAMPOS NUEVOS (QUE VIENEN DEL BACKEND) ---
+	nombre_barrio?: string; // <--- Nuevo
+	nombre_socio?: string; // <--- Nuevo
+
+	// Mantén estos por compatibilidad si tienes código viejo,
+	// pero ya no son los principales para la tabla
+	terreno_data?: Terreno;
 	socio_data?: Socio;
+	tiene_medidor_fisico?: boolean;
+	esta_activo?: boolean;
 }

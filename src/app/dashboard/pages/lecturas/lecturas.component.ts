@@ -66,7 +66,7 @@ export class LecturasComponent implements OnInit {
 
 	// Filtros Globales
 	fechaLectura: Date = new Date();
-	barrioSeleccionado: string | null = null;
+	barrioSeleccionado: number | null = null;
 
 	// Datos
 	barrios: any[] = [];
@@ -81,7 +81,7 @@ export class LecturasComponent implements OnInit {
 		this.barriosService.getBarrios().subscribe({
 			next: (data) => {
 				// Mapeamos para el dropdown de PrimeNG (label/value) y solo activos
-				this.barrios = data.filter((b) => b.activo).map((b) => ({ label: b.nombre, value: b.nombre }));
+				this.barrios = data.filter((b) => b.activo).map((b) => ({ label: b.nombre, value: b.id }));
 			},
 			error: (err) => console.error('Error cargando barrios', err),
 		});
@@ -98,7 +98,7 @@ export class LecturasComponent implements OnInit {
 			next: (medidores) => {
 				// 1. Filtramos por barrio y solo medidores físicos
 				const filtrados = medidores.filter(
-					(m) => m.tiene_medidor_fisico && m.socio_data?.barrio === this.barrioSeleccionado,
+					(m) => m.tiene_medidor_fisico && m.socio_data?.barrio_id === this.barrioSeleccionado,
 				);
 
 				// 2. Transformamos a formato de "Fila de Trabajo"
