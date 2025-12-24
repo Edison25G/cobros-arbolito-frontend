@@ -1,18 +1,20 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { Observable, throwError, forkJoin } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { Observable, throwError } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { environment } from '../../environments/environment.development';
+
+// Interfaces Actualizadas
 import { Medidor } from '../models/medidor.interface';
-import { Socio } from '../models/socio.interface'; // Importamos la interfaz Socio
-import { SocioService } from './socio.service'; // Importamos el servicio de Socios
+import { Socio } from '../models/socio.interface';
+import { SocioService } from './socio.service';
 
 @Injectable({
 	providedIn: 'root',
 })
 export class MedidorService {
 	private http = inject(HttpClient);
-	private socioService = inject(SocioService); // Inyectamos el servicio de socios
+	private socioService = inject(SocioService);
 
 	// URL del Backend
 	private baseUrl = `${environment.apiUrl}/medidores/`;
@@ -20,26 +22,13 @@ export class MedidorService {
 	constructor() {}
 
 	/**
-	 * 1. LISTAR MEDIDORES (Con "Join" de Frontend)
-	 * Trae medidores y socios al mismo tiempo y los une.
+	 * 1. LISTAR MEDIDORES
+	 * ✅ CAMBIO IMPORTANTE: Quitamos el "forkJoin".
+	 * Ahora esperamos que el Backend nos envíe el medidor con los datos del terreno/socio
+	 * usando un Serializer anidado (depth=1 o 2 en Django).
 	 */
 	getMedidores(): Observable<Medidor[]> {
-		const medidores$ = this.http.get<Medidor[]>(this.baseUrl);
-		const socios$ = this.socioService.getSocios();
-
-		return forkJoin([medidores$, socios$]).pipe(
-			map(([medidores, socios]) => {
-				return medidores.map((medidor) => {
-					// Buscamos el socio dueño de este medidor por ID
-					const socioEncontrado = socios.find((s) => s.id === medidor.socio_id);
-					return {
-						...medidor,
-						socio_data: socioEncontrado, // Rellenamos el dato extra para la tabla
-					};
-				});
-			}),
-			catchError(this.handleError),
-		);
+		return this.http.get<Medidor[]>(this.baseUrl).pipe(catchError(this.handleError));
 	}
 
 	/**
@@ -51,25 +40,19 @@ export class MedidorService {
 
 	/**
 	 * 3. CREAR MEDIDOR
+	 * Aquí recibimos los datos del formulario.
+	 * NOTA: Si tu formulario envía 'socio_id', el backend tendrá que ser inteligente
+	 * para buscar el terreno de ese socio, o el formulario deberá enviar 'terreno_id'.
 	 */
 	createMedidor(medidorData: any): Observable<Medidor> {
-		// Aseguramos enviar 'socio_id' al backend
-		const payload = {
-			...medidorData,
-			socio_id: medidorData.socio || medidorData.socio_id,
-		};
-		return this.http.post<Medidor>(this.baseUrl, payload).pipe(catchError(this.handleError));
+		return this.http.post<Medidor>(this.baseUrl, medidorData).pipe(catchError(this.handleError));
 	}
 
 	/**
 	 * 4. ACTUALIZAR MEDIDOR
 	 */
 	updateMedidor(id: number, medidorData: any): Observable<Medidor> {
-		const payload = {
-			...medidorData,
-			...(medidorData.socio && { socio_id: medidorData.socio }),
-		};
-		return this.http.patch<Medidor>(`${this.baseUrl}${id}/`, payload).pipe(catchError(this.handleError));
+		return this.http.patch<Medidor>(`${this.baseUrl}${id}/`, medidorData).pipe(catchError(this.handleError));
 	}
 
 	/**
@@ -80,18 +63,20 @@ export class MedidorService {
 	}
 
 	/**
-	 * ✅ 6. OBTENER SOCIOS PARA EL DROPDOWN (EL QUE FALTABA)
-	 * Simplemente reutiliza el servicio de socios que ya inyectamos.
+	 * 6. OBTENER SOCIOS PARA EL DROPDOWN
+	 * Mantenemos esto porque tu modal de "Gestión de Medidores"
+	 * todavía necesita listar los socios para elegir dueño.
 	 */
 	getSociosParaDropdown(): Observable<Socio[]> {
 		return this.socioService.getSocios();
 	}
 
-	// Manejo de errores
+	// Manejo de errores estándar
 	private handleError(error: HttpErrorResponse) {
 		let errorMessage = 'Error desconocido';
 		if (error.error) {
-			errorMessage = JSON.stringify(error.error);
+			// Intentamos mostrar el mensaje exacto que manda Django
+			errorMessage = JSON.stringify(error.error).replace(/["{}]/g, '');
 		}
 		console.error('Backend Error:', error);
 		return throwError(() => new Error(errorMessage));

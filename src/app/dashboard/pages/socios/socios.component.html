@@ -64,7 +64,7 @@
 						<div class="font-bold text-gray-800">{{ socio.nombres }} {{ socio.apellidos }}</div>
 						<div class="text-xs text-gray-500">{{ socio.email || socio.telefono || 'Sin contacto' }}</div>
 					</td>
-					<td class="text-gray-700">{{ socio.barrio }}</td>
+					<td class="text-gray-700">{{ getNombreBarrio(socio.barrio) }}</td>
 					<td>
 						<p-tag
 							[value]="socio.rol"
@@ -159,7 +159,7 @@
 					[options]="listaBarrios"
 					formControlName="barrio"
 					optionLabel="nombre"
-					optionValue="nombre"
+					optionValue="id"
 					placeholder="Seleccione un barrio"
 					[showClear]="true"
 					appendTo="body"
