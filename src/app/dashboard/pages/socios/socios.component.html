@@ -152,12 +152,11 @@
 				</small>
 			</div>
 
-			<!-- ✅ CAMPO BARRIO CON DROPDOWN (INTEGRADO AQUÍ) -->
 			<div class="flex flex-col gap-2">
-				<label for="barrio" class="font-bold text-sm text-gray-700">Barrio</label>
+				<label for="barrio_id" class="font-bold text-sm text-gray-700">Barrio *</label>
 				<p-select
 					[options]="listaBarrios"
-					formControlName="barrio"
+					formControlName="barrio_id"
 					optionLabel="nombre"
 					optionValue="id"
 					placeholder="Seleccione un barrio"
@@ -167,9 +166,16 @@
 					emptyMessage="No hay barrios registrados"
 				>
 				</p-select>
-				<!-- Validación visual para barrio -->
-				<small *ngIf="f['barrio'].invalid && f['barrio'].touched" class="text-red-500 text-xs">
+				<small *ngIf="f['barrio_id'].invalid && f['barrio_id'].touched" class="text-red-500 text-xs">
 					El barrio es obligatorio.
+				</small>
+			</div>
+
+			<div class="flex flex-col gap-2">
+				<label for="direccion" class="font-bold text-sm text-gray-700">Dirección Exacta *</label>
+				<input pInputText formControlName="direccion" placeholder="Ej: Calle Principal S/N y Pasaje 2" class="w-full" />
+				<small *ngIf="f['direccion'].invalid && f['direccion'].touched" class="text-red-500 text-xs">
+					La dirección es obligatoria.
 				</small>
 			</div>
 		</div>

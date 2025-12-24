@@ -150,7 +150,7 @@ export class DetalleSocioComponent implements OnInit {
 		// Preparamos los datos para enviar al Backend
 		const datosParaEnviar = {
 			...this.terrenoForm.value,
-			socio: this.socioId, // ⚠️ IMPORTANTE: Hay que decirle de quién es el terreno
+			socio_id: this.socioId, // ⚠️ IMPORTANTE: Hay que decirle de quién es el terreno
 			barrio_id: formValue.barrio, // Aquí ahora va el ID gracias al cambio en el HTML
 			direccion: formValue.direccion,
 			// NOTA: Revisa con tu backend si quiere el NOMBRE ('Alpamalag') o el ID (1) del barrio.
@@ -206,5 +206,11 @@ export class DetalleSocioComponent implements OnInit {
 
 	volver(): void {
 		this.router.navigate(['/dashboard/socios']);
+	}
+
+	getNombreBarrio(id: any): string {
+		if (!this.listaBarrios || !id) return '---';
+		const barrioEncontrado = this.listaBarrios.find((b) => b.id === Number(id));
+		return barrioEncontrado ? barrioEncontrado.nombre : 'Desconocido';
 	}
 }

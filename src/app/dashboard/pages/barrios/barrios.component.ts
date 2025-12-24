@@ -106,7 +106,8 @@ export class BarriosComponent implements OnInit {
 		this.socioService.getSocios().subscribe({
 			next: (socios) => {
 				socios.forEach((socio) => {
-					const barrioEncontrado = this.barrios.find((b) => b.nombre === socio.barrio);
+					const barrioEncontrado = // Buscamos por ID, que es mucho más seguro
+						this.barrios.find((b) => b.id === socio.barrio_id);
 					if (barrioEncontrado) {
 						barrioEncontrado.cantidadSocios = (barrioEncontrado.cantidadSocios || 0) + 1;
 						if (socio.esta_activo) {

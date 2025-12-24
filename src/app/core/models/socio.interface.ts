@@ -5,9 +5,10 @@ export interface Socio {
 	cedula: string;
 	nombres: string;
 	apellidos: string;
-	barrio: string;
-	rol: RolUsuario; // Usa el Enum
 	email: string | null;
-	telefono: string | null;
+	telefono?: string;
+	barrio_id: number;
+	direccion: string;
+	rol: RolUsuario; // Usa el Enum
 	esta_activo: boolean;
 }

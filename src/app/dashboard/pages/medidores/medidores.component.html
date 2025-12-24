@@ -62,16 +62,32 @@
 					<td>
 						<div class="flex items-center gap-2">
 							<i class="pi pi-map-marker text-gray-400"></i>
-							<span>{{ item.terreno_data?.barrio_data?.nombre || 'Sin Asignar' }}</span>
+							<span class="font-medium text-gray-700">
+								{{ item.nombre_barrio || 'Sin Asignar' }}
+							</span>
 						</div>
-						<div class="text-xs text-gray-400 pl-6">{{ item.terreno_data?.direccion }}</div>
+						<div class="text-xs text-gray-400 pl-6" *ngIf="item.terreno_data">
+							{{ item.terreno_data.direccion }}
+						</div>
 					</td>
 
 					<td>
-						<span *ngIf="item.terreno_data?.socio" class="font-medium text-blue-800">
-							{{ item.terreno_data?.socio?.nombres }} {{ item.terreno_data?.socio?.apellidos }}
-						</span>
-						<span *ngIf="!item.terreno_data?.socio" class="text-gray-400 italic">En bodega / Sin uso</span>
+						<div *ngIf="item.terreno_id" class="flex flex-col">
+							<span class="font-bold text-blue-800">
+								{{ item.nombre_socio }}
+							</span>
+							<span class="text-xs text-green-600 flex items-center gap-1">
+								<i class="pi pi-check-circle text-[10px]"></i> Instalado
+							</span>
+						</div>
+
+						<div
+							*ngIf="!item.terreno_id"
+							class="flex items-center gap-2 text-gray-400 italic bg-gray-50 px-2 py-1 rounded-md border border-gray-100 w-fit"
+						>
+							<i class="pi pi-box"></i>
+							<span>En bodega / Sin uso</span>
+						</div>
 					</td>
 
 					<td>

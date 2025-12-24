@@ -15,6 +15,7 @@ import { ToastModule } from 'primeng/toast'; // Opcional, por si quieres mensaje
 
 // Servicios e Interfaces
 import { SocioService } from '../../../core/services/socio.service'; // Ajusta la ruta
+import { BarriosService } from '../../../core/services/barrios.service';
 import { Socio } from '../../../core/models/socio.interface';
 
 @Component({
@@ -38,9 +39,10 @@ export class DetalleBarrioComponent implements OnInit {
 	private route = inject(ActivatedRoute);
 	private router = inject(Router);
 	private socioService = inject(SocioService);
-
+	private barriosService = inject(BarriosService);
 	// Datos
-	nombreBarrio = '';
+	barrioId!: number;
+	nombreBarrio = 'Cargando...';
 	sociosDelBarrio: Socio[] = [];
 	loading = true;
 
@@ -52,29 +54,27 @@ export class DetalleBarrioComponent implements OnInit {
 	};
 
 	ngOnInit() {
-		// Capturamos el nombre de la URL (Ej: "Alpamalag")
 		this.route.params.subscribe((params) => {
-			// OJO: Asegúrate que en tu app.routes.ts pusiste 'detalle/:id' o 'detalle/:nombre'
-			// Aquí leemos el parámetro. Si usaste :id, angular lo guarda en params['id'] aunque sea texto.
-			this.nombreBarrio = params['id'] || params['nombre'];
+			// ✅ CORRECCIÓN: Leemos el ID y lo convertimos a número con 'Number()' o el '+'
+			const idUrl = params['id'];
 
-			if (this.nombreBarrio) {
-				this.cargarSocios(this.nombreBarrio);
+			if (idUrl) {
+				this.barrioId = Number(idUrl); // Convertimos "1" -> 1
+				this.cargarSocios(this.barrioId);
 			}
 		});
 	}
 
-	cargarSocios(nombre: string) {
+	// ✅ CORRECCIÓN: Cambiamos el parámetro de (nombre: string) a (idBarrio: number)
+	cargarSocios(idBarrio: number) {
 		this.loading = true;
 
 		this.socioService.getSocios().subscribe({
 			next: (todosLosSocios) => {
-				// 1. FILTRAR: Comparamos el texto del barrio
-				this.sociosDelBarrio = todosLosSocios.filter(
-					(s) => s.barrio && s.barrio.trim().toLowerCase() === nombre.trim().toLowerCase(),
-				);
+				// 1. FILTRAR: Ahora comparamos el ID numérico
+				this.sociosDelBarrio = todosLosSocios.filter((s) => s.barrio_id === idBarrio);
 
-				// 2. CALCULAR ESTADÍSTICAS (Nuevo)
+				// 2. CALCULAR ESTADÍSTICAS
 				this.calcularEstadisticas();
 
 				this.loading = false;
