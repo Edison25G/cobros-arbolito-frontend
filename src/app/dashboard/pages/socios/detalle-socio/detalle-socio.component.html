@@ -46,7 +46,7 @@
 			<div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm">
 				<div class="p-3 bg-gray-50 rounded-lg border border-gray-100">
 					<span class="block text-gray-500 font-medium mb-1">Barrio (Domicilio)</span>
-					<span class="text-gray-800 font-bold text-base">{{ getNombreBarrio(socio.barrio_id) }}</span>
+					{{ getNombreBarrio($any(socio).barrio || socio.barrio_id) }}
 				</div>
 				<div class="p-3 bg-gray-50 rounded-lg border border-gray-100">
 					<span class="block text-gray-500 font-medium mb-1">Rol</span>
