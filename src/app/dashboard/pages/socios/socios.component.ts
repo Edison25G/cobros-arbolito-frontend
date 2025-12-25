@@ -159,9 +159,22 @@ export class SociosComponent implements OnInit {
 	}
 	openEditSocioModal(socio: Socio): void {
 		this.isEditMode = true;
-		this.currentSocioId = socio.id;
-		this.socioForm.patchValue(socio);
-		this.f['cedula'].disable();
+		this.currentSocioId = socio.id!;
+		const rawBarrio = socio.barrio_id || (socio as any).barrio_domicilio_id || (socio as any).barrio;
+		const idBarrioReal = rawBarrio ? Number(rawBarrio) : null;
+		this.socioForm.patchValue({
+			cedula: socio.cedula,
+			nombres: socio.nombres,
+			apellidos: socio.apellidos,
+			email: socio.email,
+			telefono: socio.telefono,
+			barrio_id: idBarrioReal,
+			direccion: socio.direccion,
+			rol: socio.rol,
+			esta_activo: socio.esta_activo,
+		});
+
+		this.f['cedula'].disable(); // La cédula no se debe editar
 		this.showSocioModal = true;
 	}
 
@@ -177,20 +190,39 @@ export class SociosComponent implements OnInit {
 			this.messageService.add({
 				severity: 'warn',
 				summary: 'Formulario Inválido',
-				detail: 'Por favor, revise los campos requeridos.',
+				detail: 'Por favor, revise los campos requeridos (Barrio y Dirección son obligatorios).',
 			});
 			return;
 		}
 
-		const formData = this.socioForm.getRawValue();
-		let request$: Observable<Socio>;
+		const formValues = this.socioForm.getRawValue();
+
+		// ✅ CORRECCIÓN: Preparamos el objeto limpio
+		const datosParaEnviar = {
+			cedula: formValues.cedula,
+			nombres: formValues.nombres,
+			apellidos: formValues.apellidos,
+			email: formValues.email,
+			telefono: formValues.telefono,
+
+			// Los campos nuevos obligatorios
+			barrio_id: formValues.barrio_id,
+			direccion: formValues.direccion,
+
+			rol: formValues.rol,
+			esta_activo: formValues.esta_activo,
+		};
+
+		let request$: Observable<any>;
 
 		if (this.isEditMode && this.currentSocioId) {
-			request$ = this.socioService.updateSocio(this.currentSocioId, formData);
+			// EDITAR
+			request$ = this.socioService.updateSocio(this.currentSocioId, datosParaEnviar);
 		} else {
-			const createData = { ...formData };
-			delete createData.esta_activo;
-			request$ = this.socioService.createSocio(createData);
+			// CREAR
+			// Al crear, no solemos enviar 'esta_activo' (el backend lo pone true por defecto),
+			// pero si tu backend lo acepta, déjalo.
+			request$ = this.socioService.createSocio(datosParaEnviar);
 		}
 
 		request$
@@ -205,17 +237,17 @@ export class SociosComponent implements OnInit {
 					this.closeSocioModal();
 				}),
 				catchError((err) => {
+					console.error(err);
 					this.messageService.add({
 						severity: 'error',
 						summary: 'Error',
-						detail: err.message,
+						detail: 'No se pudo guardar. Verifique los datos.',
 					});
 					return of(null);
 				}),
 			)
 			.subscribe();
 	}
-
 	deleteSocio(id: number): void {
 		this.confirmationService.confirm({
 			message: '¿Está seguro de que desea eliminar (desactivar) este socio? Esta acción es reversible.',
