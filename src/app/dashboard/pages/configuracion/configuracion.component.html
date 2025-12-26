@@ -1,114 +1,176 @@
-<p-card styleClass="shadow-md border-0 rounded-lg lg:max-w-4xl mx-auto">
-	<ng-template pTemplate="header">
-		<div class="p-4 bg-gray-50 rounded-t-lg">
-			<h2 class="text-2xl font-semibold text-gray-800">Configuración del Sistema</h2>
-			<p class="text-sm text-gray-500">Ajusta los parámetros maestros y tarifas de la junta.</p>
-		</div>
-	</ng-template>
+<p-toast></p-toast>
 
-	<div *ngIf="isLoadingData; else formView" class="p-4">
-		<div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
-			<div class="md:col-span-2"><p-skeleton height="3.5rem"></p-skeleton></div>
-			<div><p-skeleton height="3.5rem"></p-skeleton></div>
-			<div><p-skeleton height="3.5rem"></p-skeleton></div>
-			<div class="md:col-span-2"><p-skeleton height="3.5rem"></p-skeleton></div>
-			<div><p-skeleton height="3.5rem"></p-skeleton></div>
-			<div>
-				<p-skeleton height="3.5rem"></p-skeleton>
+<div class="p-2 animate-fade-in w-full">
+	<p-card styleClass="shadow-sm border border-gray-100 rounded-xl bg-white w-full">
+		<!-- HEADER -->
+		<ng-template pTemplate="header">
+			<div class="bg-gray-50 px-4 py-3 border-b border-gray-100 flex items-center gap-3 rounded-t-xl">
+				<div class="bg-blue-600 text-white w-8 h-8 flex items-center justify-center rounded-full shadow-sm">
+					<i class="pi pi-cog text-sm"></i>
+				</div>
+				<div>
+					<h2 class="text-lg font-bold text-gray-800 m-0">Configuración General</h2>
+					<p class="text-xs text-gray-500 m-0">Parámetros del sistema.</p>
+				</div>
+			</div>
+		</ng-template>
+
+		<!-- LOADING -->
+		<div *ngIf="isLoadingData; else formView" class="p-4">
+			<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+				<div class="col-span-3"><p-skeleton height="2.5rem"></p-skeleton></div>
+				<div><p-skeleton height="2.5rem"></p-skeleton></div>
+				<div><p-skeleton height="2.5rem"></p-skeleton></div>
+				<div><p-skeleton height="2.5rem"></p-skeleton></div>
 			</div>
 		</div>
-	</div>
 
-	<ng-template #formView>
-		<form [formGroup]="configForm" (ngSubmit)="guardarConfiguracion()">
-			<div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5 p-4">
-				<div class="md:col-span-2">
-					<label for="nombreJunta" class="block text-sm font-medium text-gray-700 mb-1">Nombre de la Junta</label>
-					<input pInputText id="nombreJunta" formControlName="nombreJunta" class="w-full" />
+		<!-- FORM -->
+		<ng-template #formView>
+			<form [formGroup]="configForm" (ngSubmit)="guardarConfiguracion()">
+				<div class="p-2">
+					<div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+						<!-- SECCIÓN -->
+						<div class="md:col-span-12 border-b border-gray-100 pb-1 mb-1">
+							<span class="text-xs font-bold text-gray-400 uppercase tracking-wider"> Datos de la Junta </span>
+						</div>
+
+						<!-- NOMBRE LEGAL -->
+						<div class="col-span-12 md:col-span-6">
+							<label for="nombreJunta" class="flex items-center gap-2 text-xs font-semibold text-gray-600 mb-1">
+								Nombre legal
+								<span class="text-[10px] text-gray-400 font-normal">(obligatorio)</span>
+							</label>
+
+							<input
+								pInputText
+								id="nombreJunta"
+								formControlName="nombreJunta"
+								class="w-full p-inputtext-sm font-semibold text-gray-700"
+							/>
+						</div>
+
+						<!-- RUC -->
+						<div class="col-span-12 md:col-span-3">
+							<label for="ruc" class="text-xs font-semibold text-gray-600 mb-1 block"> RUC </label>
+
+							<p-inputMask
+								id="ruc"
+								formControlName="ruc"
+								mask="9999999999001"
+								styleClass="w-full p-inputtext-sm font-semibold"
+							></p-inputMask>
+						</div>
+
+						<!-- DIRECCIÓN -->
+						<div class="col-span-12 md:col-span-6">
+							<label for="direccion" class="text-xs font-semibold text-gray-600 mb-1 block"> Dirección </label>
+
+							<div class="relative w-full">
+								<i class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+								<input
+									pInputText
+									id="direccion"
+									formControlName="direccion"
+									class="w-full pl-10 p-inputtext-sm text-gray-700"
+								/>
+							</div>
+						</div>
+
+						<!-- EMAIL -->
+						<div class="col-span-12 md:col-span-4">
+							<label for="email" class="text-xs font-semibold text-gray-600 mb-1 block"> Email </label>
+
+							<div class="relative w-full">
+								<i class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+								<input
+									pInputText
+									id="email"
+									formControlName="email"
+									class="w-full pl-10 p-inputtext-sm text-gray-700"
+								/>
+							</div>
+						</div>
+
+						<!-- CELULAR -->
+						<div class="col-span-12 md:col-span-2">
+							<label for="telefono" class="text-xs font-semibold text-gray-600 mb-1 block"> Celular </label>
+
+							<p-inputMask
+								id="telefono"
+								formControlName="telefono"
+								mask="0999999999"
+								styleClass="w-full p-inputtext-sm"
+								placeholder="099..."
+							></p-inputMask>
+						</div>
+
+						<!-- TARIFAS -->
+						<div class="col-span-12 mt-2 bg-green-50/60 rounded-lg p-3 border border-green-100">
+							<div class="flex items-center gap-2 mb-3">
+								<i class="pi pi-wallet text-green-700"></i>
+								<span class="text-xs font-bold text-green-700 uppercase tracking-wider"> Tarifas </span>
+							</div>
+
+							<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+								<!-- PRECIO M3 -->
+								<div>
+									<span class="text-[10px] font-bold text-gray-500 uppercase block mb-1"> Precio m³ </span>
+									<p-inputNumber
+										formControlName="tarifaAguaMetroCubico"
+										mode="currency"
+										currency="USD"
+										locale="en-US"
+										styleClass="w-full"
+										inputStyleClass="p-inputtext-sm font-bold text-green-700 bg-white w-full"
+									></p-inputNumber>
+								</div>
+
+								<!-- MORA -->
+								<div>
+									<span class="text-[10px] font-bold text-gray-500 uppercase block mb-1"> Mora mensual </span>
+									<p-inputNumber
+										formControlName="tarifaMoraMensual"
+										mode="currency"
+										currency="USD"
+										locale="en-US"
+										styleClass="w-full"
+										inputStyleClass="p-inputtext-sm font-bold text-orange-600 bg-white w-full"
+									></p-inputNumber>
+								</div>
+
+								<!-- IVA -->
+								<div>
+									<span class="text-[10px] font-bold text-gray-500 uppercase block mb-1"> IVA (decimal) </span>
+									<p-inputNumber
+										formControlName="valorIVA"
+										mode="decimal"
+										[minFractionDigits]="2"
+										[maxFractionDigits]="2"
+										[step]="0.01"
+										placeholder="0.15"
+										styleClass="w-full"
+										inputStyleClass="p-inputtext-sm bg-white w-full"
+										suffix=" %"
+									></p-inputNumber>
+								</div>
+							</div>
+						</div>
+					</div>
 				</div>
 
-				<div>
-					<label for="ruc" class="block text-sm font-medium text-gray-700 mb-1">RUC</label>
-					<p-inputMask id="ruc" formControlName="ruc" mask="9999999999001" styleClass="w-full"></p-inputMask>
+				<!-- FOOTER -->
+				<div class="px-4 py-3 bg-gray-50 border-t border-gray-100 flex justify-end rounded-b-xl">
+					<p-button
+						type="submit"
+						label="Guardar"
+						icon="pi pi-save"
+						styleClass="p-button-sm p-button-success"
+						[loading]="isSaving"
+						[disabled]="configForm.invalid || isSaving"
+					></p-button>
 				</div>
-
-				<div>
-					<label for="telefono" class="block text-sm font-medium text-gray-700 mb-1">Teléfono</label>
-					<p-inputMask
-						id="telefono"
-						formControlName="telefono"
-						mask="9999999999"
-						placeholder="0991234567"
-						styleClass="w-full"
-					></p-inputMask>
-				</div>
-
-				<div class="md:col-span-2">
-					<label for="direccion" class="block text-sm font-medium text-gray-700 mb-1">Dirección</label>
-					<input pInputText id="direccion" formControlName="direccion" class="w-full" />
-				</div>
-
-				<div class="md:col-span-2">
-					<label for="email" class="block text-sm font-medium text-gray-700 mb-1">Correo Electrónico</label>
-					<input pInputText type="email" id="email" formControlName="email" class="w-full" />
-				</div>
-
-				<div class="md:col-span-2 border-t border-gray-200 mt-2 pt-4">
-					<h3 class="text-lg font-medium text-gray-900">Tarifas y Valores</h3>
-				</div>
-
-				<div>
-					<label for="tarifaAgua" class="block text-sm font-medium text-gray-700 mb-1">Tarifa Agua (por m³)</label>
-					<p-inputNumber
-						id="tarifaAgua"
-						formControlName="tarifaAguaMetroCubico"
-						mode="currency"
-						currency="USD"
-						locale="en-US"
-						styleClass="w-full"
-						class="w-full"
-					></p-inputNumber>
-				</div>
-
-				<div>
-					<label for="tarifaMora" class="block text-sm font-medium text-gray-700 mb-1">Tarifa Mora (Mensual)</label>
-					<p-inputNumber
-						id="tarifaMora"
-						formControlName="tarifaMoraMensual"
-						mode="currency"
-						currency="USD"
-						locale="en-US"
-						styleClass="w-full"
-						class="w-full"
-					></p-inputNumber>
-				</div>
-
-				<div>
-					<label for="iva" class="block text-sm font-medium text-gray-700 mb-1">Valor IVA (%)</label>
-					<p-inputNumber
-						id="iva"
-						formControlName="valorIVA"
-						mode="decimal"
-						[minFractionDigits]="2"
-						[maxFractionDigits]="2"
-						placeholder="Ej: 0.15"
-						suffix=" (15%)"
-						styleClass="w-full"
-						class="w-full"
-					></p-inputNumber>
-				</div>
-			</div>
-
-			<div class="border-t border-gray-200 p-4 mt-4 flex justify-end">
-				<p-button
-					type="submit"
-					label="Guardar Cambios"
-					icon="pi pi-save"
-					styleClass="p-button-success"
-					[loading]="isSaving"
-					[disabled]="configForm.invalid || isSaving"
-				></p-button>
-			</div>
-		</form>
-	</ng-template>
-</p-card>
+			</form>
+		</ng-template>
+	</p-card>
+</div>

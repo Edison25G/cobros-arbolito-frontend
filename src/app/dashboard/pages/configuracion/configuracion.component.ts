@@ -3,52 +3,51 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { finalize } from 'rxjs/operators';
 
-// --- Servicios y Modelos ---
-import { ConfiguracionService } from '@core/services/configuracion.service';
-import { ErrorService } from '../../../auth/core/services/error.service';
-
-// --- Imports de PrimeNG ---
+// PrimeNG
 import { CardModule } from 'primeng/card';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { InputNumberModule } from 'primeng/inputnumber';
-import { InputMaskModule } from 'primeng/inputmask'; // Para RUC/Teléfono
+import { InputMaskModule } from 'primeng/inputmask';
 import { SkeletonModule } from 'primeng/skeleton';
+import { ToastModule } from 'primeng/toast';
+import { MessageService } from 'primeng/api';
+
+// Servicios
+import { ConfiguracionService } from '../../../core/services/configuracion.service';
+// import { ErrorService } from ... (Si tienes tu servicio de errores personalizado, úsalo)
 
 @Component({
-	selector: 'ca-configuracion',
+	selector: 'app-configuracion',
 	standalone: true,
 	imports: [
 		CommonModule,
 		ReactiveFormsModule,
-		// --- Módulos de PrimeNG ---
 		CardModule,
 		ButtonModule,
 		InputTextModule,
 		InputNumberModule,
 		InputMaskModule,
 		SkeletonModule,
+		ToastModule,
 	],
+	providers: [MessageService], // Proveedor local para el Toast
 	templateUrl: './configuracion.component.html',
-	styleUrls: ['./configuracion.component.css'],
 })
 export class ConfiguracionComponent implements OnInit {
-	// --- Inyección de Servicios ---
 	private fb = inject(FormBuilder);
 	private configuracionService = inject(ConfiguracionService);
-	private errorService = inject(ErrorService);
+	private messageService = inject(MessageService);
 
-	// --- Estado del Componente ---
-	public configForm!: FormGroup;
-	public isLoadingData = true; // Para el skeleton
-	public isSaving = false; // Para el spinner del botón
+	configForm: FormGroup;
+	isLoadingData = true;
+	isSaving = false;
 
 	constructor() {
-		// Inicializa el formulario reactivo
 		this.configForm = this.fb.group({
-			// Usaremos patchValue, pero es bueno definir los controles
-			nombreJunta: ['', [Validators.required]],
-			ruc: ['', [Validators.required]],
+			// Validaciones robustas
+			nombreJunta: ['', [Validators.required, Validators.minLength(5)]],
+			ruc: ['', [Validators.required]], // InputMask se encarga de la longitud
 			direccion: ['', [Validators.required]],
 			telefono: ['', [Validators.required]],
 			email: ['', [Validators.required, Validators.email]],
@@ -58,71 +57,54 @@ export class ConfiguracionComponent implements OnInit {
 		});
 	}
 
-	/**
-	 * ngOnInit: Se ejecuta al cargar el componente.
-	 */
 	ngOnInit(): void {
 		this.loadConfiguracion();
 	}
 
-	/**
-	 * Carga la configuración actual y la pone en el formulario
-	 */
 	loadConfiguracion(): void {
 		this.isLoadingData = true;
 		this.configuracionService.getConfiguracion().subscribe({
 			next: (data) => {
-				// Rellena el formulario con los datos cargados
 				this.configForm.patchValue(data);
 				this.isLoadingData = false;
-				console.log('Configuración cargada:', data);
 			},
 			error: (err) => {
-				console.error('Error al cargar configuración:', err);
+				console.error(err);
+				this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo cargar la configuración.' });
 				this.isLoadingData = false;
-				this.errorService.showError('No se pudo cargar la configuración.');
 			},
 		});
 	}
 
-	/**
-	 * Se llama al guardar los cambios del formulario
-	 */
 	guardarConfiguracion(): void {
 		if (this.configForm.invalid) {
 			this.configForm.markAllAsTouched();
-			this.errorService.requiredFields();
+			this.messageService.add({ severity: 'warn', summary: 'Atención', detail: 'Revisa los campos obligatorios.' });
 			return;
 		}
 
 		this.isSaving = true;
-
-		// Obtenemos los datos del formulario (incluido el 'id' si lo tuviéramos)
 		const configData = this.configForm.value;
 
-		// (En un caso real, añadiríamos el 'id' que no está en el form)
-		// const payload = { ...this.configuracionCargada, ...configData };
-
 		this.configuracionService
-			.updateConfiguracion(configData) // Enviamos el objeto completo
-			.pipe(
-				finalize(() => {
-					this.isSaving = false;
-				}),
-			)
+			.updateConfiguracion(configData)
+			.pipe(finalize(() => (this.isSaving = false)))
 			.subscribe({
-				next: (response) => {
-					if (response.success) {
-						this.errorService.showSuccess('Configuración guardada exitosamente');
-						// Rellenamos el formulario con los datos guardados (por si acaso)
-						this.configForm.patchValue(response.data);
-					} else {
-						this.errorService.showError('No se pudo guardar la configuración.');
-					}
+				next: (data) => {
+					this.messageService.add({
+						severity: 'success',
+						summary: 'Éxito',
+						detail: 'Configuración actualizada correctamente.',
+					});
+					this.configForm.patchValue(data); // Actualizamos con lo que devolvió el server
 				},
 				error: (err) => {
-					console.error('Error al guardar configuración:', err);
-					this.errorService.showError('Error de conexión al guardar.');
+					console.error(err);
+					this.messageService.add({
+						severity: 'error',
+						summary: 'Error',
+						detail: 'No se pudieron guardar los cambios.',
+					});
 				},
 			});
 	}
