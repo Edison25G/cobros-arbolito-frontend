@@ -21,9 +21,9 @@ export interface LecturaResponse {
 
 export interface LecturaView {
 	id: number;
+	fecha: string;
 	medidor_codigo: string;
 	socio_nombre: string;
-	fecha: string;
 	lectura_anterior: number;
 	lectura_actual: number;
 	consumo: number;

@@ -66,7 +66,7 @@ export class LecturasComponent implements OnInit {
 
 	// Filtros Globales
 	fechaLectura: Date = new Date();
-	barrioSeleccionado: number | null = null;
+	barrioSeleccionado: string | null = null;
 
 	// Datos
 	barrios: any[] = [];
@@ -81,7 +81,7 @@ export class LecturasComponent implements OnInit {
 		this.barriosService.getBarrios().subscribe({
 			next: (data) => {
 				// Mapeamos para el dropdown de PrimeNG (label/value) y solo activos
-				this.barrios = data.filter((b) => b.activo).map((b) => ({ label: b.nombre, value: b.id }));
+				this.barrios = data.filter((b) => b.activo).map((b) => ({ label: b.nombre, value: b.nombre }));
 			},
 			error: (err) => console.error('Error cargando barrios', err),
 		});
@@ -96,25 +96,25 @@ export class LecturasComponent implements OnInit {
 		this.isLoading = true;
 		this.medidorService.getMedidores().subscribe({
 			next: (medidores) => {
-				// 1. Filtramos por barrio y solo medidores físicos
-				const filtrados = medidores.filter(
-					(m) => m.tiene_medidor_fisico && m.socio_data?.barrio_id === this.barrioSeleccionado,
-				);
+				// --- CORRECCIÓN DEL FILTRO ---
+				// 1. Usamos 'any' porque la interfaz Medidor a veces no tiene las propiedades extra del backend
+				const filtrados = medidores.filter((m: any) => {
+					// Verificamos que tenga terreno (esté instalado) y coincida el nombre del barrio
+					return m.terreno_id && m.nombre_barrio === this.barrioSeleccionado;
+				});
 
-				// 2. Transformamos a formato de "Fila de Trabajo"
-				this.filas = filtrados.map((m) => ({
+				// 2. Mapeamos a filas
+				this.filas = filtrados.map((m: any) => ({
 					medidor: m,
-					// ⚠️ OJO: Aquí asumimos que el backend trae 'ultima_lectura'.
-					// Si no la trae, ponemos 0 por defecto.
-					lecturaAnterior: (m as any).ultima_lectura || 0,
-					lecturaActual: null, // Vacío para que el operador escriba
+					lecturaAnterior: m.lectura_inicial || 0, // Usamos lectura_inicial o la que traiga
+					lecturaActual: null,
 					consumo: 0,
 				}));
 
 				this.isLoading = false;
 			},
 			error: (_err) => {
-				this.errorService.showError('No se pudieron cargar los medidores del barrio.');
+				this.errorService.showError('No se pudieron cargar los medidores.');
 				this.isLoading = false;
 			},
 		});
