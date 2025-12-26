@@ -1,83 +1,66 @@
-import { Injectable } from '@angular/core';
-import { of } from 'rxjs';
-import { delay } from 'rxjs/operators';
+import { Injectable, inject } from '@angular/core';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { environment } from '../../environments/environment.development';
+import { Observable, throwError } from 'rxjs';
+import { catchError } from 'rxjs/operators';
+import {
+	EstadoCuentaResponse,
+	RegistrarPagoDTO,
+	PagoResponse,
+	TransferenciaPendiente,
+} from '../interfaces/caja.interface';
 
 @Injectable({
 	providedIn: 'root',
 })
 export class CajaService {
-	constructor() {}
+	private http = inject(HttpClient);
+	// Asegúrate de que environment.apiUrl apunte a http://localhost:8000/api/v1
+	private apiUrl = environment.apiUrl;
 
-	// 1. Simular búsqueda de socio y sus deudas
-	// 💡 El guion bajo (_) evita el error de "variable no usada"
-	buscarSocioConDeudas(_termino: string) {
-		// Simulamos una demora de red
-		return of({
-			encontrado: true,
-			socio: {
-				id: 1,
-				nombres: 'Juan José',
-				apellidos: 'Pérez García',
-				cedula: '0501234567',
-				barrio: 'Latacunga',
-				estado: 'ACTIVO',
-			},
-			// Deudas pendientes (Agua + Mingas)
-			deudas: [
-				{
-					id: 101,
-					concepto: 'Consumo Agua - Nov 2025',
-					monto: 3.5,
-					vencimiento: '2025-12-05',
-					tipo: 'AGUA',
-					seleccionado: true,
-				},
-				{
-					id: 102,
-					concepto: 'Multa Minga - Limpieza Canales',
-					monto: 10.0,
-					vencimiento: '2025-12-15',
-					tipo: 'MINGA',
-					seleccionado: true,
-				},
-				{
-					id: 103,
-					concepto: 'Consumo Agua - Dic 2025',
-					monto: 3.5,
-					vencimiento: '2026-01-05',
-					tipo: 'AGUA',
-					seleccionado: true,
-				},
-			],
-		}).pipe(delay(800));
+	/**
+	 * 1. Buscar deudas de un socio por Cédula o Apellido
+	 * Endpoint: GET /api/v1/caja/estado-cuenta/?termino=050123...
+	 */
+	buscarSocioConDeudas(termino: string): Observable<EstadoCuentaResponse> {
+		const url = `${this.apiUrl}/caja/estado-cuenta/?termino=${termino}`;
+		return this.http.get<EstadoCuentaResponse>(url).pipe(catchError(this.handleError));
 	}
 
-	// 2. Simular el cobro (Pago exitoso)
-	procesarPago(_deudasIds: number[], _metodoPago: string) {
-		// Aquí podrías hacer un console.log para ver qué llega, pero con el _ basta para que compile.
-		console.log('Procesando pago:', { ids: _deudasIds, metodo: _metodoPago });
-		return of({ success: true, ticket: 'TKT-2025-001' }).pipe(delay(1000));
+	/**
+	 * 2. Registrar el cobro en la base de datos
+	 * Endpoint: POST /api/v1/caja/pagar/
+	 */
+	procesarPago(ids: number[], metodo: 'EFECTIVO' | 'TRANSFERENCIA'): Observable<PagoResponse> {
+		// Aquí hardcodeamos el usuario_id: 1 hasta que tengas el Login listo
+		const payload: RegistrarPagoDTO = {
+			deudas_ids: ids,
+			metodo_pago: metodo,
+			usuario_id: 1,
+		};
+		return this.http.post<PagoResponse>(`${this.apiUrl}/caja/pagar/`, payload).pipe(catchError(this.handleError));
 	}
 
-	// 3. Simular lista de transferencias por validar
-	getTransferenciasPendientes() {
-		return of([
-			{
-				id: 501,
-				socio: 'Maria Lopez',
-				fecha: '2025-12-18',
-				monto: 3.5,
-				comprobante_url: 'assets/comprobante_mock.jpg',
-				banco: 'Pichincha',
-			},
-			{
-				id: 502,
-				socio: 'Carlos Vives',
-				fecha: '2025-12-19',
-				monto: 13.5,
-				comprobante_url: 'assets/comprobante_mock.jpg',
-				banco: 'Guayaquil',
-			},
-		]).pipe(delay(500));
+	/**
+	 * 3. Obtener transferencias pendientes de aprobar
+	 * Endpoint: GET /api/v1/caja/transferencias-pendientes/
+	 */
+	getTransferenciasPendientes(): Observable<TransferenciaPendiente[]> {
+		return this.http
+			.get<TransferenciaPendiente[]>(`${this.apiUrl}/caja/transferencias-pendientes/`)
+			.pipe(catchError(this.handleError));
+	}
+
+	private handleError(error: HttpErrorResponse) {
+		console.error('Error en CajaService:', error);
+		let msg = 'Error de conexión o servidor.';
+
+		if (error.status === 404) {
+			msg = 'Socio no encontrado o sin deudas pendientes.';
+		} else if (error.error && error.error.error) {
+			msg = error.error.error;
+		}
+
+		return throwError(() => new Error(msg));
 	}
 }
