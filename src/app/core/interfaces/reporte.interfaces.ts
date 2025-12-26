@@ -1,4 +1,6 @@
-// Esta interfaz es la que usará tu componente "Home/Resumen"
+// core/interfaces/reporte.interfaces.ts
+
+// Para el Home (KPIs rápidos)
 export interface ReporteGeneral {
 	sociosActivos: number;
 	sociosEnMora: number;
@@ -7,17 +9,12 @@ export interface ReporteGeneral {
 	recaudacionUltimos6Meses: number[];
 }
 
-// --- ¡NUEVA INTERFAZ! ---
-// Esta es la que usará tu nuevo componente de "Reportes"
-// Representa una fila en la tabla de facturas
+// Para la tabla de Reportes y el PDF
 export interface FacturaReporte {
 	id: number;
-	fecha_emision: string; // "YYYY-MM-DD"
-	fecha_vencimiento: string; // "YYYY-MM-DD"
-	socio_nombres: string;
-	socio_apellidos: string;
-	socio_cedula: string;
-	total: number;
-	estado: 'Pendiente' | 'Pagada' | 'Anulada';
-	clave_acceso_sri: string | null;
+	fecha: string;
+	socio: string;
+	concepto: string;
+	monto: number;
+	estado: 'Pagado' | 'Pendiente' | 'Anulado';
 }

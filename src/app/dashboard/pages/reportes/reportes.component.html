@@ -1,115 +1,87 @@
-<!-- p-toast es necesario para que funcione el ErrorService -->
 <p-toast></p-toast>
 
-<div class="animate-fade-in">
-	<!-- Encabezado -->
+<div class="p-2 sm:p-6 animate-fade-in">
 	<div class="mb-6">
-		<h2 class="text-3xl font-extrabold text-gray-800 tracking-tight">Reportes y Estadísticas</h2>
-		<p class="text-lg text-gray-500 mt-1">Resumen general del estado del sistema.</p>
+		<h2 class="text-2xl font-bold text-gray-800 mb-2">Reportes y Análisis</h2>
+		<p class="text-gray-500">Consulta histórica y exportación de datos.</p>
 	</div>
 
-	<!--
-    CASO 1: Cargando datos (isLoading = true)
-    Muestra "esqueletos" (skeletons) para evitar saltos de contenido.
-  -->
-	<div *ngIf="isLoading; else dataView">
-		<!-- Skeletons para las 4 tarjetas -->
-		<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-			<p-skeleton height="9rem" borderRadius="1rem" styleClass="w-full"></p-skeleton>
-			<p-skeleton height="9rem" borderRadius="1rem" styleClass="w-full"></p-skeleton>
-			<p-skeleton height="9rem" borderRadius="1rem" styleClass="w-full"></p-skeleton>
-			<p-skeleton height="9rem" borderRadius="1rem" styleClass="w-full"></p-skeleton>
+	<p-toolbar styleClass="bg-white border-gray-200 rounded-xl shadow-sm mb-6">
+		<div class="p-toolbar-group-start gap-4">
+			<span class="p-float-label">
+				<p-datepicker
+					[(ngModel)]="rangeDates"
+					selectionMode="range"
+					[readonlyInput]="true"
+					placeholder="Seleccionar rango..."
+					[showIcon]="true"
+					(onClose)="filtrarPorFechas()"
+				>
+				</p-datepicker>
+			</span>
+			<small class="text-gray-400 self-center hidden sm:block">Selecciona fechas para filtrar</small>
 		</div>
-		<!-- Skeleton para el gráfico -->
-		<p-skeleton height="25rem" borderRadius="1rem" styleClass="w-full"></p-skeleton>
-	</div>
 
-	<!--
-    CASO 2: Datos cargados (isLoading = false)
-  -->
-	<ng-template #dataView>
-		<!--
-      CASO 2A: Hay datos (reporteData NO es null)
-    -->
-		<div *ngIf="reporteData; else emptyView" class="space-y-6">
-			<!-- Fila de Tarjetas (Cards) con Estadísticas -->
-			<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-				<!-- Card: Socios Activos -->
-				<p-card class="shadow-lg border-t-4 border-blue-500 rounded-xl">
-					<div class="flex items-center justify-between">
-						<div>
-							<span class="text-sm font-medium text-gray-500">Socios Activos</span>
-							<div class="text-3xl font-bold text-gray-800 mt-1">{{ reporteData.sociosActivos }}</div>
-						</div>
-						<div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
-							<i class="pi pi-users text-2xl text-blue-600"></i>
-						</div>
-					</div>
-				</p-card>
+		<div class="p-toolbar-group-end">
+			<p-button label="Descargar PDF" icon="pi pi-file-pdf" styleClass="p-button-danger" (onClick)="descargarPDF()">
+			</p-button>
+		</div>
+	</p-toolbar>
 
-				<!-- Card: Socios en Mora -->
-				<p-card class="shadow-lg border-t-4 border-red-500 rounded-xl">
-					<div class="flex items-center justify-between">
-						<div>
-							<span class="text-sm font-medium text-gray-500">Socios en Mora</span>
-							<div class="text-3xl font-bold text-red-600 mt-1">{{ reporteData.sociosEnMora }}</div>
-						</div>
-						<div class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
-							<i class="pi pi-exclamation-triangle text-2xl text-red-600"></i>
-						</div>
-					</div>
-				</p-card>
-
-				<!-- Card: Total Recaudado (Mes) -->
-				<p-card class="shadow-lg border-t-4 border-emerald-500 rounded-xl">
-					<div class="flex items-center justify-between">
-						<div>
-							<span class="text-sm font-medium text-gray-500">Recaudado (Mes)</span>
-							<div class="text-3xl font-bold text-emerald-600 mt-1">
-								{{ reporteData.totalRecaudadoMes | currency: 'USD' }}
-							</div>
-						</div>
-						<div class="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center">
-							<i class="pi pi-dollar text-2xl text-emerald-600"></i>
-						</div>
-					</div>
-				</p-card>
-
-				<!-- Card: Deuda Total -->
-				<p-card class="shadow-lg border-t-4 border-orange-500 rounded-xl">
-					<div class="flex items-center justify-between">
-						<div>
-							<span class="text-sm font-medium text-gray-500">Deuda Total (Global)</span>
-							<div class="text-3xl font-bold text-orange-600 mt-1">{{ reporteData.totalDeuda | currency: 'USD' }}</div>
-						</div>
-						<div class="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center">
-							<i class="pi pi-wallet text-2xl text-orange-600"></i>
-						</div>
-					</div>
-				</p-card>
+	<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+		<div class="lg:col-span-1">
+			<div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 h-full">
+				<h3 class="font-bold text-gray-700 mb-4">Tendencia Semestral</h3>
+				<p-chart type="bar" [data]="chartData" [options]="chartOptions"></p-chart>
 			</div>
+		</div>
 
-			<!-- Fila del Gráfico de Barras -->
-			<p-card class="shadow-lg rounded-xl">
-				<ng-template pTemplate="title">
-					<h3 class="text-xl font-bold text-gray-800">Recaudación Últimos 6 Meses</h3>
-				</ng-template>
-				<div class="relative h-96">
-					<p-chart type="bar" [data]="barChartData" [options]="barChartOptions" height="100%" width="100%"></p-chart>
+		<div class="lg:col-span-2">
+			<div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+				<div class="p-4 border-b border-gray-100 bg-gray-50">
+					<h3 class="font-bold text-gray-700">Detalle de Transacciones</h3>
 				</div>
-			</p-card>
-		</div>
-	</ng-template>
 
-	<!--
-    CASO 2B: No hay datos (isLoading = false Y reporteData es null)
-    (Esto solo pasaría si el servicio falla y devuelve null)
-  -->
-	<ng-template #emptyView>
-		<div class="text-center p-12 bg-white rounded-xl shadow-md border border-gray-100">
-			<i class="pi pi-info-circle text-6xl text-gray-300"></i>
-			<h3 class="text-xl font-bold text-gray-700 mt-4">No hay datos disponibles</h3>
-			<p class="text-gray-500">No se pudo cargar la información del reporte en este momento.</p>
+				<p-table
+					[value]="transacciones"
+					[loading]="isLoading"
+					[rows]="5"
+					[paginator]="true"
+					styleClass="p-datatable-sm"
+				>
+					<ng-template pTemplate="header">
+						<tr>
+							<th>Fecha</th>
+							<th>Socio</th>
+							<th>Concepto</th>
+							<th>Estado</th>
+							<th class="text-right">Monto</th>
+						</tr>
+					</ng-template>
+					<ng-template pTemplate="body" let-t>
+						<tr>
+							<td>{{ t.fecha }}</td>
+							<td class="font-bold">{{ t.socio }}</td>
+							<td>{{ t.concepto }}</td>
+							<td>
+								<span
+									[class]="
+										'px-2 py-1 rounded text-xs font-bold ' +
+										(t.estado === 'Pagado'
+											? 'bg-green-100 text-green-700'
+											: t.estado === 'Pendiente'
+												? 'bg-orange-100 text-orange-700'
+												: 'bg-red-100 text-red-700')
+									"
+								>
+									{{ t.estado }}
+								</span>
+							</td>
+							<td class="text-right font-mono">{{ t.monto | currency }}</td>
+						</tr>
+					</ng-template>
+				</p-table>
+			</div>
 		</div>
-	</ng-template>
+	</div>
 </div>
