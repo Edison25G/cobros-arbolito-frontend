@@ -13,11 +13,12 @@ import { ToastModule } from 'primeng/toast';
 import { CheckboxModule } from 'primeng/checkbox';
 import { MessageService, ConfirmationService } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { ImageModule } from 'primeng/image'; // Para ver la foto del comprobante
+import { ImageModule } from 'primeng/image';
 
-// Servicio
+// Servicios e Interfaces
 import { CajaService } from '../../../core/services/caja.service';
 import { ComprobanteService } from '../../../core/services/comprobante.service';
+import { DeudaItem, TransferenciaPendiente } from '../../../core/interfaces/caja.interface';
 
 @Component({
 	selector: 'app-caja',
@@ -45,20 +46,26 @@ export class CajaComponent implements OnInit {
 	private messageService = inject(MessageService);
 	private confirmationService = inject(ConfirmationService);
 	private comprobanteService = inject(ComprobanteService);
+
 	// Variables Ventanilla
 	terminoBusqueda = '';
 	buscando = false;
+
+	// Usamos 'any' para el socio si no tienes una interfaz estricta de Socio aún
 	socioEncontrado: any = null;
-	deudas: any[] = [];
+	deudas: DeudaItem[] = [];
+
 	totalAPagar = 0;
 	procesandoPago = false;
 
 	// Variables Transferencias
-	transferencias: any[] = [];
+	transferencias: TransferenciaPendiente[] = [];
 	cargandoTransferencias = false;
 
 	ngOnInit() {
-		this.cargarTransferencias();
+		console.log('Módulo de Caja Inicializado');
+		// Descomenta esta línea cuando el backend tenga listo este endpoint
+		// this.cargarTransferencias();
 	}
 
 	// --- PESTAÑA 1: COBRO EN VENTANILLA ---
@@ -69,28 +76,31 @@ export class CajaComponent implements OnInit {
 		this.buscando = true;
 		this.socioEncontrado = null;
 		this.deudas = [];
+		this.totalAPagar = 0;
 
 		this.cajaService.buscarSocioConDeudas(this.terminoBusqueda).subscribe({
 			next: (data) => {
-				this.socioEncontrado = data.socio;
-				this.deudas = data.deudas;
-				this.calcularTotal();
+				if (data.encontrado) {
+					this.socioEncontrado = data.socio;
+					// Mapeamos las deudas del backend y les agregamos 'seleccionado' para los checkboxes
+					this.deudas = data.deudas.map((d) => ({ ...d, seleccionado: true }));
+					this.calcularTotal();
+				} else {
+					this.mostrarError('No encontrado', 'No se encontraron resultados con ese criterio.');
+				}
 				this.buscando = false;
 			},
-			error: () => {
-				this.messageService.add({
-					severity: 'error',
-					summary: 'No encontrado',
-					detail: 'No existe socio con esa cédula o nombre.',
-				});
+			error: (err) => {
+				// Si es un 404 manejado por el servicio, llega como error aquí también
+				this.mostrarError('Aviso', err.message);
 				this.buscando = false;
 			},
 		});
 	}
 
 	calcularTotal() {
-		// Suma solo las deudas que tienen el checkbox marcado (seleccionado = true)
-		this.totalAPagar = this.deudas.filter((d) => d.seleccionado).reduce((acc, d) => acc + d.monto, 0);
+		// Suma solo los ítems seleccionados
+		this.totalAPagar = this.deudas.filter((d) => d.seleccionado).reduce((acc, d) => acc + Number(d.monto), 0);
 	}
 
 	confirmarCobro() {
@@ -99,7 +109,7 @@ export class CajaComponent implements OnInit {
 		if (itemsSeleccionados.length === 0) {
 			this.messageService.add({
 				severity: 'warn',
-				summary: 'Nada seleccionado',
+				summary: 'Atención',
 				detail: 'Seleccione al menos una deuda para cobrar.',
 			});
 			return;
@@ -118,52 +128,76 @@ export class CajaComponent implements OnInit {
 		});
 	}
 
-	ejecutarPago(items: any[]) {
+	ejecutarPago(items: DeudaItem[]) {
 		this.procesandoPago = true;
 		const ids = items.map((i) => i.id);
 
-		// Guardamos referencia al socio y total ANTES de limpiar las variables
-		const socioActual = { ...this.socioEncontrado };
-		const totalCobrado = this.totalAPagar;
-		const itemsCobrados = [...items];
+		// Guardamos una copia de los datos para el recibo ANTES de limpiar las variables
+		const datosRecibo = {
+			socio: { ...this.socioEncontrado },
+			items: [...items],
+			total: this.totalAPagar,
+		};
 
-		this.cajaService.procesarPago(ids, 'EFECTIVO').subscribe((resp: any) => {
-			this.messageService.add({ severity: 'success', summary: 'Pago Exitoso', detail: 'Generando recibo...' });
+		this.cajaService.procesarPago(ids, 'EFECTIVO').subscribe({
+			next: (resp) => {
+				this.messageService.add({
+					severity: 'success',
+					summary: 'Pago Exitoso',
+					detail: `Ticket Generado: ${resp.ticket_numero}`,
+				});
 
-			// ✅ GENERAMOS EL PDF AQUÍ
-			// Usamos el ticket que devuelve el backend (o generamos uno temporal)
-			const nroTicket = resp.ticket || 'TKT-' + Math.floor(Math.random() * 10000);
+				// Generar Recibo PDF usando tu ComprobanteService
+				this.comprobanteService.generarRecibo(
+					datosRecibo.socio,
+					datosRecibo.items,
+					datosRecibo.total,
+					resp.ticket_numero,
+				);
 
-			this.comprobanteService.generarRecibo(socioActual, itemsCobrados, totalCobrado, nroTicket);
-
-			// Limpiamos pantalla
-			this.procesandoPago = false;
-			this.socioEncontrado = null;
-			this.terminoBusqueda = '';
-			this.deudas = [];
-			this.totalAPagar = 0;
+				// Limpiar pantalla / Reiniciar estado
+				this.procesandoPago = false;
+				this.socioEncontrado = null;
+				this.terminoBusqueda = '';
+				this.deudas = [];
+				this.totalAPagar = 0;
+			},
+			error: (err) => {
+				this.procesandoPago = false;
+				this.mostrarError('Error al procesar pago', err.message);
+			},
 		});
 	}
 
-	// --- PESTAÑA 2: TRANSFERENCIAS ---
+	// --- PESTAÑA 2: TRANSFERENCIAS (Opcional por ahora) ---
 
 	cargarTransferencias() {
 		this.cargandoTransferencias = true;
-		this.cajaService.getTransferenciasPendientes().subscribe((data) => {
-			this.transferencias = data;
-			this.cargandoTransferencias = false;
+		this.cajaService.getTransferenciasPendientes().subscribe({
+			next: (data) => {
+				this.transferencias = data;
+				this.cargandoTransferencias = false;
+			},
+			error: (err) => {
+				console.error(err);
+				this.cargandoTransferencias = false;
+			},
 		});
 	}
 
-	aprobarTransferencia(transf: any) {
+	aprobarTransferencia(transf: TransferenciaPendiente) {
 		this.confirmationService.confirm({
-			message: `¿El dinero llegó al banco? Se aprobará el pago de ${transf.socio}.`,
-			header: 'Validar Transferencia',
+			message: `¿Confirmar aprobación del pago de ${transf.socio_nombre}?`,
 			accept: () => {
 				// Aquí llamarías al servicio para aprobar
+				this.messageService.add({ severity: 'success', summary: 'Aprobado', detail: 'Transferencia validada.' });
+				// Eliminar de la lista localmente
 				this.transferencias = this.transferencias.filter((t) => t.id !== transf.id);
-				this.messageService.add({ severity: 'success', summary: 'Aprobado', detail: 'El pago ha sido validado.' });
 			},
 		});
+	}
+
+	mostrarError(titulo: string, msg: string) {
+		this.messageService.add({ severity: 'error', summary: titulo, detail: msg });
 	}
 }
