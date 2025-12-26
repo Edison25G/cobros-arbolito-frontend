@@ -1,43 +1,37 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 
-// PrimeNG
+// PrimeNG Imports (Solo los necesarios para ver y borrar)
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
-import { DialogModule } from 'primeng/dialog';
-import { InputTextModule } from 'primeng/inputtext';
-import { SelectModule } from 'primeng/select'; // ✅ CAMBIO: Usamos SelectModule
-import { PasswordModule } from 'primeng/password';
 import { TagModule } from 'primeng/tag';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ToastModule } from 'primeng/toast';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
+import { InputTextModule } from 'primeng/inputtext';
+import { TooltipModule } from 'primeng/tooltip';
 import { ConfirmationService, MessageService } from 'primeng/api';
 
 // Modelos y Servicios
 import { UsuarioService } from '../../../core/services/usuario.service';
 import { Usuario } from '../../../core/models/usuario.interface';
-import { RolUsuario } from '../../../core/models/role.enum';
+//import { RolUsuario } from '../../../core/models/role.enum';
 
 @Component({
 	selector: 'app-usuarios',
 	standalone: true,
 	imports: [
 		CommonModule,
-		ReactiveFormsModule,
 		TableModule,
 		ButtonModule,
-		DialogModule,
-		InputTextModule,
-		SelectModule, // ✅ CAMBIO: SelectModule en imports
-		PasswordModule,
 		TagModule,
 		IconFieldModule,
 		InputIconModule,
+		InputTextModule,
 		ConfirmDialogModule,
 		ToastModule,
+		TooltipModule,
 	],
 	providers: [ConfirmationService, MessageService],
 	templateUrl: './usuarios.component.html',
@@ -47,36 +41,12 @@ export class UsuariosComponent implements OnInit {
 	private usuarioService = inject(UsuarioService);
 	private messageService = inject(MessageService);
 	private confirmationService = inject(ConfirmationService);
-	private fb = inject(FormBuilder);
 
 	usuarios: Usuario[] = [];
 	loading = true;
-	dialogVisible = false;
-	userForm!: FormGroup;
-	isEditMode = false;
-
-	// Opciones para el Select
-	roles = [
-		{ label: 'Administrador', value: RolUsuario.ADMIN },
-		{ label: 'Tesorero', value: RolUsuario.TESORERO },
-		{ label: 'Operador', value: RolUsuario.OPERADOR },
-	];
 
 	ngOnInit(): void {
 		this.loadUsuarios();
-		this.initForm();
-	}
-
-	initForm(): void {
-		this.userForm = this.fb.group({
-			id: [null],
-			first_name: ['', Validators.required],
-			last_name: ['', Validators.required],
-			username: ['', Validators.required],
-			email: ['', [Validators.email]],
-			rol: [null, Validators.required],
-			password: [''],
-		});
 	}
 
 	loadUsuarios(): void {
@@ -87,85 +57,70 @@ export class UsuariosComponent implements OnInit {
 				this.loading = false;
 			},
 			error: (err) => {
-				console.error(err);
+				console.error('Error cargando usuarios', err);
 				this.loading = false;
-				// Datos falsos de prueba
-				this.usuarios = [
-					{
-						id: 1,
-						username: 'admin',
-						first_name: 'Super',
-						last_name: 'Admin',
-						email: 'admin@arbolito.com',
-						rol: RolUsuario.ADMIN,
-						is_active: true,
-					},
-				];
+				this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo cargar la lista.' });
 			},
 		});
-	}
+		// 	error: (err) => {
+		// 		console.warn('Backend no listo, usando datos falsos para visualización', err);
 
-	openNew(): void {
-		this.userForm.reset();
-		this.isEditMode = false;
-		this.dialogVisible = true;
-		this.userForm.get('password')?.setValidators([Validators.required, Validators.minLength(6)]);
-		this.userForm.get('password')?.updateValueAndValidity();
-	}
+		// 		// 🔥 DATOS FALSOS TEMPORALES (Para que veas la tabla bonita)
+		// 		this.usuarios = [
+		// 			{
+		// 				id: 1,
+		// 				username: 'admin',
+		// 				email: 'admin@arbolito.com',
+		// 				first_name: 'Super',
+		// 				last_name: 'Admin',
+		// 				rol: RolUsuario.ADMIN, // Asegúrate que coincida con tu Enum o string
+		// 				is_active: true,
+		// 			},
+		// 			{
+		// 				id: 2,
+		// 				username: 'tesorero1',
+		// 				email: 'caja@arbolito.com',
+		// 				first_name: 'Juan',
+		// 				last_name: 'Pérez',
+		// 				rol: RolUsuario.TESORERO,
+		// 				is_active: true,
+		// 			},
+		// 		];
 
-	editUsuario(user: Usuario): void {
-		this.isEditMode = true;
-		this.userForm.patchValue(user);
-		this.dialogVisible = true;
-		this.userForm.get('password')?.clearValidators();
-		this.userForm.get('password')?.updateValueAndValidity();
-	}
-
-	saveUsuario(): void {
-		if (this.userForm.invalid) {
-			this.userForm.markAllAsTouched();
-			return;
-		}
-
-		const userData = this.userForm.value;
-
-		if (this.isEditMode && userData.id) {
-			// EDITAR
-			this.usuarioService.update(userData.id, userData).subscribe({
-				next: () => {
-					this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Usuario actualizado' });
-					this.loadUsuarios();
-					this.dialogVisible = false;
-				},
-				error: () => this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo actualizar' }),
-			});
-		} else {
-			// CREAR
-			this.usuarioService.create(userData).subscribe({
-				next: () => {
-					this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Usuario creado correctamente' });
-					this.loadUsuarios();
-					this.dialogVisible = false;
-				},
-				error: () => this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo crear.' }),
-			});
-		}
+		// 		this.loading = false;
+		// 		// Opcional: Mostrar mensaje de que son datos simulados
+		// 		// this.messageService.add({ severity: 'warn', summary: 'Modo Prueba', detail: 'Mostrando datos simulados.' });
+		// 	},
+		// });
 	}
 
 	deleteUsuario(user: Usuario): void {
+		// Protección: No permitir borrar al admin principal
+		if (user.username === 'admin') {
+			this.messageService.add({ severity: 'warn', summary: 'Protegido', detail: 'No puedes eliminar al Super Admin.' });
+			return;
+		}
+
 		this.confirmationService.confirm({
-			message: `¿Estás seguro de eliminar a ${user.username}?`,
-			header: 'Confirmar Eliminación',
+			message: `¿Estás seguro de revocar el acceso a ${user.username}?`,
+			header: 'Revocar Acceso',
 			icon: 'pi pi-exclamation-triangle',
+			acceptLabel: 'Sí, Revocar',
+			rejectLabel: 'Cancelar',
+			acceptButtonStyleClass: 'p-button-danger',
 			accept: () => {
 				if (user.id) {
 					this.usuarioService.delete(user.id).subscribe({
 						next: () => {
-							this.messageService.add({ severity: 'success', summary: 'Eliminado', detail: 'Usuario eliminado' });
+							this.messageService.add({
+								severity: 'success',
+								summary: 'Acceso Revocado',
+								detail: 'El usuario ha sido eliminado del sistema.',
+							});
 							this.loadUsuarios();
 						},
 						error: () =>
-							this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo eliminar' }),
+							this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo eliminar.' }),
 					});
 				}
 			},
