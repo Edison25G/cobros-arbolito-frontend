@@ -70,7 +70,8 @@ export class DetalleSocioComponent implements OnInit {
 	terrenoForm!: FormGroup;
 	listaBarrios: any[] = [];
 	terrenos: any[] = []; // Tabla local de terrenos
-
+	esEdicion = false;
+	idTerrenoEditar: number | null = null;
 	// MOCK: Datos simulados de pagos
 	historialPagos = [
 		{ id: 1, mes: 'Noviembre 2025', monto: 3.5, estado: 'PAGADO', fecha_pago: '2025-11-05' },
@@ -137,6 +138,8 @@ export class DetalleSocioComponent implements OnInit {
 
 	// --- ACCIONES DEL MODAL ---
 	abrirModalTerreno() {
+		this.esEdicion = false; // <--- Importante resetear esto
+		this.idTerrenoEditar = null;
 		this.terrenoForm.reset({ tiene_medidor: false });
 		this.mostrarModalTerreno = true;
 	}
@@ -146,38 +149,53 @@ export class DetalleSocioComponent implements OnInit {
 			this.terrenoForm.markAllAsTouched();
 			return;
 		}
+
 		const formValue = this.terrenoForm.value;
-		// Preparamos los datos para enviar al Backend
+
+		// Datos comunes
 		const datosParaEnviar = {
-			...this.terrenoForm.value,
-			socio_id: this.socioId, // ⚠️ IMPORTANTE: Hay que decirle de quién es el terreno
-			barrio_id: formValue.barrio, // Aquí ahora va el ID gracias al cambio en el HTML
+			...formValue,
+			socio_id: this.socioId,
+			barrio_id: formValue.barrio,
 			direccion: formValue.direccion,
-			// NOTA: Revisa con tu backend si quiere el NOMBRE ('Alpamalag') o el ID (1) del barrio.
-			// Si tu dropdown tiene optionValue="nombre", enviará el nombre.
 			codigo_medidor: formValue.tiene_medidor ? formValue.codigo_medidor : null,
 		};
 
-		this.terrenoService.createTerreno(datosParaEnviar).subscribe({
-			next: (_terrenoCreado) => {
-				this.messageService.add({
-					severity: 'success',
-					summary: 'Éxito',
-					detail: 'Propiedad registrada correctamente',
-				});
-				this.mostrarModalTerreno = false;
-				this.cargarTerrenos();
-			},
-			error: (err) => {
-				console.error(err);
-				// Mensaje más descriptivo por si falla
-				this.messageService.add({
-					severity: 'error',
-					summary: 'Error',
-					detail: 'No se pudo guardar. Verifique que el código de medidor no esté repetido.',
-				});
-			},
-		});
+		if (this.esEdicion && this.idTerrenoEditar) {
+			// --- MODO EDICIÓN ---
+			this.terrenoService.updateTerreno(this.idTerrenoEditar, datosParaEnviar).subscribe({
+				next: () => {
+					this.messageService.add({
+						severity: 'success',
+						summary: 'Actualizado',
+						detail: 'Terreno actualizado correctamente',
+					});
+					this.mostrarModalTerreno = false;
+					this.cargarTerrenos();
+				},
+				error: (err) => {
+					console.error(err);
+					this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo actualizar.' });
+				},
+			});
+		} else {
+			// --- MODO CREACIÓN (El que ya tenías) ---
+			this.terrenoService.createTerreno(datosParaEnviar).subscribe({
+				next: () => {
+					this.messageService.add({
+						severity: 'success',
+						summary: 'Creado',
+						detail: 'Propiedad registrada correctamente',
+					});
+					this.mostrarModalTerreno = false;
+					this.cargarTerrenos();
+				},
+				error: (err) => {
+					console.error(err);
+					this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo guardar.' });
+				},
+			});
+		}
 	}
 
 	// --- LÓGICA EXISTENTE ---
@@ -202,6 +220,28 @@ export class DetalleSocioComponent implements OnInit {
 				}),
 			)
 			.subscribe();
+	}
+
+	editarTerreno(terreno: any) {
+		this.esEdicion = true;
+		this.idTerrenoEditar = terreno.id;
+
+		// --- LÓGICA COPIADA DE SOCIO (ROBUSTA) ---
+		// 1. Buscamos el ID donde sea que venga (barrio_id, barrio objeto, etc.)
+		const rawBarrio = terreno.barrio_id || (terreno.barrio && terreno.barrio.id) || terreno.barrio;
+
+		// 2. LA CLAVE: Convertir a Número (Number)
+		const idBarrioReal = rawBarrio ? Number(rawBarrio) : null;
+
+		// 3. PatchValue con el ID numérico
+		this.terrenoForm.patchValue({
+			barrio: idBarrioReal, // <--- Aquí usamos la variable convertida
+			direccion: terreno.direccion,
+			tiene_medidor: terreno.tiene_medidor || (terreno.codigo_medidor ? true : false),
+			codigo_medidor: terreno.codigo_medidor,
+		});
+
+		this.mostrarModalTerreno = true;
 	}
 
 	volver(): void {

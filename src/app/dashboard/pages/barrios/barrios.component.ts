@@ -11,17 +11,17 @@ import { ToastModule } from 'primeng/toast';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
 import { TextareaModule } from 'primeng/textarea';
-import { AutoFocusModule } from 'primeng/autofocus';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { MessageService, ConfirmationService } from 'primeng/api';
 
 // Servicios y Modelos
 import { BarriosService } from '@core/services/barrios.service';
-import { SocioService } from '@core/services/socio.service';
+import { SocioService } from '@core/services/socio.service'; // ✅ RESTAURADO
 import { ErrorService } from '../../../auth/core/services/error.service';
 import { Barrio } from '@core/interfaces/barrio.interface';
 
+// Interfaz extendida para la UI (para guardar los contadores)
 interface BarrioUI extends Barrio {
 	cantidadSocios?: number;
 	activos?: number;
@@ -42,7 +42,6 @@ interface BarrioUI extends Barrio {
 		InputTextModule,
 		TextareaModule,
 		ToggleSwitchModule,
-		AutoFocusModule,
 		ConfirmDialogModule,
 	],
 	providers: [MessageService, ConfirmationService],
@@ -51,7 +50,7 @@ interface BarrioUI extends Barrio {
 export class BarriosComponent implements OnInit {
 	// Inyecciones
 	private barriosService = inject(BarriosService);
-	private socioService = inject(SocioService);
+	private socioService = inject(SocioService); // ✅ RESTAURADO
 	private errorService = inject(ErrorService);
 	private messageService = inject(MessageService);
 	private confirmationService = inject(ConfirmationService);
@@ -83,16 +82,20 @@ export class BarriosComponent implements OnInit {
 
 	cargarDatosReales() {
 		this.loading = true;
+
+		// 1. Cargamos los Barrios
 		this.barriosService.getBarrios().subscribe({
 			next: (dataBarrios) => {
+				// Inicializamos los contadores en 0
 				this.barrios = dataBarrios.map((b) => ({
 					...b,
 					cantidadSocios: 0,
 					activos: 0,
 					inactivos: 0,
 				}));
+
+				// 2. ✅ LLAMAMOS A LA FUNCIÓN DE CONTAR (RESTAURADA)
 				this.calcularContadores();
-				this.loading = false;
 			},
 			error: (err) => {
 				console.error(err);
@@ -102,28 +105,49 @@ export class BarriosComponent implements OnInit {
 		});
 	}
 
+	// ✅ ESTA ES LA FUNCIÓN QUE HACE LA MAGIA VISUAL AHORA MISMO
 	calcularContadores() {
 		this.socioService.getSocios().subscribe({
 			next: (socios) => {
-				socios.forEach((socio) => {
-					const barrioEncontrado = // Buscamos por ID, que es mucho más seguro
-						this.barrios.find((b) => b.id === socio.barrio_id);
+				socios.forEach((socio: any) => {
+					// 1. EXTRACTOR DE ID INTELIGENTE
+					let idDelSocio = null;
+
+					if (socio.barrio_id) {
+						idDelSocio = socio.barrio_id;
+					} else if (socio.barrio) {
+						// Puede venir como objeto {id: 1...} o como número directo (2)
+						idDelSocio = typeof socio.barrio === 'object' ? socio.barrio.id : socio.barrio;
+					} else if (socio.barrio_domicilio_id) {
+						idDelSocio = socio.barrio_domicilio_id;
+					}
+
+					// 2. BUSCAR Y SUMAR
+					// Usamos '==' para comparar sin importar si es texto o número
+					const barrioEncontrado = this.barrios.find((b) => b.id == idDelSocio);
+
 					if (barrioEncontrado) {
 						barrioEncontrado.cantidadSocios = (barrioEncontrado.cantidadSocios || 0) + 1;
-						if (socio.esta_activo) {
+
+						// Contar activos/inactivos
+						const estaActivo = socio.esta_activo ?? socio.is_active ?? socio.activo ?? true;
+						if (estaActivo) {
 							barrioEncontrado.activos = (barrioEncontrado.activos || 0) + 1;
 						} else {
 							barrioEncontrado.inactivos = (barrioEncontrado.inactivos || 0) + 1;
 						}
 					}
 				});
+
+				this.loading = false;
 			},
-			error: (_err) => console.warn('No se pudieron cargar contadores de socios'),
+			error: (_err) => {
+				this.loading = false;
+			},
 		});
 	}
 
 	// --- MODAL: CREAR Y EDITAR ---
-
 	abrirModalNuevo() {
 		this.esEdicion = false;
 		this.idBarrioEditar = null;
@@ -145,7 +169,6 @@ export class BarriosComponent implements OnInit {
 		this.mostrarModalCrear = true;
 	}
 
-	// ✅ VERSIÓN LIMPIA Y OPTIMIZADA
 	guardarBarrio() {
 		if (this.barrioForm.invalid) {
 			this.barrioForm.markAllAsTouched();
@@ -172,38 +195,26 @@ export class BarriosComponent implements OnInit {
 			},
 			error: (err) => {
 				this.guardando = false;
-				// Delegamos la interpretación del error a una función auxiliar
 				const { severity, detail } = this.interpretarError(err);
 				this.messageService.add({ severity, summary: 'Atención', detail });
 			},
 		});
 	}
 
-	/**
-	 * 🧹 Helper privado para limpiar la lógica de errores
-	 */
 	private interpretarError(err: any): { severity: string; detail: string } {
 		console.warn('🔥 API Error:', err);
-
 		if (err.status === 400 && err.error) {
 			let mensaje = 'Verifique los datos ingresados.';
-
-			// Prioridad 1: { "error": "texto" }
 			if (err.error.error) {
 				mensaje = err.error.error;
-			}
-			// Prioridad 2: { "nombre": ["texto"] }
-			else if (err.error.nombre) {
+			} else if (err.error.nombre) {
 				mensaje = Array.isArray(err.error.nombre) ? err.error.nombre[0] : err.error.nombre;
 			}
-
 			return { severity: 'warn', detail: mensaje };
 		}
-
 		if (err.status === 500) {
 			return { severity: 'error', detail: 'Error interno del servidor.' };
 		}
-
 		return { severity: 'error', detail: 'No se pudo completar la operación.' };
 	}
 
@@ -214,8 +225,6 @@ export class BarriosComponent implements OnInit {
 		this.idBarrioEditar = null;
 		this.barrioForm.reset({ activo: true });
 	}
-
-	// --- DESACTIVAR (LÓGICO) ---
 
 	eliminarBarrio(barrio: BarrioUI, event: Event) {
 		event.stopPropagation();
@@ -228,7 +237,6 @@ export class BarriosComponent implements OnInit {
 			rejectButtonStyleClass: 'p-button-text p-button-text',
 			acceptLabel: 'Sí, desactivar',
 			rejectLabel: 'Cancelar',
-
 			accept: () => {
 				this.barriosService.updateBarrio(barrio.id, { activo: false }).subscribe({
 					next: () => {
@@ -237,10 +245,6 @@ export class BarriosComponent implements OnInit {
 							summary: 'Desactivado',
 							detail: 'El barrio ha sido desactivado correctamente',
 						});
-
-						// NOTA: Si tu backend filtra los inactivos, aquí desaparecerá el barrio.
-						// Si quieres que se quede rojo sin desaparecer, usa el truco de actualización local
-						// que vimos antes en lugar de cargarDatosReales().
 						this.cargarDatosReales();
 					},
 					error: (err) => {
@@ -257,6 +261,6 @@ export class BarriosComponent implements OnInit {
 	}
 
 	verDetalle(nombre: string) {
-		this.router.navigate(['/dashboard/barrios/detalle', nombre]);
+		this.router.navigate(['/dashboard/barrios/detalle', encodeURIComponent(nombre)]);
 	}
 }
