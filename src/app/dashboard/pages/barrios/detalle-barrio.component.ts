@@ -73,9 +73,6 @@ export class DetalleBarrioComponent implements OnInit {
 			next: (socios) => {
 				// ✅ CAMBIO CLAVE: Usamos 's.barrio' porque así viene desde tu API
 				this.sociosDelBarrio = socios.filter((s: any) => s.barrio == idBarrio);
-
-				console.log(`Filtrados ${this.sociosDelBarrio.length} socios para el barrio ID: ${idBarrio}`);
-
 				this.calcularEstadisticas();
 				this.loading = false;
 			},

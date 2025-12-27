@@ -20,6 +20,8 @@ import { BarriosService } from '@core/services/barrios.service';
 import { SocioService } from '@core/services/socio.service'; // ✅ RESTAURADO
 import { ErrorService } from '../../../auth/core/services/error.service';
 import { Barrio } from '@core/interfaces/barrio.interface';
+import { AuthService } from '../../../core/services/auth.service';
+import { RolUsuario } from '@core/models/role.enum';
 
 // Interfaz extendida para la UI (para guardar los contadores)
 interface BarrioUI extends Barrio {
@@ -56,7 +58,7 @@ export class BarriosComponent implements OnInit {
 	private confirmationService = inject(ConfirmationService);
 	private router = inject(Router);
 	private fb = inject(FormBuilder);
-
+	private authService = inject(AuthService);
 	// Datos
 	barrios: BarrioUI[] = [];
 	loading = true;
@@ -67,7 +69,8 @@ export class BarriosComponent implements OnInit {
 	esEdicion = false;
 	idBarrioEditar: number | null = null;
 	barrioForm: FormGroup;
-
+	currentUserRole: string | null = null;
+	Role = RolUsuario;
 	constructor() {
 		this.barrioForm = this.fb.group({
 			nombre: ['', [Validators.required]],
@@ -77,6 +80,7 @@ export class BarriosComponent implements OnInit {
 	}
 
 	ngOnInit() {
+		this.currentUserRole = this.authService.getRole();
 		this.cargarDatosReales();
 	}
 
@@ -94,8 +98,12 @@ export class BarriosComponent implements OnInit {
 					inactivos: 0,
 				}));
 
-				// 2. ✅ LLAMAMOS A LA FUNCIÓN DE CONTAR (RESTAURADA)
-				this.calcularContadores();
+				if (this.currentUserRole === RolUsuario.OPERADOR) {
+					this.loading = false;
+				} else {
+					// Si es Admin o Tesorero, calculamos los contadores
+					this.calcularContadores();
+				}
 			},
 			error: (err) => {
 				console.error(err);
@@ -261,6 +269,16 @@ export class BarriosComponent implements OnInit {
 	}
 
 	verDetalle(barrio: any) {
+		// ✅ 5. OPCIONAL: Evitar que el Operador entre al detalle (porque ahí también fallará)
+		if (this.currentUserRole === RolUsuario.OPERADOR) {
+			this.messageService.add({
+				severity: 'info',
+				summary: 'Acceso Restringido',
+				detail: 'Los operadores no gestionan socios.',
+			});
+			return;
+		}
+
 		if (barrio.id) {
 			this.router.navigate(['/dashboard/barrios/detalle', barrio.id]);
 		}

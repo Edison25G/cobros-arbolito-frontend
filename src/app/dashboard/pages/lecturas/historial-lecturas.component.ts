@@ -35,6 +35,7 @@ export class HistorialLecturasComponent implements OnInit {
 
 	lecturas: LecturaView[] = [];
 	loading = true;
+	errorCarga = false;
 
 	ngOnInit(): void {
 		this.cargarDatos();
@@ -48,8 +49,16 @@ export class HistorialLecturasComponent implements OnInit {
 				this.loading = false;
 			},
 			error: (err) => {
-				console.error(err);
-				this.loading = false;
+				console.error('Error cargando lecturas:', err);
+				this.loading = false; // ✅ IMPORTANTE: Apagar el spinner
+
+				// Manejo específico del 404
+				if (err.status === 404) {
+					console.warn('No se encontró el endpoint de lecturas o no hay datos.');
+					this.lecturas = []; // Asumimos lista vacía
+				} else {
+					this.errorCarga = true; // Mostramos error genérico en el HTML
+				}
 			},
 		});
 	}

@@ -14,6 +14,8 @@ export default [
 			{
 				path: 'home',
 				loadComponent: () => import('./pages/home/home.component').then((m) => m.HomeComponent),
+				// ✅ Agregamos TODOS los roles explícitamente para que el Operador pueda entrar
+				data: { roles: [RolUsuario.ADMIN, RolUsuario.TESORERO, RolUsuario.OPERADOR, RolUsuario.SOCIO] },
 			},
 
 			// --- Rutas de Socio ---

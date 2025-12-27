@@ -63,7 +63,7 @@ export class DashboardLayoutComponent implements OnInit {
 			label: 'Gestión de Mingas',
 			icon: 'pi pi-calendar',
 			link: '/dashboard/mingas',
-			roles: [RolUsuario.ADMIN, RolUsuario.OPERADOR, RolUsuario.TESORERO],
+			roles: [RolUsuario.ADMIN, RolUsuario.TESORERO],
 		},
 		// --- TESORERO / ADMIN ---
 		{
