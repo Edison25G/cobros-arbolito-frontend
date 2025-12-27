@@ -70,17 +70,17 @@ export class DetalleBarrioComponent implements OnInit {
 		this.loading = true;
 
 		this.socioService.getSocios().subscribe({
-			next: (todosLosSocios) => {
-				// 1. FILTRAR: Ahora comparamos el ID numérico
-				this.sociosDelBarrio = todosLosSocios.filter((s) => s.barrio_id === idBarrio);
+			next: (socios) => {
+				// ✅ CAMBIO CLAVE: Usamos 's.barrio' porque así viene desde tu API
+				this.sociosDelBarrio = socios.filter((s: any) => s.barrio == idBarrio);
 
-				// 2. CALCULAR ESTADÍSTICAS
+				console.log(`Filtrados ${this.sociosDelBarrio.length} socios para el barrio ID: ${idBarrio}`);
+
 				this.calcularEstadisticas();
-
 				this.loading = false;
 			},
 			error: (err) => {
-				console.error('Error cargando socios', err);
+				console.error('Error al cargar socios', err);
 				this.loading = false;
 			},
 		});

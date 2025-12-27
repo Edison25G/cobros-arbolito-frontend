@@ -260,7 +260,9 @@ export class BarriosComponent implements OnInit {
 		});
 	}
 
-	verDetalle(nombre: string) {
-		this.router.navigate(['/dashboard/barrios/detalle', encodeURIComponent(nombre)]);
+	verDetalle(barrio: any) {
+		if (barrio.id) {
+			this.router.navigate(['/dashboard/barrios/detalle', barrio.id]);
+		}
 	}
 }

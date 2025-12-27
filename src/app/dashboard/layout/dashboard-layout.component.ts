@@ -70,7 +70,7 @@ export class DashboardLayoutComponent implements OnInit {
 			label: 'Gestión de Socios',
 			icon: 'pi pi-users',
 			link: '/dashboard/socios',
-			roles: [RolUsuario.TESORERO, RolUsuario.ADMIN],
+			roles: [RolUsuario.ADMIN],
 		},
 
 		{

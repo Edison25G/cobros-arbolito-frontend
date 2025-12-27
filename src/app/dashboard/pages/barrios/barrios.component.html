@@ -25,11 +25,10 @@
 		<div
 			*ngFor="let barrio of barrios"
 			class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-all duration-300 cursor-pointer group relative overflow-hidden focus:ring-2 focus:ring-blue-400 focus:outline-none flex flex-col justify-between"
-			(click)="verDetalle(barrio.nombre)"
+			(click)="verDetalle(barrio)"
 			[tabindex]="0"
-			(keydown.enter)="verDetalle(barrio.nombre)"
+			(keydown.enter)="verDetalle(barrio)"
 			role="button"
-			[attr.aria-label]="'Ver detalles del barrio ' + barrio.nombre"
 		>
 			<div
 				class="absolute top-0 right-0 w-24 h-24 bg-blue-50 rounded-full -mr-10 -mt-10 transition-transform group-hover:scale-150"

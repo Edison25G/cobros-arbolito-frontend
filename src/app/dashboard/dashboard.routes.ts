@@ -35,7 +35,7 @@ export default [
 				path: 'socios',
 				loadComponent: () => import('./pages/socios/socios.component').then((m) => m.SociosComponent),
 				canActivate: [RoleGuard],
-				data: { roles: [RolUsuario.ADMIN, RolUsuario.TESORERO] },
+				data: { roles: [RolUsuario.ADMIN] },
 			},
 
 			{
@@ -78,18 +78,19 @@ export default [
 				// Acceso para Tesorero (obvio) y Admin (por si acaso)
 				data: { roles: [RolUsuario.ADMIN, RolUsuario.TESORERO] },
 			},
+			// Busca esta sección en tu archivo de rutas y cámbiala:
 			{
 				path: 'barrios',
-				canActivate: [RoleGuard], // Visible para todos los roles administrativos + socio si quieres
+				canActivate: [RoleGuard],
 				data: { roles: [RolUsuario.ADMIN, RolUsuario.TESORERO, RolUsuario.OPERADOR] },
 				children: [
-					// 1. Ruta base (/dashboard/barrios): Muestra el listado de Barrios
 					{
 						path: '',
 						loadComponent: () => import('./pages/barrios/barrios.component').then((m) => m.BarriosComponent),
-					}, // 2. Ruta hija (/dashboard/barrios/detalle/:nombre): Muestra la tabla de socios
+					},
 					{
-						path: 'detalle/:nombre',
+						// ✅ CAMBIO: de 'detalle/:nombre' a 'detalle/:id'
+						path: 'detalle/:id',
 						loadComponent: () =>
 							import('./pages/barrios/detalle-barrio.component').then((m) => m.DetalleBarrioComponent),
 					},
@@ -121,7 +122,7 @@ export default [
 				path: 'medidores',
 				loadComponent: () => import('./pages/medidores/medidores.component').then((m) => m.MedidoresComponent),
 				canActivate: [RoleGuard],
-				data: { roles: [RolUsuario.ADMIN] },
+				data: { roles: [RolUsuario.ADMIN, RolUsuario.OPERADOR] },
 			},
 			{
 				path: 'reportes',
