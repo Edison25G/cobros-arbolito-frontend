@@ -1,4 +1,7 @@
-<div *ngIf="userRole === Role.ADMIN || userRole === Role.TESORERO; else socioView" class="animate-fade-in">
+<div
+	*ngIf="userRole === Role.ADMIN || userRole === Role.TESORERO || userRole === Role.OPERADOR; else socioView"
+	class="animate-fade-in"
+>
 	<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-3">
 		<div>
 			<h2 class="text-2xl font-bold text-gray-800 tracking-tight">Resumen del Sistema</h2>
@@ -61,6 +64,7 @@
 				</div>
 
 				<div
+					*ngIf="userRole !== Role.OPERADOR"
 					class="bg-white p-5 rounded-xl shadow-sm border border-slate-100 hover:shadow-md transition-all duration-300 group"
 				>
 					<div class="flex justify-between items-start">
@@ -79,6 +83,7 @@
 				</div>
 
 				<div
+					*ngIf="userRole !== Role.OPERADOR"
 					class="bg-white p-5 rounded-xl shadow-sm border border-slate-100 hover:shadow-md transition-all duration-300 group"
 				>
 					<div class="flex justify-between items-start">
@@ -95,14 +100,19 @@
 				</div>
 			</div>
 
-			<div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+			<div *ngIf="userRole !== Role.OPERADOR" class="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
 				<div class="flex justify-between items-center mb-4">
 					<h3 class="text-lg font-bold text-slate-800">Historial de Recaudación</h3>
-					<span class="px-3 py-1 text-xs font-semibold bg-slate-100 text-slate-600 rounded-full">Próximamente</span>
 				</div>
 				<div class="relative w-full h-[24rem]">
 					<p-chart type="bar" [data]="barChartData" [options]="barChartOptions" height="100%"></p-chart>
 				</div>
+			</div>
+
+			<div *ngIf="userRole === Role.OPERADOR" class="bg-blue-50 p-8 rounded-xl border border-blue-100 text-center">
+				<i class="pi pi-id-card text-4xl text-blue-500 mb-4"></i>
+				<h3 class="text-xl font-bold text-blue-800">Panel de Operador</h3>
+				<p class="text-blue-600 mt-2">Utiliza el menú lateral para registrar lecturas o gestionar medidores.</p>
 			</div>
 		</div>
 
@@ -115,7 +125,8 @@
 				</div>
 				<h3 class="text-2xl font-bold text-slate-800 mb-2">Sin datos para mostrar</h3>
 				<p class="text-slate-500 max-w-md mb-8 text-lg">El sistema está listo, pero aún no hay registros de socios.</p>
-				<div class="flex flex-wrap gap-4 justify-center">
+
+				<div *ngIf="userRole !== Role.OPERADOR" class="flex flex-wrap gap-4 justify-center">
 					<a
 						routerLink="/dashboard/socios"
 						class="inline-flex items-center gap-2 px-5 py-3 text-sm font-semibold text-white bg-emerald-600 rounded-lg shadow-md hover:bg-emerald-700 transition-colors"

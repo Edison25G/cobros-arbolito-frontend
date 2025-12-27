@@ -35,8 +35,9 @@ export class TerrenoService {
 	}
 
 	// 3. Editar terreno
-	updateTerreno(id: number, datos: Partial<Terreno>): Observable<Terreno> {
-		return this.http.put<Terreno>(`${this.apiUrl}${id}/`, datos);
+	updateTerreno(id: number, datos: any): Observable<any> {
+		// CAMBIAR .put POR .patch
+		return this.http.patch(`${this.apiUrl}${id}/`, datos);
 	}
 
 	// 4. Eliminar terreno

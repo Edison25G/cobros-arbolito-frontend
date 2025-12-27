@@ -206,7 +206,8 @@ export class SociosComponent implements OnInit {
 			telefono: formValues.telefono,
 
 			// Los campos nuevos obligatorios
-			barrio_id: formValues.barrio_id,
+			barrio: formValues.barrio_id,
+
 			direccion: formValues.direccion,
 
 			rol: formValues.rol,
