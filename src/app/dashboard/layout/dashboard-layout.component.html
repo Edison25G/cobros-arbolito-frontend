@@ -10,10 +10,10 @@
 	></div>
 
 	<aside
-		class="w-64 bg-gradient-to-b from-gray-900 to-gray-800 text-gray-200 flex flex-col z-50 overflow-y-auto transform transition-transform duration-300 shadow-xl fixed inset-y-0 h-screen lg:sticky lg:top-0 lg:h-auto lg:max-h-screen"
+		class="w-64 bg-gradient-to-b from-gray-900 to-gray-800 text-gray-200 flex flex-col z-50 overflow-y-auto transform transition-transform duration-300 shadow-xl fixed inset-y-0 h-screen lg:sticky lg:top-0 lg:h-screen"
 		[ngClass]="{ '-translate-x-full': !menuOpen && isMobile }"
 	>
-		<header class="flex items-center justify-between px-4 py-5 border-b border-gray-700">
+		<header class="flex items-center justify-between px-4 py-5 border-b border-gray-700 shrink-0">
 			<div class="flex items-center gap-2">
 				<img src="assets/img/arbolito.png" class="w-10 h-10" alt="Logo El Arbolito" />
 				<span class="text-xl font-semibold text-white">El Arbolito</span>
@@ -23,77 +23,124 @@
 			</button>
 		</header>
 
-		<nav class="flex-1 overflow-y-auto p-2 h-[calc(100vh-80px)]">
+		<nav class="flex-1 overflow-y-auto p-2 custom-scrollbar">
 			<ul class="space-y-1">
-				<!--
-          *** ¡CORRECCIÓN AQUÍ! (Línea 28) ***
-          1. Se usa <ng-container> para el bucle *ngFor.
-          2. Se usa *ngIf (en lugar de [ngIf]) en el <li> para la condición.
-        -->
 				<ng-container *ngFor="let item of menuItems">
-					<li *ngIf="hasAccess(item.roles)">
-						<a
-							[routerLink]="item.link"
-							routerLinkActive="bg-emerald-600 text-white font-semibold"
-							(click)="onMenuClick()"
-							class="group flex items-center gap-3 px-4 py-2.5 rounded-md transition-colors duration-200 hover:bg-gray-700 text-gray-300"
-						>
-							<i [class]="item.icon + ' text-gray-400 group-hover:text-white transition-colors duration-200'"></i>
-							<span class="transition-colors duration-200">{{ item.label }}</span>
-						</a>
-					</li>
+					<ng-container *ngIf="hasAccess(item.roles)">
+						<li *ngIf="item.header" class="mt-6 mb-2 px-4 text-xs font-bold text-gray-500 uppercase tracking-widest">
+							{{ item.header }}
+						</li>
+
+						<li>
+							<a
+								[routerLink]="item.link"
+								routerLinkActive="bg-emerald-600 text-white font-semibold shadow-md"
+								(click)="onMenuClick()"
+								class="group flex items-center gap-3 px-4 py-2.5 rounded-md transition-all duration-200 hover:bg-gray-700 text-gray-300 hover:text-white"
+							>
+								<i
+									[class]="item.icon + ' text-lg transition-colors duration-200 group-hover:text-emerald-400'"
+									[ngClass]="{ 'text-white': false }"
+								></i>
+								<span>{{ item.label }}</span>
+							</a>
+						</li>
+					</ng-container>
 				</ng-container>
 			</ul>
 		</nav>
+
+		<div class="p-4 border-t border-gray-700 text-xs text-center text-gray-500">v1.0.0</div>
 	</aside>
+
 	<section class="flex-1 flex flex-col min-h-screen">
 		<header
 			class="bg-white/80 backdrop-blur-lg text-black px-6 py-4 flex justify-between items-center shadow-sm sticky top-0 z-30 border-b border-gray-200"
 		>
 			<div class="flex items-center gap-4">
-				<button class="lg:hidden bg-gray-200 p-2 rounded-md" (click)="menuOpen = !menuOpen">
+				<button
+					class="lg:hidden bg-gray-200 p-2 rounded-md hover:bg-gray-300 transition"
+					(click)="menuOpen = !menuOpen"
+				>
 					<i class="pi pi-bars text-gray-800 text-lg"></i>
 				</button>
-				<h2 class="text-xl font-bold text-gray-800">Gestión de Cobros "El Arbolito"</h2>
+				<h2 class="text-xl font-bold text-gray-800 truncate">Gestión de Cobros "El Arbolito"</h2>
 			</div>
 
 			<div class="flex items-center gap-2 relative">
-				<button type="button" (click)="op.toggle($event)">
+				<button
+					type="button"
+					(click)="op.toggle($event)"
+					class="focus:outline-none focus:ring-2 focus:ring-emerald-500 rounded-full"
+				>
 					<p-avatar
 						[label]="currentUser.charAt(0).toUpperCase()"
-						styleClass="bg-emerald-500 text-white"
+						styleClass="bg-emerald-500 text-white shadow-lg"
 						size="large"
 						shape="circle"
 					>
 					</p-avatar>
 				</button>
 
-				<p-popover #op>
-					<div class="text-sm space-y-2 w-48">
-						<div class="text-center">
-							<div class="font-bold text-gray-800">{{ currentUser }}</div>
-							<div class="text-xs text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded-full inline-block mt-1">
-								<!-- Se usa el pipe 'titlecase' que importamos en el .ts -->
-								{{ currentRole | titlecase }}
-							</div>
+				<p-popover #op styleClass="rounded-2xl shadow-xl overflow-hidden">
+					<div class="w-72 font-sans">
+						<div class="relative">
+							<button
+								(click)="op.hide()"
+								class="absolute top-2 right-2 p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
+								title="Cerrar"
+							>
+								<i class="pi pi-times text-xs"></i>
+							</button>
 						</div>
-						<hr />
-						<button
-							(click)="logout()"
-							class="w-full text-red-600 hover:underline text-sm flex items-center gap-2 justify-center"
-						>
-							<i class="pi pi-sign-out"></i> Cerrar sesión
-						</button>
+
+						<div class="flex flex-col items-center pt-6 pb-5 px-4">
+							<div class="relative mb-3">
+								<div
+									class="w-20 h-20 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 text-3xl font-bold shadow-sm border-2 border-white ring-2 ring-emerald-50"
+								>
+									{{ currentUser.charAt(0).toUpperCase() }}
+								</div>
+								<div
+									class="absolute bottom-0 right-0 bg-gray-800 text-white text-[10px] font-bold px-2 py-0.5 rounded-full border-2 border-white shadow-sm uppercase tracking-wide"
+								>
+									{{ currentRole | slice: 0 : 10 }}
+								</div>
+							</div>
+
+							<h3 class="text-lg font-semibold text-gray-800 text-center leading-tight">
+								¡Hola, {{ currentUser.split(' ')[0] }}!
+							</h3>
+							<p class="text-sm text-gray-500 mb-4 text-center">
+								{{ currentUser }}
+							</p>
+
+							<button
+								class="px-5 py-2 rounded-full border border-gray-300 text-sm font-medium text-emerald-700 hover:bg-emerald-50 hover:border-emerald-200 transition-all duration-200 flex items-center gap-2"
+							>
+								<i class="pi pi-user text-xs"></i>
+								Gestionar mi perfil
+							</button>
+						</div>
+
+						<div class="border-t border-gray-100 bg-gray-50/50 p-2 flex justify-center">
+							<button
+								(click)="logout()"
+								class="flex items-center gap-2 px-6 py-3 text-sm text-gray-600 hover:text-red-600 hover:bg-white rounded-lg transition-all duration-200 w-full justify-center group"
+							>
+								<i class="pi pi-sign-out group-hover:text-red-500 transition-colors"></i>
+								<span>Cerrar sesión</span>
+							</button>
+						</div>
 					</div>
 				</p-popover>
 			</div>
 		</header>
 
-		<main class="flex-1 p-6 overflow-y-auto">
+		<main class="flex-1 p-4 md:p-6 overflow-y-auto bg-gray-50 scroll-smooth">
 			<router-outlet></router-outlet>
 		</main>
 
-		<!-- El selector 'amc-footer' debe coincidir con el de FooterComponent -->
 		<amc-footer></amc-footer>
 	</section>
 </section>

@@ -1,89 +1,148 @@
-// import { Component, OnInit, inject } from '@angular/core';
-// import { CommonModule } from '@angular/common';
+import { Component, OnInit, inject } from '@angular/core';
+import { CommonModule } from '@angular/common';
 
-// // --- Servicios y Modelos ---
-// import { MedidorService } from '@core/services/medidor.service';
-// import { LecturaService, HistorialLectura } from '@core/services/lectura.service';
-// import { Medidor } from '@core/models/medidor.interface';
-// import { ErrorService } from '../../../auth/core/services/error.service';
+// --- CAMBIO CLAVE: Usamos la interfaz que coincide con tu Backend (Puerto 8000) ---
+import { MedidorService } from '../../../core/services/mi-medidor.service';
+import { MedidorBackend, HistorialConsumo } from '../../../core/interfaces/mi-medidor';
+// ----------------------------------------------------------------------------------
 
-// // --- Imports de PrimeNG ---
-// import { CardModule } from 'primeng/card';
-// import { TableModule } from 'primeng/table';
-// import { TagModule } from 'primeng/tag';
-// import { SkeletonModule } from 'primeng/skeleton'; // Para la carga
+import { ErrorService } from '../../../auth/core/services/error.service';
 
-// @Component({
-// 	selector: 'amc-medidor', // Vista del Socio
-// 	standalone: true,
-// 	imports: [
-// 		CommonModule,
-// 		// --- Módulos de PrimeNG ---
-// 		CardModule,
-// 		TableModule,
-// 		TagModule,
-// 		SkeletonModule,
-// 	],
-// 	templateUrl: './medidor.component.html',
-// 	styleUrls: ['./medidor.component.css'],
-// })
-// export class MedidorComponent implements OnInit {
-// 	// --- Inyección de Servicios ---
-// 	private medidorService = inject(MedidorService);
-// 	private lecturaService = inject(LecturaService);
-// 	private errorService = inject(ErrorService);
+// --- Imports de PrimeNG ---
+import { CardModule } from 'primeng/card';
+import { TagModule } from 'primeng/tag';
+import { SkeletonModule } from 'primeng/skeleton';
+import { ChartModule } from 'primeng/chart';
+import { ButtonModule } from 'primeng/button';
+import { ToastModule } from 'primeng/toast';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { MessageService, ConfirmationService } from 'primeng/api';
 
-// 	// --- Estado del Componente ---
-// 	public medidor: Medidor | undefined; // Información de la tarjeta
-// 	public historial: HistorialLectura[] = []; // Datos de la tabla
+@Component({
+	selector: 'amc-medidor',
+	standalone: true,
+	imports: [
+		CommonModule,
+		CardModule,
+		TagModule,
+		SkeletonModule,
+		ChartModule,
+		ButtonModule,
+		ToastModule,
+		ConfirmDialogModule,
+	],
+	providers: [MessageService, ConfirmationService], // Proveedores necesarios para Toast y Confirm
+	templateUrl: './medidor.component.html',
+	styleUrls: ['./medidor.component.css'],
+})
+export class MedidorComponent implements OnInit {
+	// --- Inyección de Servicios ---
+	private medidorService = inject(MedidorService);
+	private errorService = inject(ErrorService);
+	private messageService = inject(MessageService);
+	private confirmationService = inject(ConfirmationService);
 
-// 	public isLoadingMedidor = true; // Skeleton para la tarjeta
-// 	public isLoadingHistorial = true; // Spinner para la tabla
+	// --- Datos ---
+	// CAMBIO AQUÍ: Ahora usamos MedidorBackend porque es lo que devuelve el servicio real
+	public medidor: MedidorBackend | undefined;
+	public historial: HistorialConsumo[] = [];
 
-// 	constructor() {}
+	// --- Configuración del Gráfico ---
+	public chartData: any;
+	public chartOptions: any;
 
-// 	/**
-// 	 * ngOnInit: Se ejecuta al cargar el componente.
-// 	 * Llamamos a los dos servicios.
-// 	 */
-// 	ngOnInit(): void {
-// 		this.loadDatosMedidor();
-// 		this.loadHistorialLecturas();
-// 	}
+	// --- Estado de Carga ---
+	public isLoading = true;
 
-// 	/**
-// 	 * Carga la información de la tarjeta del medidor
-// 	 */
-// 	loadDatosMedidor(): void {
-// 		this.isLoadingMedidor = true;
-// 		this.medidorService.getMedidorDelSocioLogueado().subscribe({
-// 			next: (data) => {
-// 				this.medidor = data;
-// 				this.isLoadingMedidor = false;
-// 			},
-// 			error: (err) => {
-// 				console.error('Error al cargar datos del medidor:', err);
-// 				this.isLoadingMedidor = false;
-// 				this.errorService.showError('No se pudo cargar la información de tu medidor.');
-// 			},
-// 		});
-// 	}
+	constructor() {}
 
-// 	/**
-// 	 * Carga la tabla del historial de lecturas
-// 	 */
-// 	loadHistorialLecturas(): void {
-// 		this.isLoadingHistorial = true;
-// 		this.lecturaService.getHistorialLecturasSocioLogueado().subscribe({
-// 			next: (data) => {
-// 				this.historial = data;
-// 				this.isLoadingHistorial = false;
-// 			},
-// 			error: (err) => {
-// 				console.error('Error al cargar historial de lecturas:', err);
-// 				this.isLoadingHistorial = false;
-// 				this.errorService.showError('No se pudo cargar tu historial de lecturas.');
-// 			},
-// 		});
-// 	}
-// }
+	ngOnInit(): void {
+		this.cargarDatos();
+	}
+
+	cargarDatos(): void {
+		this.isLoading = true;
+
+		// 1. Cargar Info del Medidor (Real desde el Backend)
+		this.medidorService.getMedidorDelSocioLogueado().subscribe({
+			next: (data) => {
+				// Asignamos los datos reales (codigo, nombre_barrio, etc.)
+				this.medidor = data;
+
+				// 2. Una vez cargado el medidor, cargamos el historial (Gráfico)
+				this.cargarHistorialYGrafico();
+			},
+			error: (_err) => {
+				this.isLoading = false;
+				// Mostramos error pero dejamos que el usuario lo vea en la UI (state vacío)
+				this.errorService.showError('No se pudo cargar la información del medidor.');
+			},
+		});
+	}
+
+	cargarHistorialYGrafico() {
+		this.medidorService.getHistorialConsumo().subscribe({
+			next: (data) => {
+				this.historial = data;
+				this.initChart(data);
+				this.isLoading = false;
+			},
+			error: (err) => {
+				this.isLoading = false;
+				console.error(err);
+			},
+		});
+	}
+
+	/**
+	 * Configura el gráfico de Chart.js
+	 */
+	initChart(historial: HistorialConsumo[]) {
+		const documentStyle = getComputedStyle(document.documentElement);
+		const textColor = documentStyle.getPropertyValue('--text-color');
+		const surfaceBorder = documentStyle.getPropertyValue('--surface-border');
+
+		const etiquetas = historial.map((h) => h.mes);
+		const valores = historial.map((h) => h.consumo);
+
+		this.chartData = {
+			labels: etiquetas,
+			datasets: [
+				{
+					label: 'Consumo de Agua (m³)',
+					data: valores,
+					fill: true,
+					borderColor: '#10b981', // Verde Arbolito
+					backgroundColor: 'rgba(16, 185, 129, 0.2)',
+					tension: 0.4,
+				},
+			],
+		};
+
+		this.chartOptions = {
+			maintainAspectRatio: false,
+			aspectRatio: 0.6,
+			plugins: {
+				legend: {
+					labels: { color: textColor },
+				},
+				title: {
+					display: true,
+					text: 'Tu Historial de Consumo',
+					font: { size: 16 },
+				},
+			},
+			scales: {
+				x: {
+					ticks: { color: textColor },
+					grid: { color: surfaceBorder, drawBorder: false },
+				},
+				y: {
+					ticks: { color: textColor },
+					grid: { color: surfaceBorder, drawBorder: false },
+					beginAtZero: true,
+				},
+			},
+		};
+	}
+}

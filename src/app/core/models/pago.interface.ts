@@ -1,21 +1,32 @@
-// Define los métodos de pago
-export enum MetodoPago {
-	Efectivo = 'Efectivo',
-	Transferencia = 'Transferencia',
-	Otro = 'Otro',
+export enum EstadoFactura {
+	Pendiente = 'PENDIENTE',
+	EnVerificacion = 'EN_VERIFICACION',
+	Pagada = 'PAGADA',
+	Anulada = 'ANULADA',
 }
 
-// Lo que enviamos al registrar un pago
-export interface PagoPayload {
-	idFactura: number;
-	montoPagado: number;
-	metodoPago: MetodoPago;
-	fechaPago: Date;
+// 1. Interface del detalle
+export interface DetalleConsumo {
+	lectura_anterior: number;
+	lectura_actual: number;
+	consumo_total: number;
+	costo_base: number;
+	costo_exceso_1?: number;
+	costo_exceso_2?: number;
+	m3_exceso_1?: number;
+	m3_exceso_2?: number;
 }
 
-// La respuesta del servicio
-export interface PagoResponse {
-	success: boolean;
-	message: string;
-	idPago?: number;
+// 2. Interface de la Factura (CON el detalle)
+export interface FacturaSocio {
+	id: number;
+	fecha_emision: string;
+	fecha_vencimiento: string;
+	total: number;
+	estado: EstadoFactura;
+	url_comprobante?: string;
+	lectura_id?: number;
+
+	// ¡Aquí está la clave!
+	detalle?: DetalleConsumo;
 }

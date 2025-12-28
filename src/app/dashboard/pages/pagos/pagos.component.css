@@ -1,0 +1,29 @@
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  /* Usamos ::ng-deep para forzar los estilos dentro del modal de PrimeNG */
+  ::ng-deep .p-dialog-mask {
+    background: white !important; /* Quita el fondo gris oscuro */
+  }
+
+  ::ng-deep .p-dialog, ::ng-deep .p-dialog * {
+    visibility: visible;
+  }
+
+  ::ng-deep .p-dialog {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  /* Ocultar botón de cerrar (X) y el Footer (Botón Imprimir) */
+  ::ng-deep .p-dialog .p-dialog-header-icons,
+  ::ng-deep .p-dialog .p-dialog-footer {
+    display: none !important;
+  }
+}
