@@ -9,13 +9,14 @@ import { AvatarModule } from 'primeng/avatar';
 // Componentes y Servicios
 import { FooterComponent } from '../../common/components/footer/footer.component';
 import { AuthService } from '../../core/services/auth.service';
-import { RolUsuario } from '../../core/models/role.enum'; // ✅ USAMOS RolUsuario
+import { RolUsuario } from '../../core/models/role.enum';
 
 interface SideNavItem {
 	label: string;
 	icon: string;
 	link: string;
 	roles: RolUsuario[];
+	header?: string; // ✅ NUEVO: Para poner títulos separadores visuales
 }
 
 @Component({
@@ -33,85 +34,70 @@ export class DashboardLayoutComponent implements OnInit {
 	isMobile = false;
 
 	currentUser!: string;
-	currentRole: RolUsuario | null = null; // ✅ TIPO CORRECTO
+	currentRole: RolUsuario | null = null;
 
-	public roleEnum = RolUsuario; // Para usar en el HTML
+	public roleEnum = RolUsuario;
 
-	// ✅ MENÚ CONFIGURADO CON RolUsuario
+	// ✅ MENÚ HÍBRIDO CONFIGURADO
 	menuItems: SideNavItem[] = [
-		// --- TODOS ---
+		// 1. DASHBOARD GENERAL (Para todos)
 		{
 			label: 'Resumen',
 			icon: 'pi pi-home',
 			link: '/dashboard/home',
 			roles: [RolUsuario.ADMIN, RolUsuario.TESORERO, RolUsuario.OPERADOR, RolUsuario.SOCIO],
 		},
-		// --- SOCIO ---
-		{
-			label: 'Mis Pagos',
-			icon: 'pi pi-dollar',
-			link: '/dashboard/pagos',
-			roles: [RolUsuario.SOCIO],
-		},
-		{
-			label: 'Mi Medidor',
-			icon: 'pi pi-chart-line',
-			link: '/dashboard/medidor',
-			roles: [RolUsuario.SOCIO],
-		},
-		{
-			label: 'Gestión de Mingas',
-			icon: 'pi pi-calendar',
-			link: '/dashboard/mingas',
-			roles: [RolUsuario.ADMIN, RolUsuario.TESORERO],
-		},
-		// --- TESORERO / ADMIN ---
-		{
-			label: 'Gestión de Socios',
-			icon: 'pi pi-users',
-			link: '/dashboard/socios',
-			roles: [RolUsuario.ADMIN],
-		},
 
+		// 2. SECCIÓN DE TRABAJO (Solo Roles Administrativos)
+		// -----------------------------------------------------
 		{
-			label: 'Barrios / Zonas',
-			icon: 'pi pi-map', // Icono de mapa
-			link: '/dashboard/barrios',
-			roles: [RolUsuario.ADMIN, RolUsuario.TESORERO, RolUsuario.OPERADOR],
-		},
-
-		{
-			label: 'Generar Facturación',
-			icon: 'pi pi-file-edit',
-			link: '/dashboard/facturacion',
-			roles: [RolUsuario.TESORERO, RolUsuario.ADMIN],
-		},
-		// --- TESORERO ---
-		{
-			label: 'Caja / Recaudación', // Nombre más profesional
-			icon: 'pi pi-wallet', // Icono de billetera
-			link: '/dashboard/caja', // Debe coincidir con el path del routes
-			roles: [RolUsuario.TESORERO, RolUsuario.ADMIN],
-		},
-		// --- OPERADOR ---
-		{
-			label: 'Registro de Lecturas',
-			icon: 'pi pi-camera',
-			link: '/dashboard/lecturas',
-			roles: [RolUsuario.OPERADOR, RolUsuario.ADMIN],
-		},
-		// --- ADMIN ---
-		{
+			header: 'GESTIÓN ADMINISTRATIVA', // Título visual
 			label: 'Gestión de Usuarios',
 			icon: 'pi pi-shield',
 			link: '/dashboard/usuarios',
 			roles: [RolUsuario.ADMIN],
 		},
 		{
+			label: 'Gestión de Socios',
+			icon: 'pi pi-users',
+			link: '/dashboard/socios',
+			roles: [RolUsuario.ADMIN],
+		},
+		{
+			label: 'Caja / Recaudación',
+			icon: 'pi pi-wallet',
+			link: '/dashboard/caja',
+			roles: [RolUsuario.TESORERO, RolUsuario.ADMIN],
+		},
+		{
+			label: 'Generar Facturación',
+			icon: 'pi pi-file-edit',
+			link: '/dashboard/facturacion',
+			roles: [RolUsuario.TESORERO, RolUsuario.ADMIN],
+		},
+		{
+			label: 'Registro de Lecturas',
+			icon: 'pi pi-camera',
+			link: '/dashboard/lecturas',
+			roles: [RolUsuario.OPERADOR, RolUsuario.ADMIN],
+		},
+		{
 			label: 'Gestión de Medidores',
 			icon: 'pi pi-gauge',
 			link: '/dashboard/medidores',
 			roles: [RolUsuario.ADMIN, RolUsuario.OPERADOR],
+		},
+		{
+			label: 'Barrios / Zonas',
+			icon: 'pi pi-map',
+			link: '/dashboard/barrios',
+			roles: [RolUsuario.ADMIN, RolUsuario.TESORERO, RolUsuario.OPERADOR],
+		},
+		{
+			label: 'Gestión de Mingas',
+			icon: 'pi pi-calendar',
+			link: '/dashboard/mingas',
+			roles: [RolUsuario.ADMIN, RolUsuario.TESORERO],
 		},
 		{
 			label: 'Reportes',
@@ -125,18 +111,34 @@ export class DashboardLayoutComponent implements OnInit {
 			link: '/dashboard/configuracion',
 			roles: [RolUsuario.ADMIN],
 		},
+
+		// 3. SECCIÓN PERSONAL (Para TODOS, incluido el Tesorero en su rol de vecino)
+		// --------------------------------------------------------------------------
+		{
+			header: 'MI SERVICIO (PERSONAL)', // Título visual
+			label: 'Mis Pagos',
+			icon: 'pi pi-dollar',
+			link: '/dashboard/pagos',
+			// ✅ CLAVE: Agregamos ADMIN, TESORERO y OPERADOR aquí
+			roles: [RolUsuario.SOCIO, RolUsuario.TESORERO, RolUsuario.OPERADOR],
+		},
+		{
+			label: 'Mi Medidor',
+			icon: 'pi pi-chart-line',
+			link: '/dashboard/medidor',
+			// ✅ CLAVE: Agregamos ADMIN, TESORERO y OPERADOR aquí
+			roles: [RolUsuario.SOCIO, RolUsuario.TESORERO, RolUsuario.OPERADOR],
+		},
 	];
 
 	ngOnInit(): void {
 		this.checkScreen();
-
-		// ✅ OBTENCIÓN Y CASTING DEL ROL
 		const roleString = this.authService.getRole();
 		this.currentRole = roleString as RolUsuario | null;
+		const nombreReal = this.authService.getNombreCompleto();
 
-		// Nombre para el Avatar
-		// Si roleString es 'Administrador', eso mostramos. Si es null, mostramos 'Usuario'
-		this.currentUser = roleString || 'Usuario';
+		// Si nombreReal no está vacío (""), lo usamos. Si está vacío, usamos el Rol como respaldo.
+		this.currentUser = nombreReal ? nombreReal : roleString || 'Usuario';
 	}
 
 	onMenuClick(): void {
@@ -147,7 +149,7 @@ export class DashboardLayoutComponent implements OnInit {
 
 	logout(): void {
 		this.authService.logout();
-		this.router.navigate(['/auth/login']); // Asegúrate que la ruta sea correcta
+		this.router.navigate(['/auth/login']);
 	}
 
 	hasAccess(itemRoles: RolUsuario[]): boolean {

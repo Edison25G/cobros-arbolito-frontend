@@ -1,13 +1,11 @@
 <p-toast></p-toast>
 <p-confirmDialog [style]="{ width: '450px' }"></p-confirmDialog>
 
-<!-- Encabezado -->
 <div class="mb-6">
 	<h2 class="text-3xl font-extrabold text-gray-800 tracking-tight">Mis Pagos y Facturas</h2>
 	<p class="text-lg text-gray-500 mt-1">Revisa tu historial de facturas y sube tus comprobantes de pago.</p>
 </div>
 
-<!-- Tabla de Facturas del Socio -->
 <div class="p-6 rounded-2xl shadow border border-gray-200 bg-white">
 	<p-table
 		[value]="misFacturas"
@@ -45,37 +43,33 @@
 					<p-tag [value]="factura.estado" [severity]="getSeverity(factura.estado)"></p-tag>
 				</td>
 				<td>
-					<!-- Lógica de Botones -->
+					<div class="flex gap-2">
+						<p-button
+							*ngIf="factura.estado === EstadoFactura.Pendiente"
+							icon="pi pi-upload"
+							pTooltip="Subir Pago"
+							tooltipPosition="top"
+							styleClass="p-button-sm p-button-success"
+							(click)="openUploadModal(factura)"
+						></p-button>
 
-					<!-- 1. Si está PENDIENTE: Mostrar botón "Subir Comprobante" -->
-					<p-button
-						*ngIf="factura.estado === EstadoFactura.Pendiente"
-						label="Subir Comprobante"
-						icon="pi pi-upload"
-						(click)="openUploadModal(factura)"
-					></p-button>
+						<p-button
+							icon="pi pi-file"
+							pTooltip="Ver Detalle / Imprimir"
+							tooltipPosition="top"
+							styleClass="p-button-sm p-button-secondary p-button-outlined"
+							(click)="verDetalleFactura(factura)"
+						></p-button>
 
-					<!-- 2. Si está EN VERIFICACIÓN: Mostrar texto y deshabilitar -->
-					<p-button
-						*ngIf="factura.estado === EstadoFactura.EnVerificacion"
-						label="En Verificación"
-						icon="pi pi-clock"
-						[disabled]="true"
-						severity="info"
-						[outlined]="true"
-					></p-button>
-
-					<!-- 3. Si está PAGADA: Mostrar botón de "Ver" (o imprimir) -->
-					<p-button
-						*ngIf="factura.estado === EstadoFactura.Pagada"
-						label="Pagada"
-						icon="pi pi-check"
-						severity="success"
-						[outlined]="true"
-						(click)="verFactura(factura.id)"
-					></p-button>
-
-					<!-- 4. Si está ANULADA: No mostrar nada o un tag -->
+						<p-button
+							*ngIf="factura.estado === EstadoFactura.Pagada"
+							label="Listo"
+							icon="pi pi-check"
+							severity="success"
+							[outlined]="true"
+							styleClass="p-button-sm"
+						></p-button>
+					</div>
 				</td>
 			</tr>
 		</ng-template>
@@ -88,12 +82,11 @@
 	</p-table>
 </div>
 
-<!-- MODAL (p-dialog) para Subir Comprobante -->
 <p-dialog
 	[(visible)]="showUploadModal"
 	[modal]="true"
 	[closable]="true"
-	header="Subir Comprobante de Pago (Factura #{{ facturaSeleccionada?.id }})"
+	header="Subir Comprobante (Factura #{{ facturaSeleccionada?.id }})"
 	[style]="{ width: '500px', maxWidth: '90vw' }"
 	(onHide)="closeUploadModal()"
 >
@@ -103,16 +96,8 @@
 				Total a Pagar:
 				<strong class="text-2xl text-emerald-600">{{ facturaSeleccionada?.total | currency: 'USD' }}</strong>
 			</p>
-			<p class="text-gray-600">Por favor, sube una foto o PDF de tu transferencia o depósito bancario.</p>
+			<p class="text-gray-600">Sube foto o PDF de tu transferencia.</p>
 		</div>
-
-		<!--
-      Componente de Carga de Archivos de PrimeNG
-      - auto: Sube el archivo automáticamente al seleccionarlo.
-      - customUpload: Le dice a PrimeNG que usaremos nuestra propia lógica (el método onUpload).
-      - accept: Limita los tipos de archivo.
-      - maxFileSize: Límite de 5MB (ajústalo si es necesario).
-    -->
 		<p-fileUpload
 			name="comprobante"
 			[auto]="true"
@@ -120,18 +105,75 @@
 			(uploadHandler)="onUpload($event)"
 			accept="image/*,.pdf"
 			[maxFileSize]="5000000"
-			[showCancelButton]="false"
-			[disabled]="isUploading"
 			chooseLabel="Buscar Archivo"
 			uploadLabel="Subir"
 			cancelLabel="Cancelar"
-		>
-			<ng-template pTemplate="empty">
-				<div class="flex items-center justify-center flex-col">
-					<i class="pi pi-cloud-upload text-4xl text-gray-400"></i>
-					<p class="mt-2 text-gray-600">Arrastra y suelta tu archivo aquí o haz clic.</p>
-				</div>
-			</ng-template>
-		</p-fileUpload>
+		></p-fileUpload>
 	</div>
+</p-dialog>
+
+<p-dialog
+	[(visible)]="showDetailModal"
+	[modal]="true"
+	[style]="{ width: '400px' }"
+	header="Detalle de Cobro"
+	[draggable]="false"
+	[resizable]="false"
+>
+	<div *ngIf="facturaSeleccionada" class="p-2" id="printable-ticket">
+		<div class="text-center border-b border-gray-300 pb-3 mb-3">
+			<h3 class="font-bold text-xl text-emerald-700">El Arbolito</h3>
+			<p class="text-sm text-gray-500">Junta de Agua Potable</p>
+			<p class="text-xs text-gray-400 mt-1">Recibo N° {{ facturaSeleccionada.id }}</p>
+			<p class="text-xs text-gray-400">Fecha: {{ facturaSeleccionada.fecha_emision | date: 'dd/MM/yyyy' }}</p>
+		</div>
+
+		<div class="space-y-2 text-sm text-gray-700 mb-4">
+			<div class="flex justify-between">
+				<span>Lectura Anterior:</span>
+				<span class="font-medium">{{ $any(facturaSeleccionada).detalle?.lectura_anterior || 0 }}</span>
+			</div>
+			<div class="flex justify-between">
+				<span>Lectura Actual:</span>
+				<span class="font-medium">{{ $any(facturaSeleccionada).detalle?.lectura_actual || 0 }}</span>
+			</div>
+			<div class="flex justify-between border-b border-dashed border-gray-300 pb-2">
+				<span class="font-bold">Consumo Total:</span>
+				<span class="font-bold">{{ $any(facturaSeleccionada).detalle?.consumo_total || 0 }} m³</span>
+			</div>
+		</div>
+
+		<div class="space-y-2 text-sm text-gray-700">
+			<div class="flex justify-between">
+				<span>Tarifa Base:</span>
+				<span>{{ $any(facturaSeleccionada).detalle?.costo_base | currency: 'USD' }}</span>
+			</div>
+
+			<div *ngIf="$any(facturaSeleccionada).detalle?.m3_exceso_1" class="flex justify-between text-xs text-amber-700">
+				<span>Exceso 11-15m³ ({{ $any(facturaSeleccionada).detalle?.m3_exceso_1 }}m³):</span>
+				<span>{{ $any(facturaSeleccionada).detalle?.costo_exceso_1 | currency: 'USD' }}</span>
+			</div>
+
+			<div *ngIf="$any(facturaSeleccionada).detalle?.m3_exceso_2" class="flex justify-between text-xs text-red-700">
+				<span>Exceso >15m³ ({{ $any(facturaSeleccionada).detalle?.m3_exceso_2 }}m³):</span>
+				<span>{{ $any(facturaSeleccionada).detalle?.costo_exceso_2 | currency: 'USD' }}</span>
+			</div>
+		</div>
+
+		<div class="mt-4 pt-3 border-t-2 border-gray-800 flex justify-between items-center">
+			<span class="text-lg font-bold">TOTAL A PAGAR:</span>
+			<span class="text-xl font-extrabold text-gray-900">{{ facturaSeleccionada.total | currency: 'USD' }}</span>
+		</div>
+	</div>
+
+	<ng-template pTemplate="footer">
+		<div class="flex justify-center w-full">
+			<p-button
+				label="Imprimir Recibo"
+				icon="pi pi-print"
+				(click)="imprimirTicket()"
+				styleClass="p-button-outlined p-button-secondary w-full"
+			></p-button>
+		</div>
+	</ng-template>
 </p-dialog>

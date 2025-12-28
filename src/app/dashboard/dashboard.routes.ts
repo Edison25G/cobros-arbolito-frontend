@@ -23,14 +23,16 @@ export default [
 				path: 'pagos',
 				loadComponent: () => import('./pages/pagos/pagos.component').then((m) => m.PagosComponent),
 				canActivate: [RoleGuard],
-				data: { roles: [RolUsuario.SOCIO] },
+				// Agregamos ADMIN, TESORERO y OPERADOR para que el guardia los deje pasar
+				data: { roles: [RolUsuario.SOCIO, RolUsuario.TESORERO, RolUsuario.OPERADOR] },
 			},
-			// {
-			// 	path: 'medidor',
-			// 	loadComponent: () => import('./pages/medidor/medidor.component').then((m) => m.MedidorComponent),
-			// 	canActivate: [RoleGuard],
-			// 	data: { roles: [RolUsuario.SOCIO] },
-			// },
+			{
+				path: 'medidor',
+				loadComponent: () => import('./pages/medidor/medidor.component').then((m) => m.MedidorComponent),
+				canActivate: [RoleGuard],
+				// Aquí igual:
+				data: { roles: [RolUsuario.SOCIO, RolUsuario.TESORERO, RolUsuario.OPERADOR] },
+			},
 
 			// --- Rutas de Secretario (Algunas compartidas con Admin) ---
 			{

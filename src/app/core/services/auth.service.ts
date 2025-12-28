@@ -5,8 +5,6 @@ import { environment } from './../../environments/environment.development';
 import { ErrorService } from '../../auth/core/services/error.service';
 import { LoginRequest, UserData } from '../../core/interfaces/auth.interface';
 
-// Nota: Ya no importamos RolUsuario para lógica, solo para tipado si es necesario.
-
 @Injectable({
 	providedIn: 'root',
 })
@@ -22,7 +20,7 @@ export class AuthService {
 		}
 	}
 
-	// --- MÉTODOS AUXILIARES ---
+	// --- MÉTODOS DE ESTADO ---
 	isAuthenticated(): boolean {
 		return !!localStorage.getItem('token');
 	}
@@ -34,13 +32,23 @@ export class AuthService {
 		return null;
 	}
 
+	// ✅ VITAL: Este método une lo que el Backend nos envió
+	// El MedidorService usa esto para filtrar la lista.
+	getNombreCompleto(): string {
+		if (this.currentUser) {
+			const nombre = `${this.currentUser.first_name} ${this.currentUser.last_name}`;
+			return nombre.trim();
+		}
+		return '';
+	}
+
 	logout(): void {
 		this.currentUser = null;
 		localStorage.removeItem('user');
 		localStorage.removeItem('token');
 	}
 
-	// 👇 1. FUNCIÓN PARA LEER EL INTERIOR DEL TOKEN
+	// --- DECODIFICACIÓN JWT ---
 	private decodeToken(token: string): any {
 		try {
 			const base64Url = token.split('.')[1];
@@ -67,25 +75,29 @@ export class AuthService {
 
 		return this.http.post<any>(loginUrl, credentials).pipe(
 			map((response) => {
-				// Guardamos Token
+				// 1. Guardamos el Token crudo
 				if (response.access) {
 					localStorage.setItem('token', response.access);
 				}
 
-				// 2. EXTRAEMOS LA INFORMACIÓN DEL TOKEN
+				// 2. Leemos qué tiene adentro el token
 				const payload = this.decodeToken(response.access);
 
-				// 3. ASIGNAMOS DIRECTAMENTE LO QUE VIENE EN EL TOKEN
-				// Intentamos leer 'rol', 'role' o 'tipo_usuario' por si acaso el nombre varía
+				// 3. Obtenemos el Rol (con fallback por si acaso)
 				const rolDelToken = payload.rol || payload.role || payload.tipo_usuario || 'Socio';
 
+				// 4. CREAMOS EL USUARIO CON DATOS REALES DEL BACKEND
+				// Ya no hay "if/else" manuales. Confiamos en que Django envía la data.
 				this.currentUser = {
 					id: payload.user_id || 0,
 					username: payload.username || credentials.username,
-					first_name: payload.first_name || '', // Si el token lo trae, genial
+
+					// ✅ AQUÍ LA MAGIA: Django ahora envía estos campos llenos
+					first_name: payload.first_name || '',
 					last_name: payload.last_name || '',
+
 					email: payload.email || '',
-					rol: rolDelToken, // ✅ AQUÍ SE ASIGNA EL ROL REAL
+					rol: rolDelToken,
 				};
 
 				localStorage.setItem('user', JSON.stringify(this.currentUser));

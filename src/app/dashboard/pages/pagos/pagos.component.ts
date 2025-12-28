@@ -54,7 +54,7 @@ export class PagosComponent implements OnInit {
 	public showUploadModal = false;
 	public isUploading = false;
 	public facturaSeleccionada: FacturaSocio | null = null;
-
+	public showDetailModal = false;
 	constructor() {}
 
 	ngOnInit(): void {
@@ -157,5 +157,18 @@ export class PagosComponent implements OnInit {
 	verFactura(facturaId: number): void {
 		console.log('Mostrando detalle de factura:', facturaId);
 		this.errorService.showSuccess('Simulando vista de factura PDF...');
+	}
+
+	verDetalleFactura(factura: FacturaSocio) {
+		this.facturaSeleccionada = factura;
+		this.showDetailModal = true;
+	}
+	imprimirTicket() {
+		// Cerramos el modal momentáneamente o imprimimos directamente
+		window.print();
+
+		// NOTA: Para imprimir SOLO el ticket y no toda la página,
+		// lo ideal es usar CSS con @media print.
+		// Por ahora, window.print() imprimirá la pantalla, lo cual sirve para empezar.
 	}
 }
