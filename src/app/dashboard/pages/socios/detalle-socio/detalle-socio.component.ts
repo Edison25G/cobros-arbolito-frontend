@@ -27,6 +27,8 @@ import { TerrenoService } from '../../../../core/services/terreno.service';
 import { SocioService } from '../../../../core/services/socio.service';
 import { BarriosService } from '../../../../core/services/barrios.service'; // ✅ Asegúrate que la ruta sea correcta
 import { Socio } from '../../../../core/models/socio.interface';
+import { ConfirmationService } from 'primeng/api';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
 
 @Component({
 	selector: 'app-detalle-socio',
@@ -47,6 +49,7 @@ import { Socio } from '../../../../core/models/socio.interface';
 		SelectModule, // ✅
 		InputTextModule, // ✅
 		ToggleSwitchModule, // ✅
+		ConfirmDialogModule,
 	],
 	providers: [MessageService],
 	templateUrl: './detalle-socio.component.html',
@@ -60,6 +63,7 @@ export class DetalleSocioComponent implements OnInit {
 	private fb = inject(FormBuilder); // ✅ Para crear el formulario
 	private barriosService = inject(BarriosService); // ✅ Para cargar lista de barrios
 	private terrenoService = inject(TerrenoService);
+	private confirmationService = inject(ConfirmationService);
 	// Datos del Socio
 	socioId!: number;
 	socio: Socio | null = null;
@@ -243,7 +247,31 @@ export class DetalleSocioComponent implements OnInit {
 
 		this.mostrarModalTerreno = true;
 	}
+	eliminarTerreno(terreno: any) {
+		this.confirmationService.confirm({
+			message: `¿Estás seguro de eliminar el terreno en "${terreno.direccion}"?`,
+			header: 'Confirmar Eliminación',
+			icon: 'pi pi-exclamation-triangle',
+			acceptLabel: 'Sí, eliminar',
+			acceptButtonStyleClass: 'p-button-danger',
 
+			accept: () => {
+				this.terrenoService.deleteTerreno(terreno.id).subscribe({
+					next: () => {
+						this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Terreno eliminado.' });
+						this.cargarTerrenos(); // Recargar la tabla
+					},
+					error: (_err) => {
+						this.messageService.add({
+							severity: 'error',
+							summary: 'Error',
+							detail: 'No se pudo eliminar (puede tener lecturas asociadas).',
+						});
+					},
+				});
+			},
+		});
+	}
 	volver(): void {
 		this.router.navigate(['/dashboard/socios']);
 	}
