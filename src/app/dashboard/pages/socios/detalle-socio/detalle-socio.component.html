@@ -1,5 +1,5 @@
 <p-toast></p-toast>
-
+<p-confirmDialog></p-confirmDialog>
 <div *ngIf="isLoading" class="card p-6 bg-white rounded-xl shadow-sm border border-gray-100 animate-pulse">
 	<div class="flex gap-4 mb-6">
 		<p-skeleton shape="circle" size="5rem"></p-skeleton>
@@ -118,16 +118,31 @@
 						</td>
 
 						<td class="text-center">
-							<p-button
-								icon="pi pi-pencil"
-								[text]="true"
-								[rounded]="true"
-								severity="secondary"
-								pTooltip="Editar terreno"
-								tooltipPosition="top"
-								(onClick)="editarTerreno(terreno)"
-							>
-							</p-button>
+							<div class="flex justify-center gap-2 min-w-[90px]">
+								<p-button
+									icon="pi pi-pencil"
+									[rounded]="true"
+									[outlined]="true"
+									severity="info"
+									size="small"
+									pTooltip="Editar terreno"
+									tooltipPosition="top"
+									(onClick)="editarTerreno(terreno)"
+								>
+								</p-button>
+
+								<p-button
+									icon="pi pi-trash"
+									severity="danger"
+									[rounded]="true"
+									[outlined]="true"
+									size="small"
+									pTooltip="Eliminar terreno"
+									tooltipPosition="top"
+									(onClick)="eliminarTerreno(terreno)"
+								>
+								</p-button>
+							</div>
 						</td>
 					</tr>
 				</ng-template>
