@@ -17,79 +17,103 @@
 		</p-button>
 	</div>
 
-	<!-- Tabla -->
-	<p-table
-		#dt
-		[value]="lecturas"
-		[loading]="loading"
-		[paginator]="true"
-		[rows]="10"
-		[globalFilterFields]="['medidor_codigo', 'socio_nombre', 'fecha']"
-		styleClass="p-datatable-sm"
-		[rowHover]="true"
-		currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} lecturas"
-		[showCurrentPageReport]="true"
-	>
-		<!-- Buscador -->
-		<ng-template pTemplate="caption">
-			<div class="flex justify-end">
-				<p-iconfield iconPosition="left" class="w-full sm:w-auto">
-					<p-inputicon styleClass="pi pi-search" />
-					<input
-						pInputText
-						type="text"
-						(input)="dt.filterGlobal($any($event.target).value, 'contains')"
-						placeholder="Buscar por código, socio..."
-						class="w-full sm:w-64"
-					/>
-				</p-iconfield>
-			</div>
-		</ng-template>
+	<div class="card">
+		<p-table
+			#dt
+			[value]="lecturas"
+			[loading]="loading"
+			[paginator]="true"
+			[rows]="10"
+			[rowsPerPageOptions]="[5, 10, 20]"
+			[globalFilterFields]="['medidor_codigo', 'socio_nombre', 'fecha']"
+			dataKey="id"
+			[rowHover]="true"
+			styleClass="p-datatable-sm"
+			currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} lecturas"
+			[showCurrentPageReport]="true"
+		>
+			<!-- Buscador -->
+			<ng-template pTemplate="caption">
+				<div class="flex justify-end">
+					<p-iconfield iconPosition="left" class="w-full sm:w-auto">
+						<p-inputicon styleClass="pi pi-search" />
+						<input
+							pInputText
+							type="text"
+							(input)="dt.filterGlobal($any($event.target).value, 'contains')"
+							placeholder="Buscar por código, socio..."
+							class="w-full sm:w-64"
+						/>
+					</p-iconfield>
+				</div>
+			</ng-template>
 
-		<ng-template pTemplate="header">
-			<tr>
-				<th pSortableColumn="fecha">Fecha <p-sortIcon field="fecha"></p-sortIcon></th>
-				<th pSortableColumn="medidor_codigo">Medidor <p-sortIcon field="medidor_codigo"></p-sortIcon></th>
-				<th pSortableColumn="socio_nombre">Socio <p-sortIcon field="socio_nombre"></p-sortIcon></th>
-				<th class="text-right">Lect. Anterior</th>
-				<th class="text-right">Lect. Actual</th>
-				<th class="text-center">Consumo</th>
-				<th class="text-center">Estado</th>
-			</tr>
-		</ng-template>
+			<!-- HEADER -->
+			<ng-template #header>
+				<tr>
+					<th pSortableColumn="fecha">
+						<div class="flex items-center gap-2">
+							Fecha
+							<p-sortIcon field="fecha" />
+						</div>
+					</th>
 
-		<ng-template pTemplate="body" let-lectura>
-			<tr>
-				<td>{{ lectura.fecha | date: 'dd/MM/yyyy' }}</td>
-				<td class="font-bold text-gray-700">{{ lectura.medidor_codigo }}</td>
-				<td>{{ lectura.socio_nombre }}</td>
-				<td class="text-right text-gray-500">{{ lectura.lectura_anterior }} m³</td>
-				<td class="text-right font-semibold">{{ lectura.lectura_actual }} m³</td>
+					<th pSortableColumn="medidor_codigo">
+						<div class="flex items-center gap-2">
+							Medidor
+							<p-sortIcon field="medidor_codigo" />
+						</div>
+					</th>
 
-				<td class="text-center">
-					<span class="font-bold text-lg text-blue-600">{{ lectura.consumo }} m³</span>
-				</td>
+					<th pSortableColumn="socio_nombre">
+						<div class="flex items-center gap-2">
+							Socio
+							<p-sortIcon field="socio_nombre" />
+						</div>
+					</th>
 
-				<td class="text-center">
-					<p-tag
-						[value]="lectura.estado"
-						[severity]="lectura.estado === 'Facturada' ? 'success' : 'info'"
-						[rounded]="true"
-					>
-					</p-tag>
-				</td>
-			</tr>
-		</ng-template>
+					<th class="text-right">Lect. Anterior</th>
+					<th class="text-right">Lect. Actual</th>
+					<th class="text-center">Consumo</th>
+					<th class="text-center">Estado</th>
+				</tr>
+			</ng-template>
 
-		<ng-template pTemplate="emptymessage">
-			<tr>
-				<td colspan="7" class="text-center p-8">
-					<div class="flex flex-col items-center justify-center text-gray-500">
-						<i class="pi pi-file-excel text-4xl mb-2"></i>
-						<p>No se encontraron lecturas registradas.</p>
-					</div>
-				</td>
-			</tr>
-		</ng-template>
-	</p-table>
+			<!-- BODY -->
+			<ng-template #body let-lectura>
+				<tr>
+					<td>{{ lectura.fecha | date: 'dd/MM/yyyy' }}</td>
+
+					<td class="font-bold text-gray-700">
+						{{ lectura.medidor_codigo }}
+					</td>
+
+					<td>{{ lectura.socio_nombre }}</td>
+
+					<td class="text-right text-gray-500">{{ lectura.lectura_anterior }} m³</td>
+
+					<td class="text-right font-semibold">{{ lectura.lectura_actual }} m³</td>
+
+					<td class="text-center">
+						<span class="font-bold text-lg text-blue-600"> {{ lectura.consumo }} m³ </span>
+					</td>
+
+					<td class="text-center">
+						<p-tag
+							[value]="lectura.estado"
+							[severity]="lectura.estado === 'Facturada' ? 'success' : 'info'"
+							[rounded]="true"
+						/>
+					</td>
+				</tr>
+			</ng-template>
+
+			<!-- EMPTY MESSAGE -->
+			<ng-template pTemplate="emptymessage" let-columns>
+				<tr *ngIf="!loading">
+					<td colspan="7" class="text-center p-6 text-gray-500">No se encontraron lecturas registradas.</td>
+				</tr>
+			</ng-template>
+		</p-table>
+	</div>
 </div>

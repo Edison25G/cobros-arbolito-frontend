@@ -9,11 +9,10 @@
 		</div>
 	</div>
 
-	<div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+	<div class="bg-white rounded-xl shadow-sm border border-gray-200">
 		<div class="p-4 border-b border-gray-100 flex flex-col sm:flex-row justify-between gap-3 bg-gray-50/30">
 			<span class="relative w-full sm:w-96">
 				<i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10"></i>
-
 				<input
 					pInputText
 					type="text"
@@ -22,7 +21,6 @@
 					class="w-full !pl-10 p-inputtext-sm rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
 				/>
 			</span>
-
 			<div class="flex gap-2">
 				<p-button
 					icon="pi pi-refresh"
@@ -37,133 +35,141 @@
 			</div>
 		</div>
 
-		<p-table
-			#dt
-			[value]="medidores"
-			[rows]="10"
-			[paginator]="true"
-			[loading]="isLoading"
-			[globalFilterFields]="['codigo', 'nombre_barrio', 'nombre_socio', 'estado']"
-			styleClass="p-datatable-sm"
-			responsiveLayout="scroll"
-			[rowHover]="true"
-			[showCurrentPageReport]="true"
-			currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} medidores"
-		>
-			<ng-template pTemplate="header">
-				<tr class="bg-gray-50 text-xs uppercase tracking-wider text-gray-500 font-semibold">
-					<th pSortableColumn="codigo" class="py-3 pl-4">Código / Serial <p-sortIcon field="codigo"></p-sortIcon></th>
-					<th pSortableColumn="nombre_barrio">Ubicación <p-sortIcon field="nombre_barrio"></p-sortIcon></th>
-					<th pSortableColumn="nombre_socio">Asignado A <p-sortIcon field="nombre_socio"></p-sortIcon></th>
-					<th pSortableColumn="estado" class="text-center">Estado <p-sortIcon field="estado"></p-sortIcon></th>
-					<th class="text-center pr-4">Acciones</th>
-				</tr>
-			</ng-template>
+		<div class="card">
+			<p-table
+				#dt
+				[value]="medidores"
+				[paginator]="true"
+				[rows]="5"
+				[rowsPerPageOptions]="[5, 10, 20]"
+				[loading]="isLoading"
+				[globalFilterFields]="['codigo', 'terreno_data.barrio_data.nombre', 'terreno_data.socio.nombres', 'estado']"
+				styleClass="p-datatable-sm"
+				[rowHover]="true"
+				[showCurrentPageReport]="true"
+				currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} medidores"
+			>
+				<ng-template pTemplate="header">
+					<tr class="bg-gray-50 text-xs uppercase tracking-wider text-gray-500 font-semibold">
+						<th pSortableColumn="codigo" class="py-3 pl-4">Código / Serial <p-sortIcon field="codigo"></p-sortIcon></th>
 
-			<ng-template pTemplate="body" let-item>
-				<tr class="hover:bg-blue-50/30 transition-colors duration-200 border-b border-gray-100 last:border-0">
-					<td class="pl-4 py-3">
-						<div class="flex items-center gap-2">
-							<div class="bg-blue-50 p-1.5 rounded text-blue-600">
-								<i class="pi pi-qrcode text-lg"></i>
+						<th pSortableColumn="terreno_data.barrio_data.nombre">
+							Ubicación <p-sortIcon field="terreno_data.barrio_data.nombre"></p-sortIcon>
+						</th>
+						<th pSortableColumn="terreno_data.socio.nombres">
+							Asignado A <p-sortIcon field="terreno_data.socio.nombres"></p-sortIcon>
+						</th>
+
+						<th pSortableColumn="estado" class="text-center">Estado <p-sortIcon field="estado"></p-sortIcon></th>
+						<th class="text-center pr-4">Acciones</th>
+					</tr>
+				</ng-template>
+
+				<ng-template pTemplate="body" let-item>
+					<tr class="hover:bg-blue-50/30 transition-colors duration-200 border-b border-gray-100 last:border-0">
+						<td class="pl-4 py-3">
+							<div class="flex items-center gap-2">
+								<div class="bg-blue-50 p-1.5 rounded text-blue-600">
+									<i class="pi pi-qrcode text-lg"></i>
+								</div>
+								<span class="font-mono font-bold text-gray-700 text-sm tracking-wide">
+									{{ item.codigo }}
+								</span>
 							</div>
-							<span class="font-mono font-bold text-gray-700 text-sm tracking-wide">
-								{{ item.codigo }}
-							</span>
-						</div>
-						<div class="text-[10px] text-gray-400 pl-9 mt-0.5 font-medium" *ngIf="item.marca">
-							{{ item.marca | uppercase }}
-						</div>
-					</td>
-
-					<td>
-						<div class="flex flex-col">
-							<span class="text-sm font-semibold text-gray-700 flex items-center gap-1.5">
-								<i class="pi pi-map-marker text-red-400 text-xs"></i>
-								{{ item.nombre_barrio || 'No Asignado' }}
-							</span>
-						</div>
-					</td>
-
-					<td>
-						<div *ngIf="item.terreno_id" class="flex items-center gap-3">
-							<div
-								class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-xs border border-indigo-200"
-							>
-								{{ item.nombre_socio.charAt(0) }}
+							<div class="text-[10px] text-gray-400 pl-9 mt-0.5 font-medium" *ngIf="item.marca">
+								{{ item.marca | uppercase }}
 							</div>
+						</td>
+
+						<td>
 							<div class="flex flex-col">
-								<span class="text-sm font-bold text-gray-800 leading-tight">
-									{{ item.nombre_socio }}
+								<span class="text-sm font-semibold text-gray-700 flex items-center gap-1.5">
+									<i class="pi pi-map-marker text-red-400 text-xs"></i>
+									{{ item.terreno_data?.barrio_data?.nombre || 'No Asignado' }}
 								</span>
-								<span
-									class="text-[10px] text-green-600 font-medium bg-green-50 px-1.5 py-0.5 rounded-full w-fit mt-0.5 border border-green-100"
+							</div>
+						</td>
+
+						<td>
+							<div *ngIf="item.terreno_data?.socio" class="flex items-center gap-3">
+								<div
+									class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-xs border border-indigo-200"
 								>
-									<i class="pi pi-bolt text-[9px] mr-0.5"></i> Instalado
-								</span>
+									{{ item.terreno_data.socio.nombres.charAt(0) }}
+								</div>
+								<div class="flex flex-col">
+									<span class="text-sm font-bold text-gray-800 leading-tight">
+										{{ item.terreno_data.socio.nombres }} {{ item.terreno_data.socio.apellidos }}
+									</span>
+									<span
+										class="text-[10px] text-green-600 font-medium bg-green-50 px-1.5 py-0.5 rounded-full w-fit mt-0.5 border border-green-100"
+									>
+										<i class="pi pi-bolt text-[9px] mr-0.5"></i> Instalado
+									</span>
+								</div>
 							</div>
-						</div>
 
-						<div *ngIf="!item.terreno_id" class="flex items-center gap-2 opacity-60">
-							<div class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center border border-gray-200">
-								<i class="pi pi-box text-gray-400"></i>
+							<div *ngIf="!item.terreno_data?.socio" class="flex items-center gap-2 opacity-60">
+								<div class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center border border-gray-200">
+									<i class="pi pi-box text-gray-400"></i>
+								</div>
+								<span class="text-sm text-gray-500 italic">En bodega / Disponible</span>
 							</div>
-							<span class="text-sm text-gray-500 italic">En bodega / Disponible</span>
-						</div>
-					</td>
+						</td>
 
-					<td class="text-center">
-						<p-tag
-							[value]="item.estado"
-							[severity]="item.estado === 'ACTIVO' ? 'success' : item.estado === 'DANADO' ? 'danger' : 'warn'"
-							[rounded]="true"
-							styleClass="uppercase text-[10px] font-bold px-2"
-						></p-tag>
-					</td>
-
-					<td class="text-center pr-4">
-						<div class="flex justify-center gap-1">
-							<p-button
-								icon="pi pi-cog"
+						<td class="text-center">
+							<p-tag
+								[value]="item.estado"
+								[severity]="item.estado === 'ACTIVO' ? 'success' : item.estado === 'DANADO' ? 'danger' : 'warn'"
 								[rounded]="true"
-								[text]="true"
-								severity="secondary"
-								size="small"
-								pTooltip="Gestionar Estado"
-								tooltipPosition="top"
-								(onClick)="cambiarEstado(item)"
-							>
-							</p-button>
+								styleClass="uppercase text-[10px] font-bold px-2"
+							></p-tag>
+						</td>
 
-							<p-button
-								icon="pi pi-trash"
-								[rounded]="true"
-								[text]="true"
-								severity="danger"
-								size="small"
-								pTooltip="Eliminar / Dar de Baja"
-								tooltipPosition="top"
-								(onClick)="deleteMedidor(item.id!)"
-							>
-							</p-button>
-						</div>
-					</td>
-				</tr>
-			</ng-template>
+						<td class="text-center pr-4">
+							<div class="flex justify-center gap-1">
+								<p-button
+									icon="pi pi-cog"
+									[rounded]="true"
+									[text]="true"
+									severity="secondary"
+									size="small"
+									pTooltip="Gestionar Estado"
+									tooltipPosition="top"
+									(onClick)="cambiarEstado(item)"
+								>
+								</p-button>
 
-			<ng-template pTemplate="emptymessage">
-				<tr>
-					<td colspan="5" class="text-center p-10">
-						<div class="flex flex-col items-center justify-center text-gray-400">
-							<div class="bg-gray-50 p-4 rounded-full mb-3">
-								<i class="pi pi-search text-3xl text-gray-300"></i>
+								<p-button
+									icon="pi pi-trash"
+									[rounded]="true"
+									[text]="true"
+									severity="danger"
+									size="small"
+									pTooltip="Eliminar / Dar de Baja"
+									tooltipPosition="top"
+									(onClick)="deleteMedidor(item.id!)"
+								>
+								</p-button>
 							</div>
-							<p class="font-medium text-gray-500">No se encontraron medidores</p>
-							<p class="text-sm">Intenta con otros términos de búsqueda.</p>
-						</div>
-					</td>
-				</tr>
-			</ng-template>
-		</p-table>
+						</td>
+					</tr>
+				</ng-template>
+
+				<ng-template pTemplate="emptymessage">
+					<tr>
+						<td colspan="5" class="text-center p-10">
+							<div class="flex flex-col items-center justify-center text-gray-400">
+								<div class="bg-gray-50 p-4 rounded-full mb-3">
+									<i class="pi pi-search text-3xl text-gray-300"></i>
+								</div>
+								<p class="font-medium text-gray-500">No se encontraron medidores</p>
+								<p class="text-sm">Intenta con otros términos de búsqueda.</p>
+							</div>
+						</td>
+					</tr>
+				</ng-template>
+			</p-table>
+		</div>
 	</div>
 </div>

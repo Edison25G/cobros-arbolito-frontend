@@ -10,17 +10,6 @@
 		</div>
 
 		<div class="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
-			<p-iconfield class="w-full sm:w-64">
-				<p-inputicon styleClass="pi pi-search" />
-				<input
-					pInputText
-					type="text"
-					(input)="dt.filterGlobal($any($event.target).value, 'contains')"
-					placeholder="Buscar socio..."
-					class="w-full"
-				/>
-			</p-iconfield>
-
 			<p-button
 				label="Nuevo Socio"
 				icon="pi pi-user-plus"
@@ -31,92 +20,120 @@
 	</div>
 
 	<!-- Tabla de Socios -->
-	<div class="overflow-x-auto">
+	<div class="card">
 		<p-table
 			#dt
 			[value]="socios"
 			[loading]="isLoading"
 			[paginator]="true"
 			[rows]="10"
-			[rowsPerPageOptions]="[5, 10, 20]"
+			[rowsPerPageOptions]="[5, 10]"
 			[globalFilterFields]="['cedula', 'nombres', 'apellidos', 'barrio', 'rol']"
 			dataKey="id"
-			[rowHover]="true"
-			[showCurrentPageReport]="true"
-			currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords}"
-			styleClass="p-datatable-sm min-w-[800px]"
+			rowHover
+			selectionMode="single"
+			[tableStyle]="{ 'min-width': '60rem' }"
 		>
+			<!-- 🔍 CAPTION (Buscador estilo PrimeNG) -->
+			<ng-template pTemplate="caption">
+				<p-iconfield iconPosition="left">
+					<p-inputicon>
+						<i class="pi pi-search"></i>
+					</p-inputicon>
+					<input
+						pInputText
+						type="text"
+						(input)="dt.filterGlobal($event.target.value, 'contains')"
+						placeholder="Buscar socio..."
+					/>
+				</p-iconfield>
+			</ng-template>
+
+			<!-- 🧱 HEADER -->
 			<ng-template pTemplate="header">
 				<tr>
-					<th pSortableColumn="cedula" style="width: 15%">Cédula <p-sortIcon field="cedula" /></th>
-					<th pSortableColumn="nombres" style="width: 25%">Nombre Completo <p-sortIcon field="nombres" /></th>
-					<th pSortableColumn="barrio" style="width: 20%">Barrio <p-sortIcon field="barrio" /></th>
-					<th pSortableColumn="rol" style="width: 15%">Rol <p-sortIcon field="rol" /></th>
-					<th pSortableColumn="esta_activo" style="width: 10%">Estado <p-sortIcon field="esta_activo" /></th>
-					<th class="text-center" style="width: 15%">Acciones</th>
+					<th pSortableColumn="cedula" style="width: 15%">
+						<div class="flex items-center gap-2">
+							Cédula
+							<p-sortIcon field="cedula" />
+						</div>
+					</th>
+
+					<th pSortableColumn="nombres" style="width: 25%">
+						<div class="flex items-center gap-2">
+							Nombre Completo
+							<p-sortIcon field="nombres" />
+						</div>
+					</th>
+
+					<th pSortableColumn="barrio" style="width: 20%">
+						<div class="flex items-center gap-2">
+							Barrio
+							<p-sortIcon field="barrio" />
+						</div>
+					</th>
+
+					<th pSortableColumn="rol" style="width: 15%">
+						<div class="flex items-center gap-2">
+							Rol
+							<p-sortIcon field="rol" />
+						</div>
+					</th>
+
+					<th pSortableColumn="esta_activo" style="width: 10%">
+						<div class="flex items-center gap-2">
+							Estado
+							<p-sortIcon field="esta_activo" />
+						</div>
+					</th>
+
+					<th style="width: 15%" class="text-center">Acciones</th>
 				</tr>
 			</ng-template>
 
+			<!-- 📄 BODY -->
 			<ng-template pTemplate="body" let-socio>
 				<tr>
-					<td class="font-medium text-gray-900">{{ socio.cedula }}</td>
+					<td>{{ socio.cedula }}</td>
+
 					<td>
-						<div class="font-bold text-gray-800">{{ socio.nombres }} {{ socio.apellidos }}</div>
-						<div class="text-xs text-gray-500">{{ socio.email || socio.telefono || 'Sin contacto' }}</div>
+						<div class="flex flex-col">
+							<span class="font-medium"> {{ socio.nombres }} {{ socio.apellidos }} </span>
+							<small class="text-gray-500">
+								{{ socio.email || socio.telefono || 'Sin contacto' }}
+							</small>
+						</div>
 					</td>
-					<td class="text-gray-700">{{ getNombreBarrio(socio.barrio) }}</td>
+
+					<td>{{ getNombreBarrio(socio.barrio_id) }}</td>
+
 					<td>
-						<p-tag
-							[value]="socio.rol"
-							[severity]="socio.rol === 'Administrador' ? 'danger' : 'info'"
-							[rounded]="true"
-						></p-tag>
+						<p-tag [value]="socio.rol" [severity]="socio.rol === 'Administrador' ? 'danger' : 'info'" />
 					</td>
+
 					<td>
 						<p-tag
 							[value]="socio.esta_activo ? 'Activo' : 'Inactivo'"
 							[severity]="socio.esta_activo ? 'success' : 'warn'"
-							[rounded]="true"
-						></p-tag>
+						/>
 					</td>
+
 					<td class="text-center">
 						<div class="flex justify-center gap-2">
-							<p-button
-								icon="pi pi-eye"
-								rounded
-								outlined
-								severity="help"
-								size="small"
-								pTooltip="Ver Perfil y Pagos"
-								tooltipPosition="top"
-								(onClick)="verDetalle(socio.id)"
-							>
-							</p-button>
-							<p-button
-								icon="pi pi-pencil"
-								[rounded]="true"
-								[outlined]="true"
-								size="small"
-								(onClick)="openEditSocioModal(socio)"
-							></p-button>
-							<p-button
-								icon="pi pi-trash"
-								severity="danger"
-								[rounded]="true"
-								[text]="true"
-								size="small"
-								pTooltip="Eliminar"
-								tooltipPosition="top"
-								(onClick)="deleteSocio(socio.id)"
-							></p-button>
+							<p-button icon="pi pi-eye" rounded text severity="info" (onClick)="verDetalle(socio.id)" />
+
+							<p-button icon="pi pi-pencil" rounded text severity="warn" (onClick)="openEditSocioModal(socio)" />
+
+							<p-button icon="pi pi-trash" rounded text severity="danger" (onClick)="deleteSocio(socio.id)" />
 						</div>
 					</td>
 				</tr>
 			</ng-template>
 
+			<!-- 🚫 EMPTY -->
 			<ng-template pTemplate="emptymessage">
 				<tr>
-					<td colspan="6" class="text-center p-6 text-gray-500">No se encontraron socios.</td>
+					<td colspan="6" class="text-center">No se encontraron socios.</td>
 				</tr>
 			</ng-template>
 		</p-table>
