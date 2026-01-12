@@ -136,7 +136,7 @@ export class DetalleSocioComponent implements OnInit {
 				// Solo mostramos barrios activos para asignar a terrenos
 				this.listaBarrios = data.filter((b) => b.activo);
 			},
-			error: () => console.warn('No se pudieron cargar los barrios'),
+			error: () => {},
 		});
 	}
 
@@ -230,23 +230,11 @@ export class DetalleSocioComponent implements OnInit {
 		this.esEdicion = true;
 		this.idTerrenoEditar = terreno.id;
 
-		// 1. Log para ver qué llega exactamente
-		console.log('📦 OBJETO TERRENO RECIBIDO:', terreno);
-
 		// Intentamos obtener el ID de todas las formas posibles
 		const rawBarrio = terreno.barrio_id || (terreno.barrio && terreno.barrio.id) || terreno.barrio;
 
 		// Aseguramos que sea número
 		const idBarrioReal = rawBarrio ? Number(rawBarrio) : null;
-
-		console.log('🔍 ID BARRIO CALCULADO:', idBarrioReal);
-		console.log('📋 LISTA DE BARRIOS DISPONIBLES:', this.listaBarrios);
-
-		// Verificamos si el ID existe en la lista
-		const existeEnLista = this.listaBarrios.some((b) => b.id === idBarrioReal);
-		if (!existeEnLista) {
-			console.warn('⚠️ CUIDADO: El ID del barrio no está en la lista del dropdown (¿Quizás está inactivo?)');
-		}
 
 		this.terrenoForm.patchValue({
 			barrio: idBarrioReal,

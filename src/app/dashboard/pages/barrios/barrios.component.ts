@@ -210,7 +210,6 @@ export class BarriosComponent implements OnInit {
 	}
 
 	private interpretarError(err: any): { severity: string; detail: string } {
-		console.warn('🔥 API Error:', err);
 		if (err.status === 400 && err.error) {
 			let mensaje = 'Verifique los datos ingresados.';
 			if (err.error.error) {

@@ -106,7 +106,6 @@ export class GestionMingasComponent implements OnInit {
 		});
 	}
 	irAAsistencia(id: number) {
-		console.log('Navegando a asistencia de minga ID:', id);
 		this.router.navigate(['/dashboard/mingas/asistencia', id]);
 	}
 	eliminarMinga(minga: Minga) {

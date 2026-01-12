@@ -142,7 +142,26 @@ export class DashboardLayoutComponent implements OnInit {
 	ngOnInit(): void {
 		this.checkScreen();
 		const roleString = this.authService.getRole();
-		this.currentRole = roleString as RolUsuario | null;
+
+		// Normalizar el rol a mayúsculas para comparación consistente
+		if (roleString) {
+			const roleUpper = roleString.toUpperCase();
+			// Mapear el rol del backend al enum
+			if (roleUpper === 'ADMINISTRADOR' || roleUpper === 'ADMIN') {
+				this.currentRole = RolUsuario.ADMIN;
+			} else if (roleUpper === 'TESORERO') {
+				this.currentRole = RolUsuario.TESORERO;
+			} else if (roleUpper === 'OPERADOR') {
+				this.currentRole = RolUsuario.OPERADOR;
+			} else if (roleUpper === 'SOCIO') {
+				this.currentRole = RolUsuario.SOCIO;
+			} else {
+				this.currentRole = null;
+			}
+		} else {
+			this.currentRole = null;
+		}
+
 		const nombreReal = this.authService.getNombreCompleto();
 
 		// Si nombreReal no está vacío (""), lo usamos. Si está vacío, usamos el Rol como respaldo.

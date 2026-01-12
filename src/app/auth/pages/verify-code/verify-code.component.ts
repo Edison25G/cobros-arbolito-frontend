@@ -58,8 +58,6 @@ export default class VerifyCodeComponent implements OnInit {
 
 		// 2. Simular carga y envío
 		this.isLoading = true;
-		const code = this.codeForm.value.code;
-		console.log('Verificando código (simulado):', code);
 
 		setTimeout(() => {
 			this.isLoading = false;

@@ -58,8 +58,6 @@ export default class ForgotPasswordComponent implements OnInit {
 
 		// 2. Simular carga y envío
 		this.isLoading = true;
-		const email = this.forgotForm.value.email;
-		console.log('Enviando instrucciones a (simulado):', email);
 
 		setTimeout(() => {
 			this.isLoading = false;

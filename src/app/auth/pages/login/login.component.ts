@@ -77,12 +77,9 @@ export default class LoginComponent implements OnInit {
 			)
 			.subscribe({
 				next: (user) => {
-					// ⬅️ LÓGICA CORREGIDA: El AuthService ya maneja el éxito y devuelve el usuario
 					if (user && user.rol) {
-						// Ya se mostró el mensaje de éxito en el AuthService
-						this.redirectByRole(user.rol as RolUsuario); // Redirige usando el rol
+						this.redirectByRole(user.rol);
 					} else {
-						// Esto solo ocurriría si el Backend devuelve un objeto vacío (caso raro)
 						this.errorService.loginError('Respuesta de usuario incompleta.');
 					}
 				},
@@ -95,25 +92,20 @@ export default class LoginComponent implements OnInit {
 			});
 	}
 
-	// src/app/auth/components/login/login.component.ts
+	// ✅ REDIRECCIÓN BASADA EN el rol del usuario
+	private redirectByRole(roleString: string): void {
+		const role = roleString.toUpperCase();
 
-	// ✅ REDIRECCIÓN BASADA EN RolUsuario
-	private redirectByRole(role: RolUsuario): void {
-		switch (role) {
-			case RolUsuario.ADMIN:
-				this.router.navigate(['/dashboard/home']);
-				break;
-			case RolUsuario.TESORERO:
-				this.router.navigate(['/dashboard/socios']);
-				break;
-			case RolUsuario.OPERADOR:
-				this.router.navigate(['/dashboard/lecturas']);
-				break;
-			case RolUsuario.SOCIO:
-				this.router.navigate(['/dashboard/pagos']);
-				break;
-			default:
-				this.router.navigate(['/dashboard/home']);
+		if (role === 'ADMINISTRADOR' || role === 'ADMIN') {
+			this.router.navigate(['/dashboard/home']);
+		} else if (role === 'TESORERO') {
+			this.router.navigate(['/dashboard/socios']);
+		} else if (role === 'OPERADOR') {
+			this.router.navigate(['/dashboard/lecturas']);
+		} else if (role === 'SOCIO') {
+			this.router.navigate(['/dashboard/pagos']);
+		} else {
+			this.router.navigate(['/dashboard/home']);
 		}
 	}
 }

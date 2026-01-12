@@ -60,12 +60,8 @@ export class PagoService {
 	}
 
 	subirComprobante(facturaId: number, archivo: File): Observable<any> {
-		// 1. Aquí "usamos" la variable archivo para que TypeScript no marque error
-		console.log(`Simulando subida del archivo: ${archivo.name} (Tamaño: ${archivo.size})`);
-
-		console.log(`Actualizando estado de la factura ${facturaId}...`);
-
 		// Actualizamos el mock localmente para ver el cambio en pantalla
+		void archivo; // Evitar warning de variable no usada
 		const index = this.misFacturasMock.findIndex((f) => f.id === facturaId);
 		if (index !== -1) {
 			this.misFacturasMock[index].estado = EstadoFactura.EnVerificacion;

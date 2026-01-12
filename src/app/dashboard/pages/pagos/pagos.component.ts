@@ -155,8 +155,7 @@ export class PagosComponent implements OnInit {
 	 * Placeholder para la acción de ver una factura ya pagada
 	 */
 	verFactura(facturaId: number): void {
-		console.log('Mostrando detalle de factura:', facturaId);
-		this.errorService.showSuccess('Simulando vista de factura PDF...');
+		this.errorService.showSuccess(`Ver factura #${facturaId}`);
 	}
 
 	verDetalleFactura(factura: FacturaSocio) {

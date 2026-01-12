@@ -1,6 +1,6 @@
 export enum RolUsuario {
-	ADMIN = 'Administrador',
-	TESORERO = 'Tesorero',
-	OPERADOR = 'Operador',
-	SOCIO = 'Socio',
+	ADMIN = 'ADMINISTRADOR',
+	TESORERO = 'TESORERO',
+	OPERADOR = 'OPERADOR',
+	SOCIO = 'SOCIO',
 }

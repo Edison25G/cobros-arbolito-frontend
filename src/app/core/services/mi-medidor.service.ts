@@ -37,19 +37,14 @@ export class MedidorService {
 
 		return this.http.get<MedidorBackend[]>(this.apiUrl, { headers }).pipe(
 			map((listaMedidores) => {
-				// 3. OBTENEMOS EL NOMBRE REAL (Edison Unaucho)
-				// Gracias al cambio que hicimos en auth.service.ts, esto ya devuelve "Edison Unaucho"
+				// Obtenemos el nombre del usuario logueado
 				const nombreLogueado = this.authService.getNombreCompleto();
 
-				console.log(' Usuario Logueado:', nombreLogueado); // Debería salir "Edison Unaucho" en consola
-
-				// 4. ELIMINAMOS "Juan Pérez" Y PONEMOS LA VARIABLE DINÁMICA
 				// Buscamos en la lista el medidor cuyo dueño se llame igual al usuario logueado
 				const medidorEncontrado = listaMedidores.find(
 					(m) => m.nombre_socio.trim().toLowerCase() === nombreLogueado.trim().toLowerCase(),
 				);
 
-				console.log(' Medidor Encontrado:', medidorEncontrado); // Debería salir el objeto MED-2025-001
 				return medidorEncontrado;
 			}),
 		);

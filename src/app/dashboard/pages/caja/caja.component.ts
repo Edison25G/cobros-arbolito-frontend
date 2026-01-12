@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
@@ -40,7 +40,7 @@ import { DeudaItem, TransferenciaPendiente } from '../../../core/interfaces/caja
 	providers: [MessageService, ConfirmationService],
 	templateUrl: './caja.component.html',
 })
-export class CajaComponent implements OnInit {
+export class CajaComponent {
 	// Inyecciones
 	private cajaService = inject(CajaService);
 	private messageService = inject(MessageService);
@@ -62,11 +62,10 @@ export class CajaComponent implements OnInit {
 	transferencias: TransferenciaPendiente[] = [];
 	cargandoTransferencias = false;
 
-	ngOnInit() {
-		console.log('Módulo de Caja Inicializado');
-		// Descomenta esta línea cuando el backend tenga listo este endpoint
-		// this.cargarTransferencias();
-	}
+	// TODO: Descomentar cuando el backend tenga listo el endpoint
+	// ngOnInit(): void {
+	//   this.cargarTransferencias();
+	// }
 
 	// --- PESTAÑA 1: COBRO EN VENTANILLA ---
 

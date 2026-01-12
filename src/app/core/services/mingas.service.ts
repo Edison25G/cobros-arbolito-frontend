@@ -72,8 +72,7 @@ export class MingasService {
 	// --- ASISTENCIA (HÍBRIDO) ---
 
 	getAsistencia(mingaId: number): Observable<ItemAsistencia[]> {
-		// ✅ SOLUCIÓN: Usamos la variable en un log para "engañar" a TypeScript y que no marque error
-		console.log(`Cargando lista de socios para la Minga ID: ${mingaId}`);
+		void mingaId; // Usado para futuras peticiones al backend
 
 		// 1. Petición HTTP Real a Django (/socios/)
 		return this.http.get<Socio[]>(this.sociosUrl).pipe(
@@ -104,7 +103,7 @@ export class MingasService {
 			observacion: item.observacion,
 		}));
 
-		console.log('📦 ENVIANDO AL BACKEND (Simulado):', payload);
+		void payload; // Preparado para enviar al backend
 
 		// Simular éxito y cambio de estado
 		const index = this.mingasMock.findIndex((m) => m.id === mingaId);

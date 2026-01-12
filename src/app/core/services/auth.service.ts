@@ -84,7 +84,7 @@ export class AuthService {
 				const payload = this.decodeToken(response.access);
 
 				// 3. Obtenemos el Rol (con fallback por si acaso)
-				const rolDelToken = payload.rol || payload.role || payload.tipo_usuario || 'Socio';
+				const rolDelToken = payload.rol || payload.role || payload.tipo_usuario || 'SOCIO';
 
 				// 4. CREAMOS EL USUARIO CON DATOS REALES DEL BACKEND
 				// Ya no hay "if/else" manuales. Confiamos en que Django envía la data.

@@ -54,15 +54,13 @@
 			[disabled]="isLoading"
 			class="w-full py-2.5 rounded-full bg-gradient-to-r from-emerald-400 to-green-500 text-white font-bold hover:from-emerald-500 hover:to-green-600 transition-all duration-300 flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-emerald-300 disabled:opacity-60 disabled:cursor-not-allowed"
 		>
-			<ng-container *ngIf="!isLoading">
+			@if (!isLoading) {
 				<i class="pi pi-sign-in text-lg"></i>
 				<span>Ingresar al Sistema</span>
-			</ng-container>
-
-			<ng-container *ngIf="isLoading">
+			} @else {
 				<i class="pi pi-spinner pi-spin text-lg"></i>
 				<span>Verificando credenciales...</span>
-			</ng-container>
+			}
 		</button>
 
 		<div class="my-3 border-t border-gray-300"></div>
