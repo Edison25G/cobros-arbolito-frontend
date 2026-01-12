@@ -16,7 +16,7 @@ export class LecturaService {
 	 * Registrar una nueva lectura (POST)
 	 */
 	registrarLectura(data: RegistrarLecturaDTO): Observable<LecturaResponse> {
-		const url = `${this.apiUrl}/lecturas/registrar/`;
+		const url = `${this.apiUrl}/lecturas/`;
 		return this.http.post<LecturaResponse>(url, data).pipe(catchError(this.handleError));
 	}
 

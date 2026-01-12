@@ -4,9 +4,9 @@
  */
 export interface RegistrarLecturaDTO {
 	medidor_id: number;
-	lectura_actual_m3: number;
+	lectura_actual: number;
 	fecha_lectura: string; // Formato YYYY-MM-DD
-	operador_id: number; // El ID del usuario que está registrando
+	// operador_id: number; // El ID del usuario que está registrando
 }
 
 /**

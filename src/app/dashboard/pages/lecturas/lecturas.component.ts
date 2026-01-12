@@ -106,7 +106,12 @@ export class LecturasComponent implements OnInit {
 				// 2. Mapeamos a filas
 				this.filas = filtrados.map((m: any) => ({
 					medidor: m,
-					lecturaAnterior: m.lectura_inicial || 0, // Usamos lectura_inicial o la que traiga
+					// ✅ PRIORIDAD: Usamos 'lectura_anterior' (calculada por backend).
+					// Si no viene, usamos 'lectura_inicial' (0).
+					lecturaAnterior:
+						m.lectura_anterior !== undefined && m.lectura_anterior !== null
+							? Number(m.lectura_anterior)
+							: m.lectura_inicial || 0,
 					lecturaActual: null,
 					consumo: 0,
 				}));
@@ -152,8 +157,8 @@ export class LecturasComponent implements OnInit {
 		}
 
 		this.guardando = true;
-		const user = JSON.parse(localStorage.getItem('user') || '{}');
-		const operadorId = user.id && user.id > 0 ? user.id : 1;
+		// const user = JSON.parse(localStorage.getItem('user') || '{}');
+		// const operadorId = user.id && user.id > 0 ? user.id : 1;
 
 		// Convertir fecha a string ISO (YYYY-MM-DD)
 		const fechaISO = this.fechaLectura.toISOString().split('T')[0];
@@ -162,9 +167,9 @@ export class LecturasComponent implements OnInit {
 		const peticiones = lecturasParaGuardar.map((fila) => {
 			const dto: RegistrarLecturaDTO = {
 				medidor_id: fila.medidor.id!,
-				lectura_actual_m3: fila.lecturaActual!,
+				lectura_actual: fila.lecturaActual!,
 				fecha_lectura: fechaISO,
-				operador_id: operadorId,
+				// operador_id: operadorId,
 			};
 
 			// Retornamos la petición atrapando errores individuales para que no se caiga todo el proceso

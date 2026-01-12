@@ -25,3 +25,14 @@ export interface LecturaPendiente {
 	detalle_multas?: string[];
 	total_pagar: number;
 }
+
+export interface ComprobanteSRI {
+	id: number;
+	numero: string; // Ej: 001-001-000000123
+	socio_nombre: string;
+	fecha_emision: string;
+	total: number;
+	estado_sri: 'NO_ENVIADO' | 'EN_PROCESO' | 'AUTORIZADO' | 'DEVUELTA' | 'RECHAZADA';
+	mensaje_error?: string;
+	clave_acceso?: string;
+}

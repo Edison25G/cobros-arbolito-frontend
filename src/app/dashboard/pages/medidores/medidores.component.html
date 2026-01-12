@@ -13,6 +13,7 @@
 		<div class="p-4 border-b border-gray-100 flex flex-col sm:flex-row justify-between gap-3 bg-gray-50/30">
 			<span class="relative w-full sm:w-96">
 				<i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10"></i>
+
 				<input
 					pInputText
 					type="text"
@@ -21,6 +22,7 @@
 					class="w-full !pl-10 p-inputtext-sm rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
 				/>
 			</span>
+
 			<div class="flex gap-2">
 				<p-button
 					icon="pi pi-refresh"
@@ -34,7 +36,6 @@
 				</p-button>
 			</div>
 		</div>
-
 		<div class="card">
 			<p-table
 				#dt
@@ -42,8 +43,11 @@
 				[paginator]="true"
 				[rows]="5"
 				[rowsPerPageOptions]="[5, 10, 20]"
+				paginatorPosition="bottom"
+				paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown"
+				rowsPerPageDropdownAppendTo="body"
 				[loading]="isLoading"
-				[globalFilterFields]="['codigo', 'terreno_data.barrio_data.nombre', 'terreno_data.socio.nombres', 'estado']"
+				[globalFilterFields]="['codigo', 'nombre_barrio', 'nombre_socio', 'estado']"
 				styleClass="p-datatable-sm"
 				[rowHover]="true"
 				[showCurrentPageReport]="true"
@@ -52,14 +56,8 @@
 				<ng-template pTemplate="header">
 					<tr class="bg-gray-50 text-xs uppercase tracking-wider text-gray-500 font-semibold">
 						<th pSortableColumn="codigo" class="py-3 pl-4">Código / Serial <p-sortIcon field="codigo"></p-sortIcon></th>
-
-						<th pSortableColumn="terreno_data.barrio_data.nombre">
-							Ubicación <p-sortIcon field="terreno_data.barrio_data.nombre"></p-sortIcon>
-						</th>
-						<th pSortableColumn="terreno_data.socio.nombres">
-							Asignado A <p-sortIcon field="terreno_data.socio.nombres"></p-sortIcon>
-						</th>
-
+						<th pSortableColumn="nombre_barrio">Ubicación <p-sortIcon field="nombre_barrio"></p-sortIcon></th>
+						<th pSortableColumn="nombre_socio">Asignado A <p-sortIcon field="nombre_socio"></p-sortIcon></th>
 						<th pSortableColumn="estado" class="text-center">Estado <p-sortIcon field="estado"></p-sortIcon></th>
 						<th class="text-center pr-4">Acciones</th>
 					</tr>
@@ -85,21 +83,21 @@
 							<div class="flex flex-col">
 								<span class="text-sm font-semibold text-gray-700 flex items-center gap-1.5">
 									<i class="pi pi-map-marker text-red-400 text-xs"></i>
-									{{ item.terreno_data?.barrio_data?.nombre || 'No Asignado' }}
+									{{ item.nombre_barrio || 'No Asignado' }}
 								</span>
 							</div>
 						</td>
 
 						<td>
-							<div *ngIf="item.terreno_data?.socio" class="flex items-center gap-3">
+							<div *ngIf="item.terreno_id" class="flex items-center gap-3">
 								<div
 									class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-xs border border-indigo-200"
 								>
-									{{ item.terreno_data.socio.nombres.charAt(0) }}
+									{{ item.nombre_socio.charAt(0) }}
 								</div>
 								<div class="flex flex-col">
 									<span class="text-sm font-bold text-gray-800 leading-tight">
-										{{ item.terreno_data.socio.nombres }} {{ item.terreno_data.socio.apellidos }}
+										{{ item.nombre_socio }}
 									</span>
 									<span
 										class="text-[10px] text-green-600 font-medium bg-green-50 px-1.5 py-0.5 rounded-full w-fit mt-0.5 border border-green-100"
@@ -109,7 +107,7 @@
 								</div>
 							</div>
 
-							<div *ngIf="!item.terreno_data?.socio" class="flex items-center gap-2 opacity-60">
+							<div *ngIf="!item.terreno_id" class="flex items-center gap-2 opacity-60">
 								<div class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center border border-gray-200">
 									<i class="pi pi-box text-gray-400"></i>
 								</div>

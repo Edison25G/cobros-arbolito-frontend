@@ -101,11 +101,14 @@
 								</td>
 
 								<td class="text-center">
-									<span
-										class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-md font-mono font-bold border border-gray-200"
-									>
-										{{ fila.medidor.codigo }}
-									</span>
+									<div class="flex flex-col items-center">
+										<span
+											class="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded-md font-mono font-bold border border-blue-100"
+										>
+											{{ fila.medidor.codigo }}
+										</span>
+										<span class="text-[9px] text-gray-400 mt-0.5 uppercase">{{ fila.medidor.marca }}</span>
+									</div>
 								</td>
 
 								<td class="text-center text-gray-500 text-sm font-semibold">
@@ -117,7 +120,7 @@
 										<p-inputNumber
 											[(ngModel)]="fila.lecturaActual"
 											(onInput)="calcularConsumo(fila)"
-											[min]="0"
+											[min]="fila.lecturaAnterior"
 											mode="decimal"
 											[disabled]="fila.procesado"
 											placeholder="0.00"

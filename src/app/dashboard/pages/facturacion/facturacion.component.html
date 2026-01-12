@@ -90,15 +90,35 @@
 						<div class="font-bold text-gray-800">{{ item.socio_nombre }}</div>
 						<div class="text-xs text-gray-400 flex items-center gap-2">
 							<span>{{ item.cedula }}</span>
-							<span class="bg-gray-100 px-1 rounded text-[10px]">{{ item.medidor_codigo }}</span>
+
+							<span
+								*ngIf="item.medidor_codigo"
+								class="bg-blue-50 text-blue-700 border border-blue-100 px-1 rounded text-[10px] font-mono"
+							>
+								{{ item.medidor_codigo }}
+							</span>
+
+							<span
+								*ngIf="!item.medidor_codigo"
+								class="bg-orange-50 text-orange-600 border border-orange-100 px-1 rounded text-[10px]"
+							>
+								Sin Medidor
+							</span>
 						</div>
 					</td>
 
 					<td>
-						<div class="flex flex-col">
+						<div *ngIf="item.medidor_codigo; else sinMedidorTpl" class="flex flex-col">
 							<span class="font-bold text-blue-700">{{ item.consumo }} m³</span>
-							<span class="text-[10px] text-gray-400">{{ item.lectura_anterior }} ➔ {{ item.lectura_actual }}</span>
+							<span class="text-[10px] text-gray-400"> {{ item.lectura_anterior }} ➔ {{ item.lectura_actual }} </span>
 						</div>
+
+						<ng-template #sinMedidorTpl>
+							<div class="flex flex-col">
+								<span class="font-bold text-gray-500 text-xs uppercase">Tarifa Fija</span>
+								<span class="text-[10px] text-orange-400 font-medium">Cobro Básico</span>
+							</div>
+						</ng-template>
 					</td>
 
 					<td class="text-right font-medium text-gray-600">

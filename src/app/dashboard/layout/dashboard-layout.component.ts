@@ -75,6 +75,14 @@ export class DashboardLayoutComponent implements OnInit {
 			link: '/dashboard/facturacion',
 			roles: [RolUsuario.TESORERO, RolUsuario.ADMIN],
 		},
+
+		{
+			label: 'Gestión SRI',
+			icon: 'pi pi-cloud-upload', // Icono de nube/envío queda perfecto
+			link: '/dashboard/sri-gestion',
+			roles: [RolUsuario.TESORERO, RolUsuario.ADMIN],
+		},
+
 		{
 			label: 'Registro de Lecturas',
 			icon: 'pi pi-camera',
