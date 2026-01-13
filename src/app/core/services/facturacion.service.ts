@@ -15,13 +15,13 @@ export class FacturacionService {
 
 	// 1. GET: Obtener lecturas pendientes
 	getPendientes(mes: number, anio: number): Observable<LecturaPendiente[]> {
-		const url = `${this.apiUrl}/facturas/pendientes/?mes=${mes}&anio=${anio}`;
+		const url = `${this.apiUrl}/facturas-gestion/pendientes/?mes=${mes}&anio=${anio}`;
 		return this.http.get<LecturaPendiente[]>(url).pipe(catchError(this.handleError));
 	}
 
 	// 2. POST: Generar Emisión Masiva
 	generarEmisionMasiva(datos: GenerarEmisionDTO): Observable<any> {
-		return this.http.post(`${this.apiUrl}/facturas/emision-masiva/`, datos).pipe(catchError(this.handleError));
+		return this.http.post(`${this.apiUrl}/facturas-gestion/emision-masiva/`, datos).pipe(catchError(this.handleError));
 	}
 
 	private handleError(error: HttpErrorResponse) {
@@ -35,14 +35,14 @@ export class FacturacionService {
 	getComprobantesPendientesSRI(): Observable<ComprobanteSRI[]> {
 		// Asegúrate de que este endpoint exista en tu backend (FacturaViewSet -> action por_enviar_sri)
 		return this.http
-			.get<ComprobanteSRI[]>(`${this.apiUrl}/facturas/por-enviar-sri/`)
+			.get<ComprobanteSRI[]>(`${this.apiUrl}/facturas-gestion/por-enviar-sri/`)
 			.pipe(catchError(this.handleError));
 	}
 
 	// 4. POST: Enviar una factura individual al SRI
 	enviarFacturaSRI(facturaId: number): Observable<any> {
 		return this.http
-			.post(`${this.apiUrl}/facturas/enviar-sri/`, { factura_id: facturaId })
+			.post(`${this.apiUrl}/facturas-gestion/enviar-sri/`, { factura_id: facturaId })
 			.pipe(catchError(this.handleError));
 	}
 }

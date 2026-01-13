@@ -80,18 +80,39 @@ export class MedidorComponent implements OnInit {
 		});
 	}
 
+	// Promedio de consumo calculado
+	public promedioConsumo = 0;
+
 	cargarHistorialYGrafico() {
-		this.medidorService.getHistorialConsumo().subscribe({
+		// Pasamos el código del medidor para filtrar las lecturas
+		const codigoMedidor = this.medidor?.codigo;
+
+		this.medidorService.getHistorialConsumo(codigoMedidor).subscribe({
 			next: (data) => {
 				this.historial = data;
+				this.calcularPromedio(data);
 				this.initChart(data);
 				this.isLoading = false;
 			},
-			error: (err) => {
+			error: () => {
+				this.historial = [];
+				this.promedioConsumo = 0;
 				this.isLoading = false;
-				console.error(err);
 			},
 		});
+	}
+
+	/**
+	 * Calcula el promedio de consumo del historial
+	 */
+	calcularPromedio(historial: HistorialConsumo[]): void {
+		if (!historial || historial.length === 0) {
+			this.promedioConsumo = 0;
+			return;
+		}
+		const total = historial.reduce((sum, h) => sum + (h.consumo || 0), 0);
+		const promedio = total / historial.length;
+		this.promedioConsumo = isNaN(promedio) ? 0 : Math.round(promedio);
 	}
 
 	/**

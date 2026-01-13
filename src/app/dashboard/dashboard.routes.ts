@@ -122,6 +122,14 @@ export default [
 				// ¡IMPORTANTE! Agregamos RolUsuario.TESORERO para que no lo bloquee si entra con ese rol
 				data: { roles: [RolUsuario.ADMIN, RolUsuario.OPERADOR, RolUsuario.TESORERO] },
 			},
+			// --- NUEVO: Gestión de Multas (Impugnaciones) ---
+			{
+				path: 'multas',
+				loadComponent: () => import('./pages/multas/gestion-multas.component').then((m) => m.GestionMultasComponent),
+				canActivate: [RoleGuard],
+				// Solo Admin puede impugnar/anular multas
+				data: { roles: [RolUsuario.ADMIN] },
+			},
 			// --- Rutas de Admin ---
 			{
 				path: 'usuarios',

@@ -1,11 +1,12 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable, map, of } from 'rxjs';
+import { Observable, map, of, catchError } from 'rxjs';
 
 import { environment } from '../../environments/environment.development';
-import { MedidorBackend, HistorialConsumo } from '../..//core/interfaces/mi-medidor'; // Ajusta la ruta si es necesario
+import { MedidorBackend, HistorialConsumo } from '../..//core/interfaces/mi-medidor';
+import { LecturaView } from '../models/lectura.interface';
 
-// 1. IMPORTAMOS AUTH SERVICE (Es vital para saber quién está logueado)
+// IMPORTAMOS AUTH SERVICE (Es vital para saber quién está logueado)
 import { AuthService } from '../../core/services/auth.service';
 
 @Injectable({
@@ -13,23 +14,26 @@ import { AuthService } from '../../core/services/auth.service';
 })
 export class MedidorService {
 	private http = inject(HttpClient);
-
-	// 2. INYECTAMOS EL SERVICIO DE AUTENTICACIÓN
 	private authService = inject(AuthService);
 
 	private apiUrl = `${environment.apiUrl}/medidores/`;
+	private lecturasUrl = `${environment.apiUrl}/lecturas/`;
 
-	// Mock para el gráfico (Esto está bien así)
-	private mockHistorial: HistorialConsumo[] = [
-		{ mes: 'Julio', anio: 2025, consumo: 12 },
-		{ mes: 'Agosto', anio: 2025, consumo: 19 },
-		{ mes: 'Septiembre', anio: 2025, consumo: 15 },
-		{ mes: 'Octubre', anio: 2025, consumo: 10 },
-		{ mes: 'Noviembre', anio: 2025, consumo: 21 },
-		{ mes: 'Diciembre', anio: 2025, consumo: 25 },
+	// Nombres de meses en español
+	private meses = [
+		'Enero',
+		'Febrero',
+		'Marzo',
+		'Abril',
+		'Mayo',
+		'Junio',
+		'Julio',
+		'Agosto',
+		'Septiembre',
+		'Octubre',
+		'Noviembre',
+		'Diciembre',
 	];
-
-	constructor() {}
 
 	getMedidorDelSocioLogueado(): Observable<MedidorBackend | undefined> {
 		const token = localStorage.getItem('token');
@@ -37,20 +41,51 @@ export class MedidorService {
 
 		return this.http.get<MedidorBackend[]>(this.apiUrl, { headers }).pipe(
 			map((listaMedidores) => {
-				// Obtenemos el nombre del usuario logueado
 				const nombreLogueado = this.authService.getNombreCompleto();
-
-				// Buscamos en la lista el medidor cuyo dueño se llame igual al usuario logueado
 				const medidorEncontrado = listaMedidores.find(
 					(m) => m.nombre_socio.trim().toLowerCase() === nombreLogueado.trim().toLowerCase(),
 				);
-
 				return medidorEncontrado;
 			}),
 		);
 	}
 
-	getHistorialConsumo(): Observable<HistorialConsumo[]> {
-		return of(this.mockHistorial);
+	/**
+	 * Obtiene el historial de consumo REAL desde el backend
+	 * Filtra las lecturas por código de medidor y transforma al formato del gráfico
+	 */
+	getHistorialConsumo(codigoMedidor?: string): Observable<HistorialConsumo[]> {
+		const token = localStorage.getItem('token');
+		const headers = token ? new HttpHeaders().set('Authorization', `Bearer ${token}`) : undefined;
+
+		return this.http.get<LecturaView[]>(this.lecturasUrl, { headers }).pipe(
+			map((lecturas) => {
+				// Filtramos por el medidor del usuario si se proporciona el código
+				let lecturasDelMedidor = lecturas;
+				if (codigoMedidor) {
+					lecturasDelMedidor = lecturas.filter((l) => l.medidor_codigo === codigoMedidor);
+				}
+
+				// Ordenamos por fecha (más antigua primero)
+				lecturasDelMedidor.sort((a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime());
+
+				// Tomamos los últimos 6 registros
+				const ultimas6 = lecturasDelMedidor.slice(-6);
+
+				// Transformamos al formato HistorialConsumo
+				return ultimas6.map((lectura) => {
+					const fecha = new Date(lectura.fecha);
+					return {
+						mes: this.meses[fecha.getMonth()],
+						anio: fecha.getFullYear(),
+						consumo: lectura.consumo,
+					};
+				});
+			}),
+			catchError(() => {
+				// Si falla, devolvemos array vacío
+				return of([]);
+			}),
+		);
 	}
 }

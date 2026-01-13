@@ -108,6 +108,12 @@ export class DashboardLayoutComponent implements OnInit {
 			roles: [RolUsuario.ADMIN, RolUsuario.TESORERO],
 		},
 		{
+			label: 'Gestión de Multas',
+			icon: 'pi pi-exclamation-circle',
+			link: '/dashboard/multas',
+			roles: [RolUsuario.ADMIN], // Solo Admin puede impugnar
+		},
+		{
 			label: 'Reportes',
 			icon: 'pi pi-chart-bar',
 			link: '/dashboard/reportes',

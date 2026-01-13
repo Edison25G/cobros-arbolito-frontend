@@ -1,97 +1,148 @@
-Aplicación Web para la Gestión de Cobros "El Arbolito" (Tesis)
+# Aplicación Web para la Gestión de Cobros "El Arbolito" (Frontend)
 
-Este proyecto fue generado utilizando Angular CLI v20.0.1.
-La aplicación corresponde al frontend del sistema de gestión de cobros desarrollado como parte de la tesis "Desarrollo de una aplicación web para la gestión de cobros utilizando herramientas de inteligencia artificial generativa".
+Este repositorio contiene el código fuente del **Frontend** para el sistema de gestión de cobros de la **Junta de Riego y/o Drenaje "El Arbolito"**.
 
-🚀 Requisitos Previos
+El proyecto ha sido desarrollado utilizando **Angular v20+** como parte de la tesis:
 
-Asegúrate de tener instalados:
+> _"Desarrollo de una aplicación web para la gestión de cobros utilizando herramientas de inteligencia artificial generativa"._
 
-Node.js 18+
+---
 
-Angular CLI 20+
+## 🛠️ Tecnologías Utilizadas
 
-Git
+Este proyecto integra las siguientes tecnologías. No es necesario instalarlas manualmente una por una; el gestor de paquetes se encargará de ello.
 
-🧩 Instalación del Proyecto
+- **Framework:** Angular 20+
+- **Lenguaje:** TypeScript
+- **Estilos y Diseño:** Tailwind CSS
+- **Componentes UI:** PrimeNG
+- **Gestión de Paquetes:** NPM (Node Package Manager)
 
-1. Clonar el repositorio (solo la primera vez)
-   git clone https://github.com/Edison25G/sigaf-frontend.git
-   cd sigaf-frontend
+---
 
-2. Instalar dependencias (solo la primera vez)
-   npm install
+## 🚀 Requisitos Previos
 
-3. Moverse a la rama develop (IMPORTANTE)
+Para ejecutar este proyecto, el cliente o evaluador solo necesita tener instalado:
 
-Todos los desarrolladores deben trabajar SIEMPRE desde la rama develop.
+1.  **Node.js** (Versión 18 LTS o superior) - [Descargar Node.js](https://nodejs.org/)
+2.  **Git** - [Descargar Git](https://git-scm.com/)
 
-git checkout develop
+---
 
-🪄 Scripts principales
-▶️ Iniciar servidor de desarrollo
+## 🧩 Instalación y Ejecución
+
+Sigue estos pasos para levantar el proyecto en tu máquina local:
+
+### 1. Clonar el repositorio
+
+Abre tu terminal y ejecuta:
+
+```bash
+git clone [https://github.com/Edison25G/cobros-arbolito-frontend.git](https://github.com/Edison25G/cobros-arbolito-frontend.git)
+cd cobros-arbolito-frontend
+
+```
+
+### 2. Instalar dependencias
+
+Este comando leerá el archivo `package.json` e instalará automáticamente Angular, PrimeNG, Tailwind CSS y todas las librerías necesarias.
+
+```bash
+npm install
+
+```
+
+### 3. Iniciar el servidor de desarrollo
+
+Una vez instaladas las dependencias, inicia la aplicación:
+
+```bash
 ng serve
 
-Luego abre en el navegador:
+```
 
-http://localhost:4200/
+Luego, abre tu navegador web e ingresa a:
 
-🏗️ Construir la aplicación
-ng build
+👉 **http://localhost:4200/**
 
-Los archivos generados estarán en la carpeta dist/.
+> **Nota:** Asegúrate de que el Backend (API en Django) esté en ejecución para que la aplicación pueda iniciar sesión y cargar datos correctamente.
 
-🛠️ Generar componentes, servicios, módulos, etc.
-ng generate component nombre-componente
+---
 
-Ver más opciones:
+## 🌲 Flujo de Trabajo con Git (Para el Equipo de Desarrollo)
 
-ng generate --help
+Para mantener la integridad del código durante el desarrollo de la tesis, seguimos estrictamente este flujo:
 
-🌲 Flujo de trabajo con Git (Recomendado)
-🔹 1. Actualizar rama develop
+- **`main`**: Rama de producción (Solo versiones estables y finales).
+- **`develop`**: Rama principal de desarrollo (Aquí se integran los cambios).
+
+**Pasos para contribuir:**
+
+1. **Actualizar la rama develop:**
+
+```bash
 git checkout develop
-git pull
+git pull origin develop
 
-🔹 2. Crear una rama para tu tarea
+```
+
+2. **Crear una rama para tu tarea (Feature):**
+
+```bash
 git checkout -b feature/nombre-de-la-tarea
 
-🔹 3. Subir los cambios
+```
+
+3. **Subir los cambios:**
+
+```bash
 git add .
-git commit -m "Descripción clara del cambio"
+git commit -m "feat: descripción clara del cambio realizado"
 git push --set-upstream origin feature/nombre-de-la-tarea
 
-🔹 4. Crear un Pull Request → hacia develop
+```
 
-Nunca subas cambios directamente a main.
+4. **Integrar:**
+   Crear un **Pull Request** en GitHub desde tu rama `feature` hacia `develop`.
 
-🧪 Pruebas
-Unit Tests
-ng test
+---
 
-End-to-End (E2E)
-ng e2e
+## 🏗️ Comandos Útiles
 
-📁 Estructura Recomendada del Proyecto
+| Comando    | Descripción                                                  |
+| ---------- | ------------------------------------------------------------ |
+| `ng serve` | Inicia el servidor de desarrollo.                            |
+| `ng build` | Compila la aplicación en la carpeta `dist/` para producción. |
+| `ng test`  | Ejecuta pruebas unitarias.                                   |
+| `ng lint`  | Analiza el código en busca de errores de estilo.             |
+
+---
+
+## 📁 Estructura del Proyecto
+
+```text
 src/
-└── app/
-├── core/ # Servicios, interceptores, guardias
-├── shared/ # Componentes reutilizables
-├── auth/ # Login / Registro
-└── features/ # Módulos funcionales del sistema
+├── app/
+│   ├── auth/        # Módulo de Autenticación (Login)
+│   ├── core/        # Servicios globales, interceptores y guards
+│   ├── features/    # Módulos funcionales (Gestión de cobros, usuarios, etc.)
+│   ├── shared/      # Componentes reutilizables (Botones, tablas, inputs)
+│   └── layout/      # Estructura base (Sidebar, Header, Footer)
+├── assets/          # Imágenes y recursos estáticos
+└── environments/    # Configuración de variables de entorno (API URL)
 
-🧑‍🤝‍🧑 Colaboración
+```
 
-La rama main se usa SOLO para versiones estables.
+---
 
-La rama develop es la base de trabajo del equipo.
+## ✒️ Autores
 
-Cada colaborador debe crear ramas nuevas para sus tareas.
+- **Edison Unaucho y Alexis Vega** - _Desarrollo Frontend e Integración_
 
-📚 Recursos Útiles
+---
 
-Documentación Angular CLI:
-https://angular.dev/tools/cli
+## 📚 Documentación y Recursos
 
-Documentación PrimeNG:
-https://primeng.org/
+- [Angular Documentation](https://angular.dev/)
+- [PrimeNG Components](https://primeng.org/)
+- [Tailwind CSS Docs](https://tailwindcss.com/docs)

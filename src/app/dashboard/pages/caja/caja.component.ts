@@ -1,9 +1,10 @@
-import { Component, inject } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
 // PrimeNG Imports
 import { InputTextModule } from 'primeng/inputtext';
+import { InputNumberModule } from 'primeng/inputnumber';
 import { ButtonModule } from 'primeng/button';
 import { TableModule } from 'primeng/table';
 import { CardModule } from 'primeng/card';
@@ -14,11 +15,13 @@ import { CheckboxModule } from 'primeng/checkbox';
 import { MessageService, ConfirmationService } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ImageModule } from 'primeng/image';
+import { DialogModule } from 'primeng/dialog';
+import { TooltipModule } from 'primeng/tooltip';
+import { DatePickerModule } from 'primeng/datepicker';
 
 // Servicios e Interfaces
 import { CajaService } from '../../../core/services/caja.service';
-import { ComprobanteService } from '../../../core/services/comprobante.service';
-import { DeudaItem, TransferenciaPendiente } from '../../../core/interfaces/caja.interface';
+import { TransferenciaPendiente, PagoItem, FacturaPendiente, Comprobante } from '../../../core/interfaces/caja.interface';
 
 @Component({
 	selector: 'app-caja',
@@ -27,6 +30,7 @@ import { DeudaItem, TransferenciaPendiente } from '../../../core/interfaces/caja
 		CommonModule,
 		FormsModule,
 		InputTextModule,
+		InputNumberModule,
 		ButtonModule,
 		TableModule,
 		CardModule,
@@ -36,140 +40,266 @@ import { DeudaItem, TransferenciaPendiente } from '../../../core/interfaces/caja
 		CheckboxModule,
 		ConfirmDialogModule,
 		ImageModule,
+		DialogModule,
+		TooltipModule,
+		DatePickerModule,
 	],
 	providers: [MessageService, ConfirmationService],
 	templateUrl: './caja.component.html',
 })
-export class CajaComponent {
+export class CajaComponent implements OnInit {
 	// Inyecciones
 	private cajaService = inject(CajaService);
 	private messageService = inject(MessageService);
 	private confirmationService = inject(ConfirmationService);
-	private comprobanteService = inject(ComprobanteService);
 
-	// Variables Ventanilla
-	terminoBusqueda = '';
-	buscando = false;
+	// --- Variables para tabla de facturas pendientes ---
+	facturasPendientes: FacturaPendiente[] = [];
+	facturasFiltradas: FacturaPendiente[] = [];
+	cargando = false;
+	filtroGlobal = '';
 
-	// Usamos 'any' para el socio si no tienes una interfaz estricta de Socio aún
-	socioEncontrado: any = null;
-	deudas: DeudaItem[] = [];
+	// Filtro de fecha
+	fechaSeleccionada: Date = new Date();
 
-	totalAPagar = 0;
+	// Factura seleccionada para cobrar
+	facturaSeleccionada: FacturaPendiente | null = null;
+
+	// KPIs
+	totalFacturas = 0;
+	totalPorCobrar = 0;
+
+	// Variables de procesamiento
 	procesandoPago = false;
 
 	// Variables Transferencias
 	transferencias: TransferenciaPendiente[] = [];
 	cargandoTransferencias = false;
 
-	// TODO: Descomentar cuando el backend tenga listo el endpoint
-	// ngOnInit(): void {
-	//   this.cargarTransferencias();
-	// }
+	// Variables Modal Pago Mixto
+	modalPagoMixtoVisible = false;
+	montoEfectivo = 0;
+	montoTransferencia = 0;
+	referenciaTransferencia = '';
+	montoRestante = 0;
 
-	// --- PESTAÑA 1: COBRO EN VENTANILLA ---
+	// Variables Modal Comprobante
+	modalComprobanteVisible = false;
+	comprobanteActual: Comprobante | null = null;
 
+	ngOnInit(): void {
+		// No cargamos todo al inicio para optimizar si son muchos datos.
+		// Solo si el usuario busca se llena la tabla.
+		console.log('Módulo de Caja listo para cobrar.');
+	}
+
+	// --- BUSCAR FACTURAS ---
 	buscarSocio() {
-		if (!this.terminoBusqueda.trim()) return;
+		this.cargando = true;
 
-		this.buscando = true;
-		this.socioEncontrado = null;
-		this.deudas = [];
-		this.totalAPagar = 0;
+		// Obtenemos los filtros
+		const q = this.filtroGlobal.trim() || undefined;
+		const dia = this.fechaSeleccionada.getDate();
+		const mes = this.fechaSeleccionada.getMonth() + 1;
+		const anio = this.fechaSeleccionada.getFullYear();
 
-		this.cajaService.buscarSocioConDeudas(this.terminoBusqueda).subscribe({
-			next: (data) => {
-				if (data.encontrado) {
-					this.socioEncontrado = data.socio;
-					// Mapeamos las deudas del backend y les agregamos 'seleccionado' para los checkboxes
-					this.deudas = data.deudas.map((d) => ({ ...d, seleccionado: true }));
-					this.calcularTotal();
-				} else {
-					this.mostrarError('No encontrado', 'No se encontraron resultados con ese criterio.');
+		// Llamamos al servicio con los parámetros de búsqueda
+		this.cajaService.getFacturasPendientes(q, dia, mes, anio).subscribe({
+			next: (facturas) => {
+				this.facturasPendientes = facturas || [];
+				this.facturasFiltradas = [...this.facturasPendientes];
+				this.calcularKPIs();
+				this.cargando = false;
+
+				if (this.facturasPendientes.length === 0) {
+					this.messageService.add({
+						severity: 'info',
+						summary: 'Sin Facturas',
+						detail: `No hay facturas pendientes para ${this.formatearFecha(this.fechaSeleccionada)}`,
+					});
 				}
-				this.buscando = false;
 			},
 			error: (err) => {
-				// Si es un 404 manejado por el servicio, llega como error aquí también
-				this.mostrarError('Aviso', err.message);
-				this.buscando = false;
+				console.error('Error buscando facturas:', err);
+				this.cargando = false;
+				this.facturasPendientes = [];
+				this.facturasFiltradas = [];
+				this.messageService.add({
+					severity: 'error',
+					summary: 'Error',
+					detail: err.message || 'No se pudo buscar. Verifique la conexión.',
+				});
 			},
 		});
 	}
 
-	calcularTotal() {
-		// Suma solo los ítems seleccionados
-		this.totalAPagar = this.deudas.filter((d) => d.seleccionado).reduce((acc, d) => acc + Number(d.monto), 0);
+	formatearFecha(fecha: Date): string {
+		return fecha.toLocaleDateString('es-EC', { day: '2-digit', month: 'long', year: 'numeric' });
 	}
 
-	confirmarCobro() {
-		const itemsSeleccionados = this.deudas.filter((d) => d.seleccionado);
+	calcularKPIs() {
+		this.totalFacturas = this.facturasPendientes.length;
+		this.totalPorCobrar = this.facturasPendientes.reduce((acc, f) => acc + Number(f.total), 0);
+	}
 
-		if (itemsSeleccionados.length === 0) {
-			this.messageService.add({
-				severity: 'warn',
-				summary: 'Atención',
-				detail: 'Seleccione al menos una deuda para cobrar.',
-			});
-			return;
+	// --- FILTRO LOCAL (Opcional, si ya trajiste los datos del socio) ---
+	filtrar() {
+		const filtro = this.filtroGlobal.toLowerCase().trim();
+		if (!filtro) {
+			this.facturasFiltradas = [...this.facturasPendientes];
+		} else {
+			this.facturasFiltradas = this.facturasPendientes.filter(
+				(f) =>
+					f.socio_nombre.toLowerCase().includes(filtro) ||
+					f.socio_cedula.includes(filtro) ||
+					f.numero_factura.toLowerCase().includes(filtro) ||
+					(f.medidor_codigo && f.medidor_codigo.toLowerCase().includes(filtro)),
+			);
 		}
+	}
 
+	limpiarFiltro() {
+		this.filtroGlobal = '';
+		this.facturasFiltradas = []; // Limpiamos tabla
+		this.facturasPendientes = [];
+		this.calcularKPIs();
+	}
+
+	// --- COBRAR FACTURA ---
+	confirmarCobroEfectivo(factura: FacturaPendiente) {
 		this.confirmationService.confirm({
-			message: `¿Confirmar cobro de $${this.totalAPagar.toFixed(2)} a ${this.socioEncontrado.nombres}?`,
-			header: 'Confirmación de Caja',
+			message: `¿Confirmar cobro de $${Number(factura.total).toFixed(2)} a ${factura.socio_nombre}?`,
+			header: 'Confirmación de Cobro',
 			icon: 'pi pi-exclamation-triangle',
 			acceptLabel: 'Sí, Cobrar',
 			rejectLabel: 'Cancelar',
 			acceptButtonStyleClass: 'p-button-success',
 			accept: () => {
-				this.ejecutarPago(itemsSeleccionados);
+				this.ejecutarCobroEfectivo(factura);
 			},
 		});
 	}
 
-	ejecutarPago(items: DeudaItem[]) {
+	ejecutarCobroEfectivo(factura: FacturaPendiente) {
 		this.procesandoPago = true;
-		const ids = items.map((i) => i.id);
 
-		// Guardamos una copia de los datos para el recibo ANTES de limpiar las variables
-		const datosRecibo = {
-			socio: { ...this.socioEncontrado },
-			items: [...items],
-			total: this.totalAPagar,
-		};
+		// Aseguramos que el monto sea un número con 2 decimales para evitar errores 400
+		const montoExacto = Number(Number(factura.total).toFixed(2));
 
-		this.cajaService.procesarPago(ids, 'EFECTIVO').subscribe({
+		const pagos: PagoItem[] = [{ metodo: 'EFECTIVO', monto: montoExacto }];
+
+		this.cajaService.registrarCobro({ factura_id: factura.id, pagos }).subscribe({
 			next: (resp) => {
 				this.messageService.add({
 					severity: 'success',
-					summary: 'Pago Exitoso',
-					detail: `Ticket Generado: ${resp.ticket_numero}`,
+					summary: 'Cobro Exitoso',
+					detail: resp.mensaje,
 				});
 
-				// Generar Recibo PDF usando tu ComprobanteService
-				this.comprobanteService.generarRecibo(
-					datosRecibo.socio,
-					datosRecibo.items,
-					datosRecibo.total,
-					resp.ticket_numero,
-				);
+				// Mostrar comprobante del backend
+				this.mostrarComprobante(resp.comprobante);
 
-				// Limpiar pantalla / Reiniciar estado
+				// Remover de la lista visualmente
+				this.facturasPendientes = this.facturasPendientes.filter((f) => f.id !== factura.id);
+				this.facturasFiltradas = this.facturasFiltradas.filter((f) => f.id !== factura.id);
+				this.calcularKPIs();
 				this.procesandoPago = false;
-				this.socioEncontrado = null;
-				this.terminoBusqueda = '';
-				this.deudas = [];
-				this.totalAPagar = 0;
 			},
 			error: (err) => {
 				this.procesandoPago = false;
-				this.mostrarError('Error al procesar pago', err.message);
+				// Mostramos el mensaje exacto que envía el backend
+				const msg = err.error?.error || err.message || 'Error desconocido';
+				this.messageService.add({ severity: 'error', summary: 'Error al Cobrar', detail: msg });
 			},
 		});
 	}
 
-	// --- PESTAÑA 2: TRANSFERENCIAS (Opcional por ahora) ---
+	// --- MOSTRAR COMPROBANTE ---
+	mostrarComprobante(comprobante: Comprobante) {
+		this.comprobanteActual = comprobante;
+		this.modalComprobanteVisible = true;
+	}
 
+	imprimirComprobante() {
+		window.print();
+	}
+
+	// --- PAGO MIXTO ---
+	abrirModalPagoMixto(factura: FacturaPendiente) {
+		this.facturaSeleccionada = factura;
+		this.montoEfectivo = 0;
+		this.montoTransferencia = 0;
+		this.referenciaTransferencia = '';
+		this.montoRestante = Number(factura.total);
+		this.modalPagoMixtoVisible = true;
+	}
+
+	calcularRestante() {
+		if (!this.facturaSeleccionada) return;
+		const total = Number(this.facturaSeleccionada.total);
+		const sumaMontos = (this.montoEfectivo || 0) + (this.montoTransferencia || 0);
+		this.montoRestante = Math.round((total - sumaMontos) * 100) / 100;
+	}
+
+	ejecutarPagoMixto() {
+		if (!this.facturaSeleccionada) return;
+
+		if (Math.abs(this.montoRestante) > 0.01) {
+			// Tolerancia pequeña para decimales
+			this.messageService.add({
+				severity: 'warn',
+				summary: 'Atención',
+				detail: 'Los montos deben sumar exactamente el total a pagar.',
+			});
+			return;
+		}
+
+		const pagos: PagoItem[] = [];
+
+		if (this.montoEfectivo > 0) {
+			pagos.push({ metodo: 'EFECTIVO', monto: this.montoEfectivo });
+		}
+
+		if (this.montoTransferencia > 0) {
+			pagos.push({
+				metodo: 'TRANSFERENCIA',
+				monto: this.montoTransferencia,
+				referencia: this.referenciaTransferencia || undefined,
+			});
+		}
+
+		this.procesandoPago = true;
+		const factura = this.facturaSeleccionada;
+
+		this.cajaService.registrarCobro({ factura_id: factura.id, pagos }).subscribe({
+			next: (resp) => {
+				this.messageService.add({
+					severity: 'success',
+					summary: 'Pago Mixto Exitoso',
+					detail: resp.mensaje,
+				});
+
+				// Cerrar modal de pago mixto y mostrar comprobante
+				this.modalPagoMixtoVisible = false;
+				this.mostrarComprobante(resp.comprobante);
+
+				// Remover de la lista
+				this.facturasPendientes = this.facturasPendientes.filter((f) => f.id !== factura.id);
+				this.facturasFiltradas = this.facturasFiltradas.filter((f) => f.id !== factura.id);
+				this.calcularKPIs();
+
+				this.procesandoPago = false;
+				this.facturaSeleccionada = null;
+			},
+			error: (err) => {
+				this.procesandoPago = false;
+				const msg = err.error?.error || err.message;
+				this.messageService.add({ severity: 'error', summary: 'Error en Pago Mixto', detail: msg });
+			},
+		});
+	}
+
+	// --- PESTAÑA TRANSFERENCIAS ---
 	cargarTransferencias() {
 		this.cargandoTransferencias = true;
 		this.cajaService.getTransferenciasPendientes().subscribe({
@@ -188,15 +318,17 @@ export class CajaComponent {
 		this.confirmationService.confirm({
 			message: `¿Confirmar aprobación del pago de ${transf.socio_nombre}?`,
 			accept: () => {
-				// Aquí llamarías al servicio para aprobar
 				this.messageService.add({ severity: 'success', summary: 'Aprobado', detail: 'Transferencia validada.' });
-				// Eliminar de la lista localmente
+				// Aquí deberías llamar al servicio real para aprobar en BD
 				this.transferencias = this.transferencias.filter((t) => t.id !== transf.id);
 			},
 		});
 	}
 
-	mostrarError(titulo: string, msg: string) {
-		this.messageService.add({ severity: 'error', summary: titulo, detail: msg });
+	// --- UTILIDADES ---
+	getSeverityVencimiento(dias: number | undefined): 'success' | 'warn' | 'danger' | 'info' {
+		if (!dias || dias <= 0) return 'success';
+		if (dias <= 15) return 'warn';
+		return 'danger';
 	}
 }

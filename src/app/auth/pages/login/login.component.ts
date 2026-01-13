@@ -19,7 +19,6 @@ import { MessageModule } from 'primeng/message';
 import { ErrorService } from '../../core/services/error.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { LoadingService } from '../../../core/services/loading.service';
-import { RolUsuario } from '../../../core/models/role.enum'; // Asumimos esta ruta
 
 @Component({
 	selector: 'amc-login',
@@ -83,11 +82,9 @@ export default class LoginComponent implements OnInit {
 						this.errorService.loginError('Respuesta de usuario incompleta.');
 					}
 				},
-				error: (err) => {
+				error: () => {
 					// El AuthService YA LLAMÓ a this.errorService.loginError() en el catchError.
-					// Aquí solo necesitamos manejar la acción de reseteo si queremos.
 					this.loginForm.reset();
-					console.error('Error en el componente login:', err);
 				},
 			});
 	}

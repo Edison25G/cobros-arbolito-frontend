@@ -11,143 +11,197 @@
 	<p-tabs value="0">
 		<!-- 1. Lista de Pestañas (Encabezados) -->
 		<p-tablist>
-			<p-tab value="0"> <i class="pi pi-money-bill mr-2"></i> Cobro en Ventanilla </p-tab>
+			<p-tab value="0"> <i class="pi pi-money-bill mr-2"></i> Facturas Pendientes </p-tab>
 			<p-tab value="1"> <i class="pi pi-image mr-2"></i> Validar Transferencias </p-tab>
 		</p-tablist>
 
 		<!-- 2. Contenido de las Pestañas -->
 		<p-tabpanels>
-			<!-- PANEL 0: Cobro en Ventanilla -->
+			<!-- PANEL 0: Facturas Pendientes de Cobro -->
 			<p-tabpanel value="0">
-				<div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-2">
-					<!-- Columna Izquierda: Buscador y Datos Socio -->
-					<div class="lg:col-span-4 space-y-4">
-						<!-- Buscador -->
-						<div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-							<span class="block text-sm font-bold text-gray-700 mb-2">Buscar Socio</span>
-							<div class="flex gap-2">
+				<!-- KPIs (solo visibles si hay datos) -->
+				<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 mt-2" *ngIf="facturasPendientes.length > 0">
+					<div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-blue-500">
+						<span class="text-gray-500 text-xs uppercase font-bold">Facturas Pendientes</span>
+						<div class="text-3xl font-bold text-gray-800">{{ totalFacturas }}</div>
+					</div>
+					<div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-orange-500">
+						<span class="text-gray-500 text-xs uppercase font-bold">Total por Cobrar</span>
+						<div class="text-3xl font-bold text-orange-600">{{ totalPorCobrar | currency }}</div>
+					</div>
+				</div>
+
+				<!-- Buscador -->
+				<div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-4">
+					<div class="flex flex-col lg:flex-row gap-4 items-end">
+						<!-- Selector de Fecha -->
+						<div class="flex flex-col">
+							<label class="text-xs font-bold text-gray-500 mb-1">
+								<i class="pi pi-calendar mr-1"></i>FECHA DE FACTURA
+							</label>
+							<p-datepicker
+								[(ngModel)]="fechaSeleccionada"
+								dateFormat="dd/mm/yy"
+								[showIcon]="true"
+								[showButtonBar]="true"
+								[touchUI]="false"
+								placeholder="Seleccione fecha"
+								styleClass="w-48"
+							></p-datepicker>
+						</div>
+
+						<!-- Buscador por socio -->
+						<div class="flex-1 w-full">
+							<label class="text-xs font-bold text-gray-500 mb-1 block">SOCIO (OPCIONAL)</label>
+							<span class="p-input-icon-left w-full">
+								<i class="pi pi-search"></i>
 								<input
 									pInputText
-									[(ngModel)]="terminoBusqueda"
+									[(ngModel)]="filtroGlobal"
 									(keyup.enter)="buscarSocio()"
-									placeholder="Cédula o Apellido..."
+									placeholder="Cédula o nombre del socio..."
 									class="w-full"
 								/>
-								<p-button icon="pi pi-search" [loading]="buscando" (onClick)="buscarSocio()"></p-button>
-							</div>
-							<small class="text-gray-400 mt-1 block">Presiona Enter para buscar</small>
+							</span>
 						</div>
 
-						<!-- Tarjeta de Socio Encontrado -->
-						<div *ngIf="socioEncontrado" class="bg-blue-50 p-6 rounded-xl border border-blue-100 animate-fade-in-up">
-							<div class="flex items-center gap-4 mb-4">
-								<div
-									class="w-16 h-16 bg-white rounded-full flex items-center justify-center text-blue-600 text-2xl font-bold shadow-sm"
-								>
-									{{ socioEncontrado.nombres.charAt(0) }}
-								</div>
-								<div>
-									<h3 class="font-bold text-gray-800 text-lg m-0">{{ socioEncontrado.nombres }}</h3>
-									<p class="text-gray-600 text-sm">{{ socioEncontrado.apellidos }}</p>
-								</div>
-							</div>
-
-							<div class="space-y-2 text-sm">
-								<div class="flex justify-between">
-									<span class="text-gray-500">Cédula:</span>
-									<span class="font-medium">{{ socioEncontrado.cedula }}</span>
-								</div>
-								<div class="flex justify-between">
-									<span class="text-gray-500">Barrio:</span>
-									<span class="font-medium">{{ socioEncontrado.barrio }}</span>
-								</div>
-								<div class="flex justify-between">
-									<span class="text-gray-500">Estado:</span>
-									<p-tag [value]="socioEncontrado.estado" severity="success"></p-tag>
-								</div>
-							</div>
+						<!-- Botones -->
+						<div class="flex gap-2">
+							<p-button
+								icon="pi pi-search"
+								label="Buscar"
+								severity="success"
+								[loading]="cargando"
+								(onClick)="buscarSocio()"
+							></p-button>
+							<p-button
+								*ngIf="facturasPendientes.length > 0"
+								icon="pi pi-times"
+								label="Limpiar"
+								[text]="true"
+								severity="secondary"
+								(onClick)="limpiarFiltro()"
+							></p-button>
 						</div>
 					</div>
+					<small class="text-gray-400 mt-2 block">
+						<i class="pi pi-info-circle mr-1"></i>
+						Seleccione la fecha y opcionalmente filtre por socio. Presione Buscar para ver las facturas pendientes.
+					</small>
+				</div>
 
-					<!-- Columna Derecha: Tabla de Deudas -->
-					<div class="lg:col-span-8">
-						<div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden h-full flex flex-col">
-							<div class="p-4 bg-gray-50 border-b border-gray-100 flex justify-between items-center">
-								<h3 class="font-bold text-gray-700 m-0">Estado de Cuenta</h3>
-								<span class="text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded-full" *ngIf="deudas.length > 0">
-									{{ deudas.length }} pendientes
-								</span>
-							</div>
+				<!-- Tabla de Facturas Pendientes -->
+				<div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+					<p-table
+						[value]="facturasFiltradas"
+						[loading]="cargando"
+						[paginator]="true"
+						[rows]="5"
+						[showCurrentPageReport]="true"
+						currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} facturas"
+						styleClass="p-datatable-sm p-datatable-striped"
+						responsiveLayout="scroll"
+					>
+						<ng-template pTemplate="header">
+							<tr class="bg-gray-50 text-xs uppercase tracking-wider text-gray-600">
+								<th pSortableColumn="fecha_emision" style="min-width: 100px">
+									Fecha <p-sortIcon field="fecha_emision"></p-sortIcon>
+								</th>
+								<th style="min-width: 120px">Factura</th>
+								<th pSortableColumn="socio_nombre" style="min-width: 200px">
+									Socio <p-sortIcon field="socio_nombre"></p-sortIcon>
+								</th>
+								<th style="min-width: 100px">Medidor</th>
+								<th class="text-right">Consumo</th>
+								<th class="text-right">Agua</th>
+								<th class="text-right">Multas</th>
+								<th pSortableColumn="total" class="text-right font-bold" style="min-width: 100px">
+									Total <p-sortIcon field="total"></p-sortIcon>
+								</th>
+								<th class="text-center" style="min-width: 180px">Acciones</th>
+							</tr>
+						</ng-template>
 
-							<div class="p-4 flex-1">
-								<p-table [value]="deudas" *ngIf="deudas.length > 0; else vacio">
-									<ng-template pTemplate="header">
-										<tr>
-											<th style="width: 3rem"></th>
-											<th>Concepto</th>
-											<th>Vencimiento</th>
-											<th>Tipo</th>
-											<th class="text-right">Monto</th>
-										</tr>
-									</ng-template>
-									<ng-template pTemplate="body" let-item>
-										<tr [ngClass]="{ 'bg-green-50': item.seleccionado }">
-											<td>
-												<p-checkbox
-													[(ngModel)]="item.seleccionado"
-													[binary]="true"
-													(onChange)="calcularTotal()"
-												></p-checkbox>
-											</td>
-											<td>
-												<span class="font-medium text-gray-800">{{ item.concepto }}</span>
-											</td>
-											<td class="text-gray-500 text-sm">{{ item.vencimiento }}</td>
-											<td>
-												<p-tag [value]="item.tipo" [severity]="item.tipo === 'AGUA' ? 'info' : 'warn'"></p-tag>
-											</td>
-											<td class="text-right font-bold text-gray-800">
-												{{ item.monto | currency }}
-											</td>
-										</tr>
-									</ng-template>
-								</p-table>
-
-								<ng-template #vacio>
-									<div class="flex flex-col items-center justify-center h-64 text-gray-400">
-										<i class="pi pi-shopping-cart text-4xl mb-3 opacity-30"></i>
-										<p *ngIf="!socioEncontrado">Busque un socio para ver sus deudas.</p>
-										<p *ngIf="socioEncontrado">Este socio está al día. ¡Excelente! 🎉</p>
+						<ng-template pTemplate="body" let-factura>
+							<tr>
+								<td class="text-gray-500 text-sm">{{ factura.fecha_emision | date: 'dd/MM/yyyy' }}</td>
+								<td>
+									<span class="font-mono text-xs bg-gray-100 px-2 py-1 rounded">
+										{{ factura.numero_factura }}
+									</span>
+								</td>
+								<td>
+									<div class="font-bold text-gray-800">{{ factura.socio_nombre }}</div>
+									<div class="text-xs text-gray-400">{{ factura.socio_cedula }}</div>
+								</td>
+								<td>
+									<span
+										*ngIf="factura.medidor_codigo"
+										class="bg-blue-50 text-blue-700 border border-blue-100 px-2 py-1 rounded text-xs font-mono"
+									>
+										{{ factura.medidor_codigo }}
+									</span>
+									<span *ngIf="!factura.medidor_codigo" class="text-gray-400 text-xs">-</span>
+								</td>
+								<td class="text-right">
+									<span *ngIf="factura.consumo" class="font-bold text-blue-600"> {{ factura.consumo }} m³ </span>
+									<span *ngIf="!factura.consumo" class="text-gray-400">-</span>
+								</td>
+								<td class="text-right text-gray-600">{{ factura.monto_agua | currency }}</td>
+								<td class="text-right">
+									<span *ngIf="factura.multas > 0" class="text-orange-600 font-medium">
+										{{ factura.multas | currency }}
+									</span>
+									<span *ngIf="factura.multas === 0" class="text-gray-300">-</span>
+								</td>
+								<td class="text-right">
+									<span class="font-bold text-lg text-green-700">{{ factura.total | currency }}</span>
+								</td>
+								<td class="text-center">
+									<div class="flex justify-center gap-2">
+										<p-button
+											icon="pi pi-money-bill"
+											pTooltip="Cobrar en Efectivo"
+											tooltipPosition="top"
+											severity="success"
+											[rounded]="true"
+											(onClick)="confirmarCobroEfectivo(factura)"
+											[loading]="procesandoPago"
+										></p-button>
+										<p-button
+											icon="pi pi-credit-card"
+											pTooltip="Pago Mixto"
+											tooltipPosition="top"
+											severity="info"
+											[rounded]="true"
+											[outlined]="true"
+											(onClick)="abrirModalPagoMixto(factura)"
+										></p-button>
 									</div>
-								</ng-template>
-							</div>
+								</td>
+							</tr>
+						</ng-template>
 
-							<!-- Footer con Total y Botón Pagar -->
-							<div
-								class="bg-gray-800 p-6 flex flex-col sm:flex-row justify-between items-center gap-4"
-								*ngIf="deudas.length > 0"
-							>
-								<div>
-									<span class="text-gray-400 text-sm uppercase font-bold">Total a Pagar</span>
-									<div class="text-3xl font-bold text-green-400">{{ totalAPagar | currency }}</div>
-								</div>
-								<p-button
-									label="Recibir Efectivo y Procesar"
-									icon="pi pi-check"
-									[loading]="procesandoPago"
-									(onClick)="confirmarCobro()"
-									styleClass="p-button-lg p-button-success font-bold px-8"
-								>
-								</p-button>
-							</div>
-						</div>
-					</div>
+						<ng-template pTemplate="emptymessage">
+							<tr>
+								<td colspan="9" class="text-center p-12 text-gray-400">
+									<div class="flex flex-col items-center">
+										<div class="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mb-3">
+											<i class="pi pi-search text-3xl text-blue-400"></i>
+										</div>
+										<p class="font-medium text-gray-600">Busque un socio</p>
+										<p class="text-sm">Ingrese la cédula o apellido del socio para ver sus facturas pendientes.</p>
+									</div>
+								</td>
+							</tr>
+						</ng-template>
+					</p-table>
 				</div>
 			</p-tabpanel>
 
 			<!-- PANEL 1: Validar Transferencias -->
 			<p-tabpanel value="1">
-				<div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+				<div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mt-2">
 					<p class="mb-4 text-gray-600">
 						Revise los comprobantes subidos por los socios y apruebe el pago si el dinero está en la cuenta.
 					</p>
@@ -164,9 +218,9 @@
 						</ng-template>
 						<ng-template pTemplate="body" let-t>
 							<tr>
-								<td class="font-bold">{{ t.socio }}</td>
+								<td class="font-bold">{{ t.socio_nombre }}</td>
 								<td>
-									<div class="text-sm">{{ t.banco }}</div>
+									<div class="text-sm">{{ t.banco_origen }}</div>
 									<div class="text-xs text-gray-500">{{ t.fecha }}</div>
 								</td>
 								<td class="font-bold text-green-600">{{ t.monto | currency }}</td>
@@ -200,9 +254,246 @@
 								</td>
 							</tr>
 						</ng-template>
+						<ng-template pTemplate="emptymessage">
+							<tr>
+								<td colspan="5" class="text-center p-8 text-gray-400">
+									<i class="pi pi-inbox text-3xl mb-2 opacity-30"></i>
+									<p>No hay transferencias pendientes de validar.</p>
+								</td>
+							</tr>
+						</ng-template>
 					</p-table>
 				</div>
 			</p-tabpanel>
 		</p-tabpanels>
 	</p-tabs>
 </div>
+
+<!-- MODAL: Pago Mixto -->
+<p-dialog
+	[(visible)]="modalPagoMixtoVisible"
+	header="Pago Mixto"
+	[modal]="true"
+	[breakpoints]="{ '960px': '75vw', '640px': '95vw' }"
+	[style]="{ width: '500px' }"
+	styleClass="p-fluid"
+	[draggable]="false"
+	[resizable]="false"
+>
+	<ng-template pTemplate="content">
+		<!-- Resumen de la Factura -->
+		<div class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg" *ngIf="facturaSeleccionada">
+			<div class="text-sm text-gray-600"><strong>Socio:</strong> {{ facturaSeleccionada.socio_nombre }}</div>
+			<div class="text-sm text-gray-600"><strong>Factura:</strong> {{ facturaSeleccionada.numero_factura }}</div>
+			<div class="text-lg font-bold text-blue-600 mt-1">Total: {{ facturaSeleccionada.total | currency }}</div>
+		</div>
+
+		<!-- Montos -->
+		<div class="flex flex-col gap-4">
+			<!-- Efectivo -->
+			<div class="flex flex-col gap-2">
+				<span class="font-bold text-sm text-gray-700">
+					<i class="pi pi-money-bill text-green-600 mr-1"></i> Monto en Efectivo
+				</span>
+				<p-inputNumber
+					[(ngModel)]="montoEfectivo"
+					mode="currency"
+					currency="USD"
+					locale="en-US"
+					placeholder="0.00"
+					(onInput)="calcularRestante()"
+					styleClass="w-full"
+				></p-inputNumber>
+			</div>
+
+			<!-- Transferencia -->
+			<div class="flex flex-col gap-2">
+				<span class="font-bold text-sm text-gray-700">
+					<i class="pi pi-credit-card text-blue-600 mr-1"></i> Monto en Transferencia
+				</span>
+				<p-inputNumber
+					[(ngModel)]="montoTransferencia"
+					mode="currency"
+					currency="USD"
+					locale="en-US"
+					placeholder="0.00"
+					(onInput)="calcularRestante()"
+					styleClass="w-full"
+				></p-inputNumber>
+			</div>
+
+			<!-- Referencia (si hay transferencia) -->
+			<div class="flex flex-col gap-2" *ngIf="montoTransferencia > 0">
+				<span class="font-bold text-sm text-gray-700">Referencia de Transferencia</span>
+				<input pInputText [(ngModel)]="referenciaTransferencia" placeholder="Ej: REF123456" class="w-full" />
+			</div>
+
+			<!-- Validación -->
+			<div
+				class="p-3 rounded-lg"
+				[ngClass]="{
+					'bg-green-50 border border-green-200': montoRestante === 0,
+					'bg-red-50 border border-red-200': montoRestante !== 0,
+				}"
+			>
+				<div class="flex justify-between items-center">
+					<span class="text-sm text-gray-600">Suma de pagos:</span>
+					<span class="font-bold">{{ (montoEfectivo || 0) + (montoTransferencia || 0) | currency }}</span>
+				</div>
+				<div class="flex justify-between items-center mt-1">
+					<span class="text-sm text-gray-600">Restante:</span>
+					<span
+						class="font-bold"
+						[ngClass]="{
+							'text-green-600': montoRestante === 0,
+							'text-red-600': montoRestante !== 0,
+						}"
+					>
+						{{ montoRestante | currency }}
+					</span>
+				</div>
+				<small *ngIf="montoRestante !== 0" class="text-red-500 text-xs mt-1 block">
+					<i class="pi pi-exclamation-triangle mr-1"></i>
+					Los montos deben sumar exactamente el total a pagar
+				</small>
+			</div>
+		</div>
+	</ng-template>
+
+	<ng-template pTemplate="footer">
+		<div class="flex justify-end gap-2 mt-2">
+			<p-button
+				label="Cancelar"
+				icon="pi pi-times"
+				[text]="true"
+				severity="secondary"
+				(onClick)="modalPagoMixtoVisible = false"
+			></p-button>
+			<p-button
+				label="Procesar Pago Mixto"
+				icon="pi pi-check"
+				severity="success"
+				[loading]="procesandoPago"
+				[disabled]="montoRestante !== 0"
+				(onClick)="ejecutarPagoMixto()"
+			></p-button>
+		</div>
+	</ng-template>
+</p-dialog>
+
+<!-- MODAL: Comprobante de Pago -->
+<p-dialog
+	[(visible)]="modalComprobanteVisible"
+	header="Comprobante de Pago"
+	[modal]="true"
+	[breakpoints]="{ '960px': '80vw', '640px': '95vw' }"
+	[style]="{ width: '550px' }"
+	[draggable]="false"
+	[resizable]="false"
+>
+	<ng-template pTemplate="content">
+		<div class="comprobante-container" *ngIf="comprobanteActual">
+			<!-- Encabezado -->
+			<div class="text-center mb-4 pb-4 border-b border-gray-200">
+				<div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+					<i class="pi pi-check-circle text-4xl text-green-600"></i>
+				</div>
+				<h2 class="text-xl font-bold text-gray-800 m-0">COMPROBANTE DE PAGO</h2>
+				<p class="text-gray-500 text-sm m-0">Junta de Agua "El Arbolito"</p>
+			</div>
+
+			<!-- Datos del Cliente -->
+			<div class="bg-blue-50 p-4 rounded-lg mb-4">
+				<h3 class="text-sm font-bold text-blue-800 uppercase mb-2"><i class="pi pi-user mr-2"></i>Datos del Cliente</h3>
+				<div class="grid grid-cols-2 gap-2 text-sm">
+					<span class="text-gray-600">Nombres:</span>
+					<span class="font-medium text-gray-800"
+						>{{ comprobanteActual.socio.nombres }} {{ comprobanteActual.socio.apellidos }}</span
+					>
+					<span class="text-gray-600">Cédula:</span>
+					<span class="font-medium text-gray-800">{{ comprobanteActual.socio.cedula }}</span>
+					<span class="text-gray-600">Dirección:</span>
+					<span class="font-medium text-gray-800">{{ comprobanteActual.socio.direccion || '-' }}</span>
+				</div>
+			</div>
+
+			<!-- Datos de la Factura -->
+			<div class="bg-gray-50 p-4 rounded-lg mb-4">
+				<h3 class="text-sm font-bold text-gray-700 uppercase mb-2">
+					<i class="pi pi-file mr-2"></i>Datos de la Factura
+				</h3>
+				<div class="grid grid-cols-2 gap-2 text-sm">
+					<span class="text-gray-600">Factura N°:</span>
+					<span class="font-medium text-gray-800">{{ comprobanteActual.factura.id }}</span>
+					<span class="text-gray-600">Fecha Emisión:</span>
+					<span class="font-medium text-gray-800">{{
+						comprobanteActual.factura.fecha_emision | date: 'dd/MM/yyyy'
+					}}</span>
+					<span class="text-gray-600">Subtotal:</span>
+					<span class="font-medium text-gray-800">{{ comprobanteActual.factura.subtotal | currency }}</span>
+				</div>
+				<div class="mt-3 pt-3 border-t border-gray-200 flex justify-between items-center">
+					<span class="text-lg font-bold text-gray-700">TOTAL:</span>
+					<span class="text-2xl font-bold text-green-600">{{ comprobanteActual.factura.total | currency }}</span>
+				</div>
+			</div>
+
+			<!-- Pagos Realizados -->
+			<div class="bg-green-50 p-4 rounded-lg mb-4">
+				<h3 class="text-sm font-bold text-green-800 uppercase mb-2">
+					<i class="pi pi-money-bill mr-2"></i>Pagos Realizados
+				</h3>
+				<div *ngFor="let pago of comprobanteActual.pagos" class="flex justify-between items-center py-1">
+					<span class="text-gray-700">
+						<i
+							[class]="
+								pago.metodo === 'EFECTIVO' ? 'pi pi-money-bill text-green-600' : 'pi pi-credit-card text-blue-600'
+							"
+							class="mr-2"
+						></i>
+						{{ pago.metodo }}
+					</span>
+					<span class="font-bold text-gray-800">{{ pago.monto | currency }}</span>
+				</div>
+			</div>
+
+			<!-- Estado SRI -->
+			<div class="bg-yellow-50 p-4 rounded-lg">
+				<h3 class="text-sm font-bold text-yellow-800 uppercase mb-2">
+					<i class="pi pi-verified mr-2"></i>Información SRI
+				</h3>
+				<div class="flex items-center gap-2 mb-2">
+					<span class="text-gray-600 text-sm">Estado:</span>
+					<p-tag
+						[value]="comprobanteActual.factura.estado_sri"
+						[severity]="comprobanteActual.factura.estado_sri === 'AUTORIZADO' ? 'success' : 'warn'"
+					></p-tag>
+				</div>
+				<div class="text-xs">
+					<span class="text-gray-600">Clave de Acceso:</span>
+					<div class="font-mono bg-white p-2 rounded border border-gray-200 mt-1 break-all text-gray-700">
+						{{ comprobanteActual.factura.clave_acceso_sri }}
+					</div>
+				</div>
+			</div>
+		</div>
+	</ng-template>
+
+	<ng-template pTemplate="footer">
+		<div class="flex justify-between gap-2">
+			<p-button
+				label="Imprimir"
+				icon="pi pi-print"
+				[outlined]="true"
+				severity="secondary"
+				(onClick)="imprimirComprobante()"
+			></p-button>
+			<p-button
+				label="Cerrar"
+				icon="pi pi-times"
+				severity="success"
+				(onClick)="modalComprobanteVisible = false"
+			></p-button>
+		</div>
+	</ng-template>
+</p-dialog>

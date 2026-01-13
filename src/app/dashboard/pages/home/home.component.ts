@@ -58,7 +58,22 @@ export class HomeComponent implements OnInit {
 	barChartOptions: any;
 
 	ngOnInit(): void {
-		this.userRole = this.authService.getRole() as RolUsuario;
+		// Normalizar el rol del backend al enum
+		const roleString = this.authService.getRole();
+		if (roleString) {
+			const roleUpper = roleString.toUpperCase();
+			if (roleUpper === 'ADMINISTRADOR' || roleUpper === 'ADMIN') {
+				this.userRole = RolUsuario.ADMIN;
+			} else if (roleUpper === 'TESORERO') {
+				this.userRole = RolUsuario.TESORERO;
+			} else if (roleUpper === 'OPERADOR') {
+				this.userRole = RolUsuario.OPERADOR;
+			} else if (roleUpper === 'SOCIO') {
+				this.userRole = RolUsuario.SOCIO;
+			} else {
+				this.userRole = null;
+			}
+		}
 
 		// Iniciamos configuración visual
 		this.initChart();
