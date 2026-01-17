@@ -479,18 +479,18 @@
 	</ng-template>
 
 	<ng-template pTemplate="footer">
-		<div class="flex justify-between gap-2">
+		<div class="flex justify-between gap-2 w-full">
 			<p-button
-				label="Imprimir"
+				label="Imprimir Ticket"
 				icon="pi pi-print"
 				[outlined]="true"
-				severity="secondary"
+				severity="success"
 				(onClick)="imprimirComprobante()"
 			></p-button>
 			<p-button
 				label="Cerrar"
 				icon="pi pi-times"
-				severity="success"
+				severity="secondary"
 				(onClick)="modalComprobanteVisible = false"
 			></p-button>
 		</div>

@@ -28,6 +28,8 @@ import {
 	Comprobante,
 } from '../../../core/interfaces/caja.interface';
 
+import { ComprobanteService } from '../../../core/services/comprobante.service';
+
 @Component({
 	selector: 'app-caja',
 	standalone: true,
@@ -57,6 +59,7 @@ export class CajaComponent implements OnInit {
 	private cajaService = inject(CajaService);
 	private messageService = inject(MessageService);
 	private confirmationService = inject(ConfirmationService);
+	private comprobanteService = inject(ComprobanteService);
 
 	// --- Variables para tabla de facturas pendientes ---
 	facturasPendientes: FacturaPendiente[] = [];
@@ -237,7 +240,16 @@ export class CajaComponent implements OnInit {
 	}
 
 	imprimirComprobante() {
-		window.print();
+		if (this.comprobanteActual) {
+			const { socio, factura, pagos } = this.comprobanteActual;
+			this.comprobanteService.generarTicketProfesional(socio, factura, pagos);
+
+			this.messageService.add({
+				severity: 'info',
+				summary: 'Impresión',
+				detail: 'Generando ticket profesional...',
+			});
+		}
 	}
 
 	// --- PAGO MIXTO ---

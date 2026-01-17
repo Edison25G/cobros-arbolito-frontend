@@ -46,4 +46,15 @@ export class FacturacionService {
 		console.error('Error:', error);
 		return throwError(() => new Error(error.error?.error || 'Error desconocido'));
 	}
+
+	// FacturacionService
+	getFacturasPorSocio(cedula: string): Observable<any[]> {
+		const url = `${this.apiUrl}/facturas-gestion/pendientes/?cedula=${cedula}`;
+		return this.http.get<any>(url).pipe(
+			// El backend v4 a veces devuelve {mensaje: '...', data: []}
+			// o el array directo. Manejamos ambos:
+			map((res) => (Array.isArray(res) ? res : res.data)),
+			catchError(this.handleError),
+		);
+	}
 }

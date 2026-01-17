@@ -1,10 +1,13 @@
-import { ApplicationConfig, provideZoneChangeDetection } from '@angular/core';
+import { ApplicationConfig, provideZoneChangeDetection, LOCALE_ID } from '@angular/core'; // ✅ AGREGADO LOCALE_ID
 import { provideRouter, withViewTransitions } from '@angular/router';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 
+// ✅ NUEVO: Importar idioma Español de Angular
+import localeEs from '@angular/common/locales/es';
+import { registerLocaleData } from '@angular/common';
+
 // Servicios de PrimeNG
-// AGREGADO: ConfirmationService (necesario para los popups de borrar)
 import { MessageService, ConfirmationService } from 'primeng/api';
 import { providePrimeNG } from 'primeng/config';
 import { DialogService } from 'primeng/dynamicdialog';
@@ -12,6 +15,9 @@ import Aura from '@primeuix/themes/aura';
 
 import { routes } from './app.routes';
 import { tokenInterceptor } from './interceptors/token-interceptor';
+
+// ✅ NUEVO: Registrar el idioma antes de la configuración
+registerLocaleData(localeEs, 'es');
 
 export const appConfig: ApplicationConfig = {
 	providers: [
@@ -22,6 +28,10 @@ export const appConfig: ApplicationConfig = {
 		provideAnimationsAsync(),
 		provideHttpClient(withInterceptors([tokenInterceptor])),
 
+		// ✅ NUEVO: Decirle a Angular que el idioma por defecto es Español ('es')
+		// Esto es lo que arregla el "JAN" -> "ENE"
+		{ provide: LOCALE_ID, useValue: 'es' },
+
 		// ✅ CONFIGURACIÓN CENTRAL DE PRIMENG (v20)
 		providePrimeNG({
 			theme: {
@@ -30,10 +40,9 @@ export const appConfig: ApplicationConfig = {
 					darkModeSelector: '.my-app-dark',
 				},
 			},
-			// Habilitar efecto de onda en botones
 			ripple: true,
 
-			// 👇 TRADUCCIÓN AL ESPAÑOL (Aquí se hace ahora)
+			// Traducción de componentes (Calendarios, Filtros, etc.)
 			translation: {
 				accept: 'Aceptar',
 				reject: 'Cancelar',
@@ -63,18 +72,12 @@ export const appConfig: ApplicationConfig = {
 				weekHeader: 'Sem',
 				firstDayOfWeek: 1,
 				dateFormat: 'dd/mm/yy',
-
-				// Contraseñas (p-password)
 				weak: 'Débil',
 				medium: 'Medio',
 				strong: 'Fuerte',
 				passwordPrompt: 'Ingrese una contraseña',
-
-				// Tablas y Listas (p-table, p-select)
 				emptyMessage: 'No se encontraron resultados',
 				emptyFilterMessage: 'No se encontraron resultados',
-
-				// Filtros de tabla
 				startsWith: 'Comienza con',
 				contains: 'Contiene',
 				notContains: 'No contiene',
@@ -98,9 +101,8 @@ export const appConfig: ApplicationConfig = {
 			},
 		}),
 
-		// Servicios globales disponibles para inyectar
 		MessageService,
 		DialogService,
-		ConfirmationService, // <-- Agregado para que funcionen los diálogos de confirmación
+		ConfirmationService,
 	],
 };

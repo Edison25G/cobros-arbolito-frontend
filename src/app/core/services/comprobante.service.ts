@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core'; // <--- ESTA ES LA LÍNEA QUE FALTA
+import { Injectable } from '@angular/core';
 import jsPDF from 'jspdf';
 import JsBarcode from 'jsbarcode';
 
@@ -7,11 +7,12 @@ import JsBarcode from 'jsbarcode';
 })
 export class ComprobanteService {
 	generarTicketProfesional(socio: any, factura: any, pagos: any[]) {
-		// Definimos el tamaño del ticket: 80mm de ancho y altura dinámica
 		const doc = new jsPDF({
 			unit: 'mm',
-			format: [80, 160],
+			format: [80, 150], // Ajustado para que no sobre mucho espacio
 		});
+
+		const totalFactura = Number(factura.total); // ✅ Asegurar número
 
 		// --- 1. DATOS DEL EMISOR (JUNTA) ---
 		doc.setFontSize(10);
@@ -37,15 +38,13 @@ export class ComprobanteService {
 		doc.text(`DIRECCIÓN: ${socio.direccion || 'S/N'}`, 5, 44);
 		doc.text('--------------------------------------------------', 40, 48, { align: 'center' });
 
-		// --- 4. DETALLE (TABLA) ---
+		// --- 4. DETALLE ---
 		doc.setFont('helvetica', 'bold');
 		doc.text('CONCEPTO', 5, 53);
 		doc.text('TOTAL', 75, 53, { align: 'right' });
 		doc.setFont('helvetica', 'normal');
-
-		// Aquí el sistema diferencia si es medidor o acometida fija
 		doc.text('Servicio de Agua Potable', 5, 58);
-		doc.text(`$${factura.total.toFixed(2)}`, 75, 58, { align: 'right' });
+		doc.text(`$${totalFactura.toFixed(2)}`, 75, 58, { align: 'right' });
 
 		doc.text('--------------------------------------------------', 40, 64, { align: 'center' });
 
@@ -53,33 +52,33 @@ export class ComprobanteService {
 		doc.setFontSize(10);
 		doc.setFont('helvetica', 'bold');
 		doc.text('TOTAL PAGADO:', 5, 70);
-		doc.text(`$${factura.total.toFixed(2)}`, 75, 70, { align: 'right' });
+		doc.text(`$${totalFactura.toFixed(2)}`, 75, 70, { align: 'right' });
 
-		// AQUÍ USAMOS LA VARIABLE 'pagos' PARA QUITAR EL ERROR
 		doc.setFontSize(7);
 		doc.setFont('helvetica', 'normal');
 		let yPago = 74;
 		pagos.forEach((p) => {
-			doc.text(`PAGO: ${p.metodo} - $${p.monto.toFixed(2)}`, 5, yPago);
+			doc.text(`PAGO: ${p.metodo} - $${Number(p.monto).toFixed(2)}`, 5, yPago);
 			yPago += 3;
 		});
-		// --- 6. DATOS SRI (LO MÁS IMPORTANTE) ---
-		doc.setFontSize(6);
-		doc.setFont('helvetica', 'normal');
-		doc.text('CLAVE DE ACCESO / AUTORIZACIÓN:', 40, 78, { align: 'center' });
-		doc.text(factura.clave_acceso_sri, 40, 81, { align: 'center' });
 
-		// Generamos el Código de Barras dinámico
-		const canvas = document.createElement('canvas');
-		JsBarcode(canvas, factura.clave_acceso_sri, { format: 'CODE128', displayValue: false });
-		const imgData = canvas.toDataURL('image/png');
-		doc.addImage(imgData, 'PNG', 10, 83, 60, 10);
+		// --- 6. DATOS SRI ---
+		if (factura.clave_acceso_sri) {
+			doc.setFontSize(6);
+			doc.text('CLAVE DE ACCESO / AUTORIZACIÓN:', 40, yPago + 4, { align: 'center' });
+			doc.text(factura.clave_acceso_sri, 40, yPago + 7, { align: 'center' });
+
+			const canvas = document.createElement('canvas');
+			JsBarcode(canvas, factura.clave_acceso_sri, { format: 'CODE128', displayValue: false });
+			const imgData = canvas.toDataURL('image/png');
+			doc.addImage(imgData, 'PNG', 10, yPago + 9, 60, 10);
+		}
 
 		doc.setFontSize(7);
-		doc.text('Descargue su factura en: sri.gob.ec', 40, 98, { align: 'center' });
+		doc.text('Descargue su factura en: sri.gob.ec', 40, yPago + 24, { align: 'center' });
 
-		// Abrir en ventana nueva para imprimir
-		doc.output('dataurlnewwindow');
-		return doc.output('bloburl');
+		// Abrir en ventana nueva
+		doc.save(`Ticket-${factura.id}.pdf`);
+		//return doc.output('bloburl');
 	}
 }

@@ -1,216 +1,232 @@
 <p-toast></p-toast>
 <p-confirmDialog></p-confirmDialog>
-<div *ngIf="isLoading" class="card p-6 bg-white rounded-xl shadow-sm border border-gray-100 animate-pulse">
-	<div class="flex gap-4 mb-6">
-		<p-skeleton shape="circle" size="5rem"></p-skeleton>
+
+<div *ngIf="isLoading" class="p-4 h-full flex flex-col gap-4 animate-pulse">
+	<div class="flex gap-4">
+		<p-skeleton shape="circle" size="4rem"></p-skeleton>
 		<div class="flex-1 space-y-2">
-			<p-skeleton width="50%" height="2rem"></p-skeleton>
-			<p-skeleton width="30%"></p-skeleton>
+			<p-skeleton width="40%" height="2rem"></p-skeleton>
+			<p-skeleton width="20%"></p-skeleton>
 		</div>
 	</div>
-	<p-skeleton height="150px"></p-skeleton>
+	<div class="grid grid-cols-1 lg:grid-cols-3 gap-4 h-full">
+		<p-skeleton height="100%" styleClass="lg:col-span-1"></p-skeleton>
+		<p-skeleton height="100%" styleClass="lg:col-span-2"></p-skeleton>
+	</div>
 </div>
 
-<div *ngIf="!isLoading && socio" class="card p-6 bg-white rounded-xl shadow-sm border border-gray-100 animate-fade-in">
-	<div class="flex flex-col gap-6 mb-6">
-		<!-- AVATAR + NOMBRE -->
-		<div class="flex flex-col md:flex-row gap-6 items-start">
-			<div class="flex-shrink-0">
-				<p-avatar
-					icon="pi pi-user"
-					size="xlarge"
-					shape="circle"
-					styleClass="bg-green-100 text-green-700 w-24 h-24 text-4xl shadow-sm"
-				></p-avatar>
-			</div>
-
-			<div class="flex-grow w-full">
-				<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-					<div>
-						<h1 class="text-3xl font-bold text-gray-800">{{ socio.nombres }} {{ socio.apellidos }}</h1>
-						<div class="text-gray-500 text-lg flex items-center gap-2 mt-1">
-							<i class="pi pi-id-card text-green-600"></i>
-							<span class="font-medium">{{ socio.cedula }}</span>
-						</div>
-					</div>
-
+<div *ngIf="!isLoading && socio" class="flex flex-col h-[calc(100vh-10rem)] p-2 gap-3 animate-fade-in">
+	<div class="bg-white rounded-xl shadow-sm border border-gray-100 p-3 flex justify-between items-center shrink-0">
+		<div class="flex items-center gap-4">
+			<p-avatar icon="pi pi-user" size="large" shape="circle" styleClass="bg-green-100 text-green-700"></p-avatar>
+			<div>
+				<h1 class="text-xl font-bold text-gray-800 m-0 leading-tight">{{ socio.nombres }} {{ socio.apellidos }}</h1>
+				<div class="text-sm text-gray-500 flex items-center gap-2">
+					<i class="pi pi-id-card text-green-600"></i>
+					<span>{{ socio.cedula }}</span>
 					<p-tag
 						[value]="socio.esta_activo ? 'ACTIVO' : 'INACTIVO'"
 						[severity]="socio.esta_activo ? 'success' : 'danger'"
-					></p-tag>
+						styleClass="text-[10px] py-0 px-2 h-5"
+					>
+					</p-tag>
 				</div>
 			</div>
 		</div>
-
-		<!-- 👇 BARRIO / ROL / CONTACTO (DEBAJO DEL LOGO) -->
-		<div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-			<div class="p-2 bg-gray-50 rounded-lg">
-				<span class="block text-gray-500 font-medium mb-1">Barrio (Domicilio)</span>
-				{{ getNombreBarrio($any(socio).barrio || socio.barrio_id) }}
-			</div>
-
-			<div class="p-2 bg-gray-50 rounded-lg">
-				<span class="block text-gray-500 font-medium mb-1">Rol</span>
-				<p-tag [value]="socio.rol" severity="info"></p-tag>
-			</div>
-
-			<div class="p-2 bg-gray-50 rounded-lg">
-				<span class="block text-gray-500 font-medium mb-1">Contacto</span>
-				<div class="font-semibold break-words">
-					<div class="flex items-center gap-2"><i class="pi pi-envelope text-xs"></i> {{ socio.email || 'N/A' }}</div>
-					<div class="flex items-center gap-2 mt-1">
-						<i class="pi pi-phone text-xs"></i> {{ socio.telefono || 'N/A' }}
-					</div>
-				</div>
-			</div>
-		</div>
-	</div>
-
-	<p-divider></p-divider>
-
-	<div class="mt-6 mb-8 animate-fade-in-up">
-		<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
-			<div>
-				<h3 class="text-xl font-bold text-gray-800 m-0">Propiedades Registradas</h3>
-				<p class="text-gray-500 text-sm">Administra los terrenos y medidores asignados a este socio.</p>
-			</div>
-
-			<p-button
-				label="Agregar Terreno"
-				icon="pi pi-plus"
-				[rounded]="true"
-				severity="primary"
-				(onClick)="abrirModalTerreno()"
-			>
-			</p-button>
-		</div>
-
-		<div class="card bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-			<p-table [value]="terrenos" [tableStyle]="{ 'min-width': '50rem' }">
-				<ng-template pTemplate="header">
-					<tr>
-						<th>Barrio / Sector</th>
-						<th>Dirección / Referencia</th>
-						<th>Servicio (Medidor)</th>
-						<th class="text-center">Acciones</th>
-					</tr>
-				</ng-template>
-
-				<ng-template pTemplate="body" let-terreno>
-					<tr>
-						<td class="font-bold">
-							{{ terreno.nombre_barrio || '---' }}
-						</td>
-
-						<td>{{ terreno.direccion }}</td>
-
-						<td>
-							<p-tag
-								[severity]="terreno.tiene_medidor || terreno.codigo_medidor ? 'info' : 'warn'"
-								[value]="
-									terreno.tiene_medidor || terreno.codigo_medidor
-										? '💧 Medidor: ' + terreno.codigo_medidor
-										: '🚫 Solo Cometida'
-								"
-								[rounded]="true"
-							>
-							</p-tag>
-						</td>
-
-						<td class="text-center">
-							<div class="flex justify-center gap-2 min-w-[90px]">
-								<p-button
-									icon="pi pi-pencil"
-									[rounded]="true"
-									[outlined]="true"
-									severity="info"
-									size="small"
-									pTooltip="Editar terreno"
-									tooltipPosition="top"
-									(onClick)="editarTerreno(terreno)"
-								>
-								</p-button>
-
-								<p-button
-									icon="pi pi-trash"
-									severity="danger"
-									[rounded]="true"
-									[outlined]="true"
-									size="small"
-									pTooltip="Eliminar terreno"
-									tooltipPosition="top"
-									(onClick)="eliminarTerreno(terreno)"
-								>
-								</p-button>
-							</div>
-						</td>
-					</tr>
-				</ng-template>
-				<ng-template pTemplate="emptymessage">
-					<tr>
-						<td colspan="4" class="text-center p-8">
-							<div class="flex flex-col items-center justify-center text-gray-400">
-								<i class="pi pi-home text-4xl mb-2"></i>
-								<p>Este socio aún no tiene terrenos registrados.</p>
-								<p class="text-sm">Haz clic en "Agregar Terreno" para registrar uno.</p>
-							</div>
-						</td>
-					</tr>
-				</ng-template>
-			</p-table>
-		</div>
-	</div>
-
-	<p-tabs value="0">
-		<p-tablist>
-			<p-tab value="0">Historial de Pagos</p-tab>
-		</p-tablist>
-
-		<p-tabpanels>
-			<p-tabpanel value="0">
-				<p-table [value]="historialPagos" styleClass="p-datatable-sm p-datatable-striped" [rowHover]="true">
-					<ng-template pTemplate="header">
-						<tr>
-							<th>Concepto</th>
-							<th>Mes</th>
-							<th>Monto</th>
-							<th>Estado</th>
-							<th>Fecha</th>
-						</tr>
-					</ng-template>
-					<ng-template pTemplate="body" let-pago>
-						<tr>
-							<td class="font-medium">Consumo Agua</td>
-							<td>{{ pago.mes }}</td>
-							<td class="font-bold text-gray-700">{{ pago.monto | currency }}</td>
-							<td>
-								<p-tag
-									[value]="pago.estado"
-									[severity]="pago.estado === 'PAGADO' ? 'success' : 'warn'"
-									[rounded]="true"
-								></p-tag>
-							</td>
-							<td class="text-sm text-gray-500">{{ pago.fecha_pago || '---' }}</td>
-						</tr>
-					</ng-template>
-					<ng-template pTemplate="emptymessage">
-						<tr>
-							<td colspan="5" class="text-center p-4">Sin historial.</td>
-						</tr>
-					</ng-template>
-				</p-table>
-			</p-tabpanel>
-		</p-tabpanels>
-	</p-tabs>
-
-	<div class="flex justify-end mt-6 pt-4 border-t border-gray-100">
 		<p-button
 			label="Volver"
 			icon="pi pi-arrow-left"
 			[outlined]="true"
 			severity="secondary"
+			size="small"
 			(onClick)="volver()"
 		></p-button>
+	</div>
+
+	<div class="grid grid-cols-1 lg:grid-cols-12 gap-3 flex-grow h-full">
+		<div class="lg:col-span-4 flex flex-col gap-3 h-full">
+			<div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 shrink-0">
+				<h3 class="text-sm font-bold text-gray-400 uppercase tracking-wider mb-3">Información General</h3>
+				<div class="space-y-3 text-sm">
+					<div class="flex justify-between border-b border-gray-50 pb-2">
+						<span class="text-gray-500">Barrio:</span>
+						<span class="font-medium text-right">{{ getNombreBarrio($any(socio).barrio || socio.barrio_id) }}</span>
+					</div>
+					<div class="flex justify-between border-b border-gray-50 pb-2">
+						<span class="text-gray-500">Rol:</span>
+						<p-tag [value]="socio.rol" severity="info" styleClass="text-[10px]"></p-tag>
+					</div>
+					<div class="flex flex-col gap-1">
+						<span class="text-gray-500">Contacto:</span>
+						<div class="flex items-center gap-2 text-gray-700">
+							<i class="pi pi-envelope text-xs"></i> {{ socio.email || 'N/A' }}
+						</div>
+						<div class="flex items-center gap-2 text-gray-700">
+							<i class="pi pi-phone text-xs"></i> {{ socio.telefono || 'N/A' }}
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex-grow flex flex-col justify-between">
+				<div class="flex justify-between items-center mb-2 shrink-0">
+					<h3 class="text-sm font-bold text-gray-800"><i class="pi pi-home mr-1"></i> Propiedades</h3>
+					<p-button
+						icon="pi pi-plus"
+						[rounded]="true"
+						[text]="true"
+						severity="primary"
+						size="small"
+						pTooltip="Agregar"
+						(onClick)="abrirModalTerreno()"
+					></p-button>
+				</div>
+
+				<p-table
+					[value]="terrenos"
+					[rows]="2"
+					[paginator]="true"
+					styleClass="p-datatable-sm text-xs"
+					responsiveLayout="scroll"
+				>
+					<ng-template pTemplate="header">
+						<tr>
+							<th>Dirección / Medidor</th>
+							<th class="w-16"></th>
+						</tr>
+					</ng-template>
+					<ng-template pTemplate="body" let-terreno>
+						<tr>
+							<td>
+								<div class="font-bold text-gray-700">{{ terreno.nombre_barrio || 'Sector' }}</div>
+								<div class="text-gray-500">{{ terreno.direccion }}</div>
+								<div class="mt-1">
+									<span
+										*ngIf="terreno.tiene_medidor || terreno.codigo_medidor"
+										class="text-blue-600 bg-blue-50 px-1 rounded text-[10px]"
+									>
+										💧 {{ terreno.codigo_medidor }}
+									</span>
+									<span
+										*ngIf="!terreno.tiene_medidor && !terreno.codigo_medidor"
+										class="text-orange-600 bg-orange-50 px-1 rounded text-[10px]"
+									>
+										🚫 Solo Cometida
+									</span>
+								</div>
+							</td>
+							<td class="text-right">
+								<div class="flex flex-col gap-1">
+									<p-button
+										icon="pi pi-pencil"
+										[text]="true"
+										severity="info"
+										size="small"
+										(onClick)="editarTerreno(terreno)"
+									></p-button>
+									<p-button
+										icon="pi pi-trash"
+										[text]="true"
+										severity="danger"
+										size="small"
+										(onClick)="eliminarTerreno(terreno)"
+									></p-button>
+								</div>
+							</td>
+						</tr>
+					</ng-template>
+					<ng-template pTemplate="emptymessage">
+						<tr>
+							<td colspan="2" class="text-center p-4 text-gray-400">Sin propiedades.</td>
+						</tr>
+					</ng-template>
+				</p-table>
+			</div>
+		</div>
+
+		<div class="lg:col-span-8 h-full">
+			<div class="bg-white rounded-xl shadow-sm border border-gray-100 h-full flex flex-col">
+				<div class="p-4 border-b border-gray-100 flex justify-between items-center shrink-0">
+					<h3 class="text-lg font-bold text-gray-800 flex items-center gap-2">
+						<i class="pi pi-history text-green-600"></i> Historial de Facturación
+					</h3>
+					<div class="flex items-center gap-2">
+						<i class="pi pi-search text-gray-500 text-sm"></i>
+
+						<input
+							pInputText
+							type="text"
+							(input)="dtPagos.filterGlobal($any($event.target).value, 'contains')"
+							placeholder="Buscar..."
+							class="p-inputtext-sm w-32"
+						/>
+					</div>
+				</div>
+
+				<div class="flex-grow p-2 flex flex-col justify-center">
+					<p-table
+						#dtPagos
+						[value]="historialPagos"
+						[rows]="6"
+						[paginator]="true"
+						[globalFilterFields]="['fecha_emision', 'total', 'estado_pago']"
+						styleClass="p-datatable-sm p-datatable-striped"
+						[tableStyle]="{ 'min-width': '100%' }"
+					>
+						<ng-template pTemplate="header">
+							<tr>
+								<th class="text-xs font-bold text-gray-500 uppercase">Emisión</th>
+								<th class="text-xs font-bold text-gray-500 uppercase">Concepto</th>
+								<th class="text-xs font-bold text-gray-500 uppercase text-right">Monto</th>
+								<th class="text-xs font-bold text-gray-500 uppercase text-center">Estado</th>
+								<th class="text-xs font-bold text-gray-500 uppercase text-center">Acción</th>
+							</tr>
+						</ng-template>
+						<ng-template pTemplate="body" let-pago>
+							<tr class="hover:bg-gray-50 transition-colors">
+								<td class="font-medium text-gray-700">
+									{{ pago.fecha_emision | date: 'MMM yyyy' | uppercase }}
+									<div class="text-[10px] text-gray-400">{{ pago.fecha_emision | date: 'dd/MM/yyyy' }}</div>
+								</td>
+								<td class="text-sm">Consumo Agua Potable</td>
+								<td class="text-right font-bold text-gray-800">{{ pago.total | currency }}</td>
+								<td class="text-center">
+									<p-tag
+										[value]="pago.estado_pago"
+										[severity]="pago.estado_pago === 'PAGADA' ? 'success' : 'warn'"
+										[rounded]="true"
+										styleClass="text-[10px] px-2 uppercase"
+									></p-tag>
+								</td>
+								<td class="text-center">
+									<p-button
+										*ngIf="pago.estado_pago === 'PAGADA'"
+										icon="pi pi-file-pdf"
+										[rounded]="true"
+										[text]="true"
+										severity="success"
+										pTooltip="Imprimir Ticket"
+										tooltipPosition="left"
+										(onClick)="imprimirFacturaSocio(pago)"
+									></p-button>
+									<span
+										*ngIf="pago.estado_pago === 'PENDIENTE'"
+										class="text-orange-400 text-xs font-medium"
+										pTooltip="Pago Requerido"
+										><i class="pi pi-clock"></i
+									></span>
+								</td>
+							</tr>
+						</ng-template>
+						<ng-template pTemplate="emptymessage">
+							<tr>
+								<td colspan="5" class="text-center p-8 text-gray-400">No hay registros de facturas.</td>
+							</tr>
+						</ng-template>
+					</p-table>
+				</div>
+			</div>
+		</div>
 	</div>
 </div>
 
@@ -218,9 +234,10 @@
 	[header]="esEdicion ? 'Editar Propiedad' : 'Registrar Nuevo Terreno'"
 	[(visible)]="mostrarModalTerreno"
 	[modal]="true"
-	[style]="{ width: '450px' }"
+	[style]="{ width: '400px' }"
 	[draggable]="false"
 	[resizable]="false"
+	styleClass="p-fluid"
 >
 	<form [formGroup]="terrenoForm" class="flex flex-col gap-4 mt-2">
 		<div class="field flex flex-col gap-2">
@@ -230,54 +247,26 @@
 				formControlName="barrio"
 				optionLabel="nombre"
 				optionValue="id"
-				placeholder="Seleccione el sector"
+				placeholder="Seleccione..."
 				appendTo="body"
 				[style]="{ width: '100%' }"
-				[showClear]="true"
-				emptyMessage="No hay barrios activos"
-			>
-			</p-select>
-			<small
-				*ngIf="terrenoForm.get('barrio')?.invalid && terrenoForm.get('barrio')?.touched"
-				class="text-red-500 text-xs"
-			>
-				El barrio es obligatorio.
-			</small>
+			></p-select>
 		</div>
-
 		<div class="field flex flex-col gap-2">
-			<span class="font-bold text-sm">Dirección / Referencia *</span>
-			<input pInputText formControlName="direccion" placeholder="Ej: Frente a la escuela, casa verde" class="w-full" />
-			<small
-				*ngIf="terrenoForm.get('direccion')?.invalid && terrenoForm.get('direccion')?.touched"
-				class="text-red-500 text-xs"
-			>
-				La dirección es obligatoria.
-			</small>
+			<span class="font-bold text-sm">Dirección *</span>
+			<input pInputText formControlName="direccion" class="w-full" />
 		</div>
-
-		<div class="field flex items-center justify-between bg-gray-50 p-3 rounded-lg border border-gray-200">
-			<div class="flex flex-col">
-				<span class="font-bold text-sm text-gray-800">¿Tiene Medidor?</span>
-				<span class="text-xs text-gray-500">Activar si el terreno posee medidor de agua.</span>
-			</div>
+		<div class="field flex items-center justify-between bg-gray-50 p-3 rounded border border-gray-200">
+			<span class="font-bold text-sm">¿Tiene Medidor?</span>
 			<p-toggleswitch formControlName="tiene_medidor"></p-toggleswitch>
 		</div>
-
-		<div *ngIf="terrenoForm.get('tiene_medidor')?.value" class="field flex flex-col gap-2 animate-fade-in">
-			<span class="font-bold text-sm text-blue-700">Código del Medidor *</span>
-			<input pInputText formControlName="codigo_medidor" placeholder="Ej: MED-2024-001" class="w-full" />
-			<small
-				*ngIf="terrenoForm.get('codigo_medidor')?.invalid && terrenoForm.get('codigo_medidor')?.touched"
-				class="text-red-500 text-xs"
-			>
-				El código es obligatorio si hay medidor.
-			</small>
+		<div *ngIf="terrenoForm.get('tiene_medidor')?.value" class="field flex flex-col gap-2">
+			<span class="font-bold text-sm text-blue-700">Código *</span>
+			<input pInputText formControlName="codigo_medidor" class="w-full" />
 		</div>
 	</form>
-
 	<ng-template pTemplate="footer">
 		<p-button label="Cancelar" icon="pi pi-times" [text]="true" (onClick)="mostrarModalTerreno = false"></p-button>
-		<p-button label="Guardar Propiedad" icon="pi pi-check" [loading]="false" (onClick)="guardarTerreno()"></p-button>
+		<p-button label="Guardar" icon="pi pi-check" (onClick)="guardarTerreno()"></p-button>
 	</ng-template>
 </p-dialog>
