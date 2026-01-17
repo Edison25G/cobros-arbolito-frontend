@@ -17,15 +17,10 @@ import {
 })
 export class CajaService {
 	private http = inject(HttpClient);
-	// Asegúrate de que environment.apiUrl apunte a http://localhost:8000/api/v1
 	private apiUrl = environment.apiUrl;
 
-	/**
-	 * 1. Registrar el cobro en la base de datos (método antiguo)
-	 * Endpoint: POST /api/v1/caja/pagar/
-	 */
+	// 1. Registrar pago (Método antiguo - quizas ya no lo uses, pero lo dejo por si acaso)
 	procesarPago(ids: number[], metodo: 'EFECTIVO' | 'TRANSFERENCIA'): Observable<PagoResponse> {
-		// Aquí hardcodeamos el usuario_id: 1 hasta que tengas el Login listo
 		const payload: RegistrarPagoDTO = {
 			deudas_ids: ids,
 			metodo_pago: metodo,
@@ -34,47 +29,39 @@ export class CajaService {
 		return this.http.post<PagoResponse>(`${this.apiUrl}/caja/pagar/`, payload).pipe(catchError(this.handleError));
 	}
 
-	/**
-	 * 3. Obtener transferencias pendientes de aprobar
-	 * Endpoint: GET /api/v1/caja/transferencias-pendientes/
-	 */
+	// 3. Obtener transferencias (Si lo usas)
 	getTransferenciasPendientes(): Observable<TransferenciaPendiente[]> {
 		return this.http
 			.get<TransferenciaPendiente[]>(`${this.apiUrl}/caja/transferencias-pendientes/`)
 			.pipe(catchError(this.handleError));
 	}
 
-	/**
-	 * 4. NUEVO: Registrar cobro con pagos mixtos
-	 * Endpoint: POST /api/v1/cobros/registrar/
-	 *
-	 * Permite cobrar una factura con múltiples métodos de pago
-	 * Ejemplo: parte en efectivo y parte en transferencia
-	 */
+	// 4. NUEVO: Registrar cobro (Este es el que usa el RegistrarCobroUseCase)
 	registrarCobro(datos: RegistrarCobroDTO): Observable<CobroResponse> {
+		// Asegúrate de que la ruta sea exactamente esta para que coincida con el router de Django
 		return this.http.post<CobroResponse>(`${this.apiUrl}/cobros/registrar/`, datos).pipe(catchError(this.handleError));
 	}
 
 	/**
-	 * 5. Buscar facturas pendientes de cobro
-	 * Endpoint: GET /api/v1/cobros/pendientes/?q=cedula_o_nombre&dia=12&mes=1&anio=2026
-	 *
-	 * Busca las facturas pendientes, opcionalmente filtradas por socio y/o fecha
-	 * @param q - Cédula o nombre del socio (opcional)
-	 * @param dia - Día de la factura (1-31, opcional)
-	 * @param mes - Mes de la factura (1-12, opcional)
-	 * @param anio - Año de la factura (opcional)
+	 * 5. BUSCAR DEUDAS PENDIENTES (CORREGIDO)
+	 * Se agrega la lógica para 'dia' para evitar el error TS6133
 	 */
 	getFacturasPendientes(q?: string, dia?: number, mes?: number, anio?: number): Observable<FacturaPendiente[]> {
-		let url = `${this.apiUrl}/cobros/pendientes/`;
+		// Apuntamos al endpoint correcto
+		let url = `${this.apiUrl}/facturas-gestion/pendientes/`;
+
 		const params: string[] = [];
 
 		if (q) {
-			params.push(`q=${encodeURIComponent(q)}`);
+			// Backend espera 'cedula'
+			params.push(`cedula=${encodeURIComponent(q)}`);
 		}
+
+		// ✅ CORRECCIÓN: Ahora sí usamos la variable 'dia'
 		if (dia) {
 			params.push(`dia=${dia}`);
 		}
+
 		if (mes) {
 			params.push(`mes=${mes}`);
 		}
@@ -97,6 +84,8 @@ export class CajaService {
 			msg = 'No se encontraron facturas pendientes.';
 		} else if (error.error && error.error.error) {
 			msg = error.error.error;
+		} else if (error.error && error.error.mensaje) {
+			msg = error.error.mensaje;
 		}
 
 		return throwError(() => new Error(msg));

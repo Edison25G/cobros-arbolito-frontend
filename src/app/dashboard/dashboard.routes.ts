@@ -76,13 +76,6 @@ export default [
 			},
 
 			{
-				path: 'sri-gestion',
-				loadComponent: () => import('./pages/sri-gestion/sri-gestion.component').then((m) => m.SriGestionComponent),
-				canActivate: [RoleGuard],
-				// Solo Admin y Tesorero pueden enviar al SRI
-				data: { roles: [RolUsuario.ADMIN, RolUsuario.TESORERO] },
-			},
-			{
 				path: 'caja',
 				loadComponent: () => import('./pages/caja/caja.component').then((m) => m.CajaComponent),
 				canActivate: [RoleGuard],

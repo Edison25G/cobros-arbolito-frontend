@@ -115,17 +115,18 @@ export interface CobroResponse {
 
 // 13. Factura pendiente de cobro (para tabla principal de caja)
 export interface FacturaPendiente {
-	id: number;
-	numero_factura: string;
+	factura_id: number; // Antes seguro tenías 'id'
+	socio: string; // Antes seguro tenías 'nombre_socio' o 'cliente'
+	cedula: string;
 	fecha_emision: string;
-	socio_id: number;
-	socio_nombre: string;
-	socio_cedula: string;
-	medidor_codigo?: string;
-	consumo?: number;
-	monto_agua: number;
-	multas: number;
-	total: number;
-	estado: 'PENDIENTE' | 'PAGADA' | 'ANULADA';
-	dias_vencido?: number;
+
+	medidor: string; // Antes seguro tenías 'codigo_medidor'
+	consumo: string;
+
+	agua: string; // Valor numérico en string
+	multas: string;
+	total: string;
+
+	estado_sri: string;
+	estado_pago: string;
 }

@@ -121,48 +121,26 @@
 	[draggable]="false"
 	[resizable]="false"
 >
-	<div *ngIf="facturaSeleccionada" class="p-2" id="printable-ticket">
+	<div *ngIf="facturaSeleccionada" class="p-2">
 		<div class="text-center border-b border-gray-300 pb-3 mb-3">
-			<h3 class="font-bold text-xl text-emerald-700">El Arbolito</h3>
-			<p class="text-sm text-gray-500">Junta de Agua Potable</p>
-			<p class="text-xs text-gray-400 mt-1">Recibo N° {{ facturaSeleccionada.id }}</p>
+			<h3 class="font-bold text-xl text-emerald-700">Junta "El Arbolito"</h3>
+			<p class="text-sm text-gray-500">Recibo N° {{ facturaSeleccionada.id }}</p>
 			<p class="text-xs text-gray-400">Fecha: {{ facturaSeleccionada.fecha_emision | date: 'dd/MM/yyyy' }}</p>
 		</div>
 
-		<div class="space-y-2 text-sm text-gray-700 mb-4">
+		<div class="space-y-2 text-sm text-gray-700 mb-4" *ngIf="facturaSeleccionada.detalle?.consumo_total! > 0">
 			<div class="flex justify-between">
-				<span>Lectura Anterior:</span>
-				<span class="font-medium">{{ $any(facturaSeleccionada).detalle?.lectura_anterior || 0 }}</span>
-			</div>
-			<div class="flex justify-between">
-				<span>Lectura Actual:</span>
-				<span class="font-medium">{{ $any(facturaSeleccionada).detalle?.lectura_actual || 0 }}</span>
-			</div>
-			<div class="flex justify-between border-b border-dashed border-gray-300 pb-2">
-				<span class="font-bold">Consumo Total:</span>
-				<span class="font-bold">{{ $any(facturaSeleccionada).detalle?.consumo_total || 0 }} m³</span>
+				<span>Consumo Total:</span>
+				<span class="font-bold">{{ facturaSeleccionada.detalle?.consumo_total }} m³</span>
 			</div>
 		</div>
 
-		<div class="space-y-2 text-sm text-gray-700">
-			<div class="flex justify-between">
-				<span>Tarifa Base:</span>
-				<span>{{ $any(facturaSeleccionada).detalle?.costo_base | currency: 'USD' }}</span>
-			</div>
-
-			<div *ngIf="$any(facturaSeleccionada).detalle?.m3_exceso_1" class="flex justify-between text-xs text-amber-700">
-				<span>Exceso 11-15m³ ({{ $any(facturaSeleccionada).detalle?.m3_exceso_1 }}m³):</span>
-				<span>{{ $any(facturaSeleccionada).detalle?.costo_exceso_1 | currency: 'USD' }}</span>
-			</div>
-
-			<div *ngIf="$any(facturaSeleccionada).detalle?.m3_exceso_2" class="flex justify-between text-xs text-red-700">
-				<span>Exceso >15m³ ({{ $any(facturaSeleccionada).detalle?.m3_exceso_2 }}m³):</span>
-				<span>{{ $any(facturaSeleccionada).detalle?.costo_exceso_2 | currency: 'USD' }}</span>
-			</div>
+		<div class="text-center py-4 italic text-gray-500 text-sm" *ngIf="facturaSeleccionada.detalle?.consumo_total === 0">
+			Servicio de Acometida de Agua (Tarifa Fija)
 		</div>
 
 		<div class="mt-4 pt-3 border-t-2 border-gray-800 flex justify-between items-center">
-			<span class="text-lg font-bold">TOTAL A PAGAR:</span>
+			<span class="text-lg font-bold">TOTAL:</span>
 			<span class="text-xl font-extrabold text-gray-900">{{ facturaSeleccionada.total | currency: 'USD' }}</span>
 		</div>
 	</div>

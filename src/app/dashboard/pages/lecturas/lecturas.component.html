@@ -117,21 +117,32 @@
 
 								<td class="p-2 relative">
 									<div class="w-full">
-										<p-inputNumber
-											[(ngModel)]="fila.lecturaActual"
-											(onInput)="calcularConsumo(fila)"
-											[min]="fila.lecturaAnterior"
-											mode="decimal"
-											[disabled]="fila.procesado"
-											placeholder="0.00"
-											styleClass="w-full"
-											inputStyleClass="w-full text-center font-bold text-lg rounded-lg py-2 transition-all border-2 {{
-												fila.error
-													? 'bg-red-50 border-red-400 text-red-700 focus:ring-red-200'
-													: 'bg-white border-gray-300 text-gray-800 focus:border-blue-500 focus:ring-4 focus:ring-blue-100'
-											}}"
-										>
-										</p-inputNumber>
+										<div *ngIf="fila.medidor.id; else esAcometida">
+											<p-inputNumber
+												[(ngModel)]="fila.lecturaActual"
+												(onInput)="calcularConsumo(fila)"
+												[min]="fila.lecturaAnterior"
+												mode="decimal"
+												[disabled]="fila.procesado"
+												placeholder="0.00"
+												styleClass="w-full"
+												inputStyleClass="w-full text-center font-bold text-lg rounded-lg py-2 transition-all border-2 {{
+													fila.error
+														? 'bg-red-50 border-red-400 text-red-700 focus:ring-red-200'
+														: 'bg-white border-gray-300 text-gray-800 focus:border-blue-500 focus:ring-4 focus:ring-blue-100'
+												}}"
+											>
+											</p-inputNumber>
+										</div>
+
+										<ng-template #esAcometida>
+											<div
+												class="flex flex-col items-center justify-center bg-gray-100 rounded-lg py-2 border border-gray-200 opacity-80"
+											>
+												<span class="text-[10px] font-bold text-gray-500 uppercase tracking-wide">TARIFA FIJA</span>
+												<span class="text-xl font-extrabold text-blue-600">3</span>
+											</div>
+										</ng-template>
 
 										<div
 											*ngIf="fila.error"

@@ -6,7 +6,8 @@ import { catchError, tap } from 'rxjs/operators';
 // --- Servicios y Modelos ---
 import { PagoService } from '../../../core/services/pago.service';
 import { ErrorService } from '../../../auth/core/services/error.service';
-import { FacturaSocio, EstadoFactura } from '../../../core/interfaces/pago.interfaces';
+import { ComprobanteService } from '../../../core/services/comprobante.service'; // <--- AÑADIR ESTO
+import { FacturaSocio, EstadoFactura } from '../../../core/models/pago.interface';
 
 // --- PrimeNG v20 (Módulos) ---
 import { TableModule } from 'primeng/table';
@@ -44,6 +45,7 @@ export class PagosComponent implements OnInit {
 	private pagoService = inject(PagoService);
 	private errorService = inject(ErrorService);
 	private messageService = inject(MessageService);
+	private comprobanteService = inject(ComprobanteService);
 
 	// --- Estado del Componente ---
 	public misFacturas: FacturaSocio[] = [];
@@ -55,6 +57,8 @@ export class PagosComponent implements OnInit {
 	public isUploading = false;
 	public facturaSeleccionada: FacturaSocio | null = null;
 	public showDetailModal = false;
+
+	public comprobanteActual: any = null;
 	constructor() {}
 
 	ngOnInit(): void {
@@ -163,11 +167,22 @@ export class PagosComponent implements OnInit {
 		this.showDetailModal = true;
 	}
 	imprimirTicket() {
-		// Cerramos el modal momentáneamente o imprimimos directamente
-		window.print();
-
-		// NOTA: Para imprimir SOLO el ticket y no toda la página,
-		// lo ideal es usar CSS con @media print.
-		// Por ahora, window.print() imprimirá la pantalla, lo cual sirve para empezar.
+		if (this.facturaSeleccionada) {
+			// Usamos el servicio profesional para generar el ticket real
+			this.comprobanteService.generarTicketProfesional(
+				this.facturaSeleccionada.socio, // Datos del socio
+				this.facturaSeleccionada, // Datos de la factura
+				[], // Lista de pagos (puedes mandarla vacía si solo es consulta)
+			);
+		}
+	}
+	imprimirComprobanteProfesional() {
+		if (this.comprobanteActual) {
+			this.comprobanteService.generarTicketProfesional(
+				this.comprobanteActual.socio,
+				this.comprobanteActual.factura,
+				this.comprobanteActual.pagos,
+			);
+		}
 	}
 }

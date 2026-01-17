@@ -94,24 +94,26 @@ export class LecturasComponent implements OnInit {
 		}
 
 		this.isLoading = true;
-		this.medidorService.getMedidores().subscribe({
-			next: (medidores) => {
-				// --- CORRECCIÓN DEL FILTRO ---
-				// 1. Usamos 'any' porque la interfaz Medidor a veces no tiene las propiedades extra del backend
-				const filtrados = medidores.filter((m: any) => {
-					// Verificamos que tenga terreno (esté instalado) y coincida el nombre del barrio
-					return m.terreno_id && m.nombre_barrio === this.barrioSeleccionado;
-				});
 
-				// 2. Mapeamos a filas
-				this.filas = filtrados.map((m: any) => ({
-					medidor: m,
-					// ✅ PRIORIDAD: Usamos 'lectura_anterior' (calculada por backend).
-					// Si no viene, usamos 'lectura_inicial' (0).
-					lecturaAnterior:
-						m.lectura_anterior !== undefined && m.lectura_anterior !== null
-							? Number(m.lectura_anterior)
-							: m.lectura_inicial || 0,
+		// ✅ CAMBIO: Usamos el nuevo endpoint específico
+		this.medidorService.getPlanillaLecturas(this.barrioSeleccionado).subscribe({
+			next: (datosMixtos) => {
+				// Ya no necesitamos filtrar manualmente, el backend ya filtró por barrio
+
+				this.filas = datosMixtos.map((item: any) => ({
+					// Reconstruimos el objeto 'medidor' para que coincida con la interfaz FilaLectura
+					medidor: {
+						id: item.id, // Será null si es acometida
+						codigo: item.codigo,
+						marca: item.marca,
+						nombre_socio: item.nombre_socio,
+						nombre_barrio: item.nombre_barrio,
+						// ... otros campos opcionales
+					} as any, // 'as any' para flexibilidad temporal
+
+					tiene_medidor: item.tiene_medidor, // ✅ Usamos el flag del backend
+
+					lecturaAnterior: item.lectura_anterior,
 					lecturaActual: null,
 					consumo: 0,
 				}));
@@ -119,7 +121,7 @@ export class LecturasComponent implements OnInit {
 				this.isLoading = false;
 			},
 			error: (_err) => {
-				this.errorService.showError('No se pudieron cargar los medidores.');
+				this.errorService.showError('No se pudieron cargar los datos del barrio.');
 				this.isLoading = false;
 			},
 		});
@@ -144,41 +146,53 @@ export class LecturasComponent implements OnInit {
 
 	// ✅ Guardado Masivo
 	guardarPlanilla() {
-		// 1. Filtrar solo los que tienen datos válidos
-		const lecturasParaGuardar = this.filas.filter((f) => f.lecturaActual !== null && !f.error && !f.procesado);
+		// 1. Filtrar:
+		// - Que tenga lectura escrita (lecturaActual !== null)
+		// - Que NO tenga errores (!f.error)
+		// - Que NO esté ya guardado (!f.procesado)
+		// - Y LO MÁS IMPORTANTE: Que tenga ID de medidor (f.medidor.id)
+		const lecturasParaGuardar = this.filas.filter(
+			(f) =>
+				f.medidor.id != null && // <--- ESTO EVITA EL ERROR DE LAS ACOMETIDAS
+				f.lecturaActual !== null &&
+				!f.error &&
+				!f.procesado,
+		);
 
 		if (lecturasParaGuardar.length === 0) {
 			this.messageService.add({
 				severity: 'warn',
 				summary: 'Atención',
-				detail: 'No hay lecturas nuevas válidas para guardar.',
+				detail: 'No hay lecturas de medidores válidas para guardar.',
 			});
 			return;
 		}
 
 		this.guardando = true;
-		// const user = JSON.parse(localStorage.getItem('user') || '{}');
-		// const operadorId = user.id && user.id > 0 ? user.id : 1;
-
-		// Convertir fecha a string ISO (YYYY-MM-DD)
 		const fechaISO = this.fechaLectura.toISOString().split('T')[0];
 
-		// 2. Creamos un array de peticiones (Observables)
+		// 2. Creamos un array de peticiones
 		const peticiones = lecturasParaGuardar.map((fila) => {
 			const dto: RegistrarLecturaDTO = {
-				medidor_id: fila.medidor.id!,
+				medidor_id: fila.medidor.id!, // El ! es seguro aquí porque ya filtramos los null arriba
 				lectura_actual: fila.lecturaActual!,
 				fecha_lectura: fechaISO,
-				// operador_id: operadorId,
+				// operador_id: 1, // Puedes descomentar si lo manejas
 			};
 
-			// Retornamos la petición atrapando errores individuales para que no se caiga todo el proceso
-			return this.lecturaService
-				.registrarLectura(dto)
-				.pipe(catchError((_error) => of({ error: true, medidor: fila.medidor.codigo })));
+			return this.lecturaService.registrarLectura(dto).pipe(
+				catchError((errorBackend) => {
+					// 👇 AUMENTA ESTO: Para ver el error en la consola negra (F12)
+					console.error('❌ ERROR AL GUARDAR MEDIDOR:', fila.medidor.codigo);
+					console.error('DETALLE:', errorBackend.error); // Aquí te dirá qué campo falla
+
+					// Esto sigue igual para que el proceso continúe
+					return of({ error: true, medidor: fila.medidor.codigo });
+				}),
+			);
 		});
 
-		// 3. Ejecutamos todas las peticiones en paralelo (Batch Frontend)
+		// 3. Ejecutamos batch
 		forkJoin(peticiones)
 			.pipe(finalize(() => (this.guardando = false)))
 			.subscribe((resultados) => {
@@ -190,7 +204,6 @@ export class LecturasComponent implements OnInit {
 						fallos++;
 					} else {
 						exitos++;
-						// Marcamos la fila como procesada visualmente (verde)
 						lecturasParaGuardar[index].procesado = true;
 					}
 				});
@@ -198,7 +211,7 @@ export class LecturasComponent implements OnInit {
 				if (exitos > 0) {
 					this.messageService.add({
 						severity: 'success',
-						summary: 'Proceso Finalizado',
+						summary: 'Guardado',
 						detail: `Se registraron ${exitos} lecturas correctamente.`,
 					});
 				}
@@ -206,17 +219,13 @@ export class LecturasComponent implements OnInit {
 					this.messageService.add({
 						severity: 'error',
 						summary: 'Errores',
-						detail: `Hubo ${fallos} lecturas que no se pudieron guardar.`,
+						detail: `Hubo ${fallos} problemas al guardar.`,
 					});
 				}
 
-				// Opcional: Recargar la tabla automáticamente si todo salió bien
+				// Limpiar filas si todo salió perfecto (Opcional)
 				if (fallos === 0) {
-					setTimeout(() => {
-						// Limpiamos o recargamos según prefieras
-						// this.filas = [];
-						// this.barrioSeleccionado = null;
-					}, 1500);
+					// this.cargarPlanilla(); // Descomentar si quieres recargar la tabla
 				}
 			});
 	}

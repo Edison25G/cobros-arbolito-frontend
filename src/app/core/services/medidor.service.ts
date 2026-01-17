@@ -81,4 +81,10 @@ export class MedidorService {
 		console.error('Backend Error:', error);
 		return throwError(() => new Error(errorMessage));
 	}
+
+	getPlanillaLecturas(barrio: string): Observable<any[]> {
+		return this.http
+			.get<any[]>(`${this.baseUrl}planilla-lecturas/?barrio=${barrio}`)
+			.pipe(catchError(this.handleError));
+	}
 }

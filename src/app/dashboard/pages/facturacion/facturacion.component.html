@@ -5,8 +5,11 @@
 		class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100"
 	>
 		<div>
-			<h2 class="text-2xl font-extrabold text-gray-800 m-0">Generar Emisión Mensual</h2>
-			<p class="text-sm text-gray-500">Procesamiento de lecturas y cálculo de valores a pagar</p>
+			<h2 class="text-2xl font-extrabold text-gray-800 m-0">Generar Planillas de Cobro</h2>
+			<p class="text-sm text-gray-500">
+				<span class="font-bold text-blue-600">Medidores</span> (Según Lectura) +
+				<span class="font-bold text-orange-500">Acometidas</span> (Tarifa Fija)
+			</p>
 		</div>
 
 		<div class="flex items-center gap-3 w-full md:w-auto bg-gray-50 p-2 rounded-lg border border-gray-200">
@@ -17,44 +20,54 @@
 					dateFormat="dd/mm/yy"
 					appendTo="body"
 					[showIcon]="true"
-					(onSelect)="buscarPendientes()"
+					(onSelect)="buscarPreEmision()"
 					styleClass="w-full border-0"
 					inputStyleClass="bg-transparent border-none font-bold text-gray-700 w-full md:w-32 text-sm focus:ring-0"
 				>
 				</p-datepicker>
 			</div>
-			<i class="pi pi-calendar text-blue-400 text-xl mr-2"></i>
 		</div>
 	</div>
 
 	<div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
 		<div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-blue-500 flex flex-col justify-center">
-			<span class="text-gray-500 text-xs uppercase font-bold">Total Facturas</span>
-			<span class="text-3xl font-bold text-gray-800">{{ totalPlanillas }}</span>
+			<span class="text-gray-500 text-xs uppercase font-bold">Medidores (Variable)</span>
+			<div class="flex items-baseline gap-2">
+				<span class="text-2xl font-bold text-gray-800">{{ totalPlanillasMedidor }}</span>
+				<span class="text-xs text-gray-400">facturas</span>
+			</div>
+			<span class="text-sm font-bold text-blue-600 mt-1">{{ totalAgua | currency }}</span>
+		</div>
+
+		<div class="bg-orange-50 p-4 rounded-xl shadow-sm border border-orange-100 flex flex-col justify-center relative">
+			<span class="text-orange-600 text-xs uppercase font-bold">Acometidas (Fijo $5)</span>
+			<div class="flex items-center gap-2 mt-1">
+				<i class="pi pi-cog animate-spin text-orange-400"></i>
+				<span class="text-sm font-medium text-orange-800">Proceso Automático</span>
+			</div>
+			<p class="text-[10px] text-orange-600 mt-1 leading-tight">
+				Se generarán automáticamente para socios sin medidor.
+			</p>
 		</div>
 
 		<div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col justify-center">
-			<span class="text-gray-500 text-xs uppercase font-bold">Por Consumo Agua</span>
-			<span class="text-2xl font-bold text-blue-600">{{ totalAgua | currency }}</span>
-		</div>
-
-		<div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col justify-center">
-			<span class="text-gray-500 text-xs uppercase font-bold">Por Multas / Mingas</span>
-			<span class="text-2xl font-bold text-orange-500">{{ totalMultas | currency }}</span>
+			<span class="text-gray-500 text-xs uppercase font-bold">Multas / Mingas</span>
+			<span class="text-2xl font-bold text-red-500">{{ totalMultas | currency }}</span>
 		</div>
 
 		<div class="bg-gray-800 p-4 rounded-xl shadow-lg flex flex-col justify-center relative overflow-hidden">
 			<div class="absolute right-[-10px] top-[-10px] opacity-10">
-				<i class="pi pi-dollar text-9xl text-white"></i>
+				<i class="pi pi-wallet text-9xl text-white"></i>
 			</div>
-			<span class="text-gray-300 text-xs uppercase font-bold relative z-10">Total a Recaudar</span>
+			<span class="text-gray-300 text-xs uppercase font-bold relative z-10">Recaudación Medidores</span>
 			<span class="text-3xl font-bold text-green-400 relative z-10">{{ granTotal | currency }}</span>
+			<span class="text-[10px] text-gray-400 relative z-10 mt-1">+ Acometidas Fijas</span>
 		</div>
 	</div>
 
-	<div class="mb-4 flex justify-end" *ngIf="totalPlanillas > 0">
+	<div class="mb-4 flex justify-end">
 		<p-button
-			label="Confirmar y Generar Emisión"
+			label="Confirmar y Generar Todo"
 			icon="pi pi-check-circle"
 			[loading]="isProcessing"
 			(onClick)="generarEmisionMasiva()"
@@ -64,8 +77,11 @@
 	</div>
 
 	<div class="card bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-		<div class="p-4 border-b border-gray-100 bg-gray-50/50">
-			<h3 class="text-sm font-bold text-gray-700 m-0">Detalle de valores a generar (Pre-visualización)</h3>
+		<div class="p-4 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
+			<h3 class="text-sm font-bold text-gray-700 m-0">Detalle de Consumos (Solo Medidores)</h3>
+			<span class="text-xs text-gray-400 bg-white px-2 py-1 rounded border border-gray-200">
+				<i class="pi pi-info-circle mr-1"></i> Las tarifas fijas no aparecen en esta lista previa.
+			</span>
 		</div>
 
 		<p-table
@@ -73,14 +89,17 @@
 			[loading]="isLoading"
 			styleClass="p-datatable-sm p-datatable-striped"
 			responsiveLayout="scroll"
+			[paginator]="true"
+			[rows]="10"
 		>
 			<ng-template pTemplate="header">
 				<tr class="bg-gray-50 text-xs uppercase tracking-wider text-gray-600">
 					<th style="min-width: 200px">Socio</th>
-					<th>Consumo</th>
-					<th class="text-right">Servicio Agua</th>
-					<th class="text-right">Multas Mingas</th>
-					<th class="text-right font-bold text-gray-800 bg-gray-50">Total</th>
+					<th>Lectura</th>
+					<th class="text-right">Consumo</th>
+					<th class="text-right">Valor Agua</th>
+					<th class="text-right">Multas</th>
+					<th class="text-right font-bold text-gray-800 bg-gray-50">Subtotal</th>
 				</tr>
 			</ng-template>
 
@@ -90,54 +109,29 @@
 						<div class="font-bold text-gray-800">{{ item.socio_nombre }}</div>
 						<div class="text-xs text-gray-400 flex items-center gap-2">
 							<span>{{ item.cedula }}</span>
-
-							<span
-								*ngIf="item.medidor_codigo"
-								class="bg-blue-50 text-blue-700 border border-blue-100 px-1 rounded text-[10px] font-mono"
-							>
+							<span class="bg-blue-50 text-blue-700 border border-blue-100 px-1 rounded text-[10px] font-mono">
 								{{ item.medidor_codigo }}
-							</span>
-
-							<span
-								*ngIf="!item.medidor_codigo"
-								class="bg-orange-50 text-orange-600 border border-orange-100 px-1 rounded text-[10px]"
-							>
-								Sin Medidor
 							</span>
 						</div>
 					</td>
 
 					<td>
-						<div *ngIf="item.medidor_codigo; else sinMedidorTpl" class="flex flex-col">
-							<span class="font-bold text-blue-700">{{ item.consumo }} m³</span>
-							<span class="text-[10px] text-gray-400"> {{ item.lectura_anterior }} ➔ {{ item.lectura_actual }} </span>
+						<div class="text-xs text-gray-500">
+							{{ item.lectura_anterior }} ➔ <span class="font-bold text-gray-800">{{ item.lectura_actual }}</span>
 						</div>
-
-						<ng-template #sinMedidorTpl>
-							<div class="flex flex-col">
-								<span class="font-bold text-gray-500 text-xs uppercase">Tarifa Fija</span>
-								<span class="text-[10px] text-orange-400 font-medium">Cobro Básico</span>
-							</div>
-						</ng-template>
 					</td>
 
-					<td class="text-right font-medium text-gray-600">
+					<td class="text-right font-bold text-blue-600">{{ item.consumo }} m³</td>
+
+					<td class="text-right text-gray-600">
 						{{ item.monto_agua | currency }}
 					</td>
 
-					<td class="text-right">
-						<span
-							*ngIf="item.multas_mingas > 0"
-							class="text-orange-600 font-bold"
-							[pTooltip]="item.detalle_multas?.join(', ')"
-						>
-							{{ item.multas_mingas | currency }}
-							<i class="pi pi-info-circle text-[10px] ml-1"></i>
-						</span>
-						<span *ngIf="item.multas_mingas === 0" class="text-gray-300">-</span>
+					<td class="text-right text-orange-600">
+						{{ item.multas_mingas > 0 ? (item.multas_mingas | currency) : '-' }}
 					</td>
 
-					<td class="text-right font-bold text-lg text-green-700 bg-green-50/30">
+					<td class="text-right font-bold text-green-700 bg-green-50/30">
 						{{ item.total_pagar | currency }}
 					</td>
 				</tr>
@@ -145,13 +139,13 @@
 
 			<ng-template pTemplate="emptymessage">
 				<tr>
-					<td colspan="5" class="text-center p-12 text-gray-400">
+					<td colspan="6" class="text-center p-12 text-gray-400">
 						<div class="flex flex-col items-center">
-							<div class="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-3">
-								<i class="pi pi-file text-2xl text-gray-300"></i>
-							</div>
-							<p class="font-medium text-gray-600">Todo al día</p>
-							<p class="text-sm">No se encontraron lecturas pendientes para facturar en este mes.</p>
+							<i class="pi pi-file text-4xl text-gray-200 mb-2"></i>
+							<p>No hay lecturas de medidores pendientes.</p>
+							<p class="text-sm text-gray-400">
+								Si solo tienes acometidas fijas, puedes generar la emisión directamente.
+							</p>
 						</div>
 					</td>
 				</tr>

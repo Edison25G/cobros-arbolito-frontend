@@ -21,7 +21,12 @@ import { DatePickerModule } from 'primeng/datepicker';
 
 // Servicios e Interfaces
 import { CajaService } from '../../../core/services/caja.service';
-import { TransferenciaPendiente, PagoItem, FacturaPendiente, Comprobante } from '../../../core/interfaces/caja.interface';
+import {
+	TransferenciaPendiente,
+	PagoItem,
+	FacturaPendiente,
+	Comprobante,
+} from '../../../core/interfaces/caja.interface';
 
 @Component({
 	selector: 'app-caja',
@@ -150,10 +155,9 @@ export class CajaComponent implements OnInit {
 		} else {
 			this.facturasFiltradas = this.facturasPendientes.filter(
 				(f) =>
-					f.socio_nombre.toLowerCase().includes(filtro) ||
-					f.socio_cedula.includes(filtro) ||
-					f.numero_factura.toLowerCase().includes(filtro) ||
-					(f.medidor_codigo && f.medidor_codigo.toLowerCase().includes(filtro)),
+					f.socio.toLowerCase().includes(filtro) ||
+					f.cedula.includes(filtro) ||
+					(f.medidor && f.medidor.toLowerCase().includes(filtro)),
 			);
 		}
 	}
@@ -168,7 +172,7 @@ export class CajaComponent implements OnInit {
 	// --- COBRAR FACTURA ---
 	confirmarCobroEfectivo(factura: FacturaPendiente) {
 		this.confirmationService.confirm({
-			message: `¿Confirmar cobro de $${Number(factura.total).toFixed(2)} a ${factura.socio_nombre}?`,
+			message: `¿Confirmar cobro de $${Number(factura.total).toFixed(2)} a ${factura.socio}?`,
 			header: 'Confirmación de Cobro',
 			icon: 'pi pi-exclamation-triangle',
 			acceptLabel: 'Sí, Cobrar',
@@ -188,20 +192,32 @@ export class CajaComponent implements OnInit {
 
 		const pagos: PagoItem[] = [{ metodo: 'EFECTIVO', monto: montoExacto }];
 
-		this.cajaService.registrarCobro({ factura_id: factura.id, pagos }).subscribe({
+		this.cajaService.registrarCobro({ factura_id: factura.factura_id, pagos }).subscribe({
 			next: (resp) => {
-				this.messageService.add({
-					severity: 'success',
-					summary: 'Cobro Exitoso',
-					detail: resp.mensaje,
-				});
+				// --- INICIO CAMBIO: MEJORAR MENSAJE SRI ---
+				const estadoSri = resp.comprobante?.factura?.estado_sri;
+
+				if (estadoSri === 'AUTORIZADO') {
+					this.messageService.add({
+						severity: 'success',
+						summary: 'Cobro y Factura OK',
+						detail: `Factura autorizada por el SRI. Ticket: ${resp.mensaje}`, // O ticket_numero
+					});
+				} else {
+					// Caso: Se cobró el dinero, pero el SRI falló o está procesando
+					this.messageService.add({
+						severity: 'warn',
+						summary: 'Cobrado (SRI Pendiente)',
+						detail: `Pago registrado, pero estado SRI es: ${estadoSri}. Se reintentará automáticamente.`,
+					});
+				}
 
 				// Mostrar comprobante del backend
 				this.mostrarComprobante(resp.comprobante);
 
 				// Remover de la lista visualmente
-				this.facturasPendientes = this.facturasPendientes.filter((f) => f.id !== factura.id);
-				this.facturasFiltradas = this.facturasFiltradas.filter((f) => f.id !== factura.id);
+				this.facturasPendientes = this.facturasPendientes.filter((f) => f.factura_id !== factura.factura_id);
+				this.facturasFiltradas = this.facturasFiltradas.filter((f) => f.factura_id !== factura.factura_id);
 				this.calcularKPIs();
 				this.procesandoPago = false;
 			},
@@ -271,7 +287,7 @@ export class CajaComponent implements OnInit {
 		this.procesandoPago = true;
 		const factura = this.facturaSeleccionada;
 
-		this.cajaService.registrarCobro({ factura_id: factura.id, pagos }).subscribe({
+		this.cajaService.registrarCobro({ factura_id: factura.factura_id, pagos }).subscribe({
 			next: (resp) => {
 				this.messageService.add({
 					severity: 'success',
@@ -284,8 +300,8 @@ export class CajaComponent implements OnInit {
 				this.mostrarComprobante(resp.comprobante);
 
 				// Remover de la lista
-				this.facturasPendientes = this.facturasPendientes.filter((f) => f.id !== factura.id);
-				this.facturasFiltradas = this.facturasFiltradas.filter((f) => f.id !== factura.id);
+				this.facturasPendientes = this.facturasPendientes.filter((f) => f.factura_id !== factura.factura_id);
+				this.facturasFiltradas = this.facturasFiltradas.filter((f) => f.factura_id !== factura.factura_id);
 				this.calcularKPIs();
 
 				this.procesandoPago = false;

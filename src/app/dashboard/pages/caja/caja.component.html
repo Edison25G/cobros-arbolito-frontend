@@ -36,9 +36,9 @@
 					<div class="flex flex-col lg:flex-row gap-4 items-end">
 						<!-- Selector de Fecha -->
 						<div class="flex flex-col">
-							<label class="text-xs font-bold text-gray-500 mb-1">
+							<span class="text-xs font-bold text-gray-500 mb-1">
 								<i class="pi pi-calendar mr-1"></i>FECHA DE FACTURA
-							</label>
+							</span>
 							<p-datepicker
 								[(ngModel)]="fechaSeleccionada"
 								dateFormat="dd/mm/yy"
@@ -52,7 +52,7 @@
 
 						<!-- Buscador por socio -->
 						<div class="flex-1 w-full">
-							<label class="text-xs font-bold text-gray-500 mb-1 block">SOCIO (OPCIONAL)</label>
+							<span class="text-xs font-bold text-gray-500 mb-1 block">SOCIO (OPCIONAL)</span>
 							<span class="p-input-icon-left w-full">
 								<i class="pi pi-search"></i>
 								<input
@@ -127,27 +127,27 @@
 								<td class="text-gray-500 text-sm">{{ factura.fecha_emision | date: 'dd/MM/yyyy' }}</td>
 								<td>
 									<span class="font-mono text-xs bg-gray-100 px-2 py-1 rounded">
-										{{ factura.numero_factura }}
+										{{ factura.factura_id }}
 									</span>
 								</td>
 								<td>
-									<div class="font-bold text-gray-800">{{ factura.socio_nombre }}</div>
-									<div class="text-xs text-gray-400">{{ factura.socio_cedula }}</div>
+									<div class="font-bold text-gray-800">{{ factura.socio }}</div>
+									<div class="text-xs text-gray-400">{{ factura.cedula }}</div>
 								</td>
 								<td>
 									<span
-										*ngIf="factura.medidor_codigo"
+										*ngIf="factura.medidor"
 										class="bg-blue-50 text-blue-700 border border-blue-100 px-2 py-1 rounded text-xs font-mono"
 									>
-										{{ factura.medidor_codigo }}
+										{{ factura.medidor }}
 									</span>
-									<span *ngIf="!factura.medidor_codigo" class="text-gray-400 text-xs">-</span>
+									<span *ngIf="!factura.medidor" class="text-gray-400 text-xs">-</span>
 								</td>
 								<td class="text-right">
 									<span *ngIf="factura.consumo" class="font-bold text-blue-600"> {{ factura.consumo }} m³ </span>
 									<span *ngIf="!factura.consumo" class="text-gray-400">-</span>
 								</td>
-								<td class="text-right text-gray-600">{{ factura.monto_agua | currency }}</td>
+								<td class="text-right text-gray-600">{{ factura.agua | currency }}</td>
 								<td class="text-right">
 									<span *ngIf="factura.multas > 0" class="text-orange-600 font-medium">
 										{{ factura.multas | currency }}
@@ -283,8 +283,7 @@
 	<ng-template pTemplate="content">
 		<!-- Resumen de la Factura -->
 		<div class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg" *ngIf="facturaSeleccionada">
-			<div class="text-sm text-gray-600"><strong>Socio:</strong> {{ facturaSeleccionada.socio_nombre }}</div>
-			<div class="text-sm text-gray-600"><strong>Factura:</strong> {{ facturaSeleccionada.numero_factura }}</div>
+			<div class="text-sm text-gray-600"><strong>Socio:</strong> {{ facturaSeleccionada.socio }}</div>
 			<div class="text-lg font-bold text-blue-600 mt-1">Total: {{ facturaSeleccionada.total | currency }}</div>
 		</div>
 

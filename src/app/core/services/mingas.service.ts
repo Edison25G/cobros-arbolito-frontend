@@ -1,116 +1,49 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
-import { delay, map } from 'rxjs/operators';
+import { Observable } from 'rxjs';
 
 import { environment } from '../../environments/environment.development';
 // Importamos las interfaces actualizadas
 import { Minga, ItemAsistencia } from '../interfaces/minga.interface';
 // Importamos el modelo de Socio para leer la respuesta del backend
-import { Socio } from '../models/socio.interface';
+//import { Socio } from '../models/socio.interface';
 
 @Injectable({
 	providedIn: 'root',
 })
 export class MingasService {
 	private http = inject(HttpClient);
+	private apiUrl = environment.apiUrl;
 
-	// URL REAL de Socios (Django)
-	private sociosUrl = environment.apiUrl + '/socios/';
-
-	// --- DATOS MOCK DE MINGAS (Simulados) ---
-	private mingasMock: Minga[] = [
-		{
-			id: 1,
-			titulo: 'Limpieza General de Canales',
-			descripcion: 'Mantenimiento anual previo al invierno.',
-			fecha: '2025-12-15',
-			lugar: 'Toma Principal',
-			multa: 10.0,
-			estado: 'Programada',
-		},
-		{
-			id: 2,
-			titulo: 'Minga de Reforestación',
-			descripcion: 'Siembra de plantas nativas.',
-			fecha: '2025-11-20',
-			lugar: 'Vertiente El Arbolito',
-			multa: 5.0,
-			estado: 'Realizada',
-		},
-	];
-
-	// --- CRUD MINGAS (MOCK) ---
+	// --- CRUD REAL (CONECTADO AL BACKEND) ---
 
 	getAll(): Observable<Minga[]> {
-		return of(this.mingasMock).pipe(delay(500));
+		// Busca las mingas en el backend
+		return this.http.get<Minga[]>(`${this.apiUrl}/mingas/`);
 	}
 
-	getById(id: number): Observable<Minga | undefined> {
-		const minga = this.mingasMock.find((m) => m.id === id);
-		return of(minga).pipe(delay(300));
+	getById(id: number): Observable<Minga> {
+		return this.http.get<Minga>(`${this.apiUrl}/mingas/${id}/`);
 	}
 
 	create(minga: Minga): Observable<Minga> {
-		minga.id = Math.floor(Math.random() * 10000);
-		minga.estado = 'Programada';
-		this.mingasMock.unshift(minga);
-		return of(minga).pipe(delay(500));
+		return this.http.post<Minga>(`${this.apiUrl}/mingas/`, minga);
 	}
 
-	delete(id: number): Observable<boolean> {
-		this.mingasMock = this.mingasMock.filter((m) => m.id !== id);
-		return of(true).pipe(delay(500));
+	delete(id: number): Observable<void> {
+		return this.http.delete<void>(`${this.apiUrl}/mingas/${id}/`);
 	}
 
-	// --- ASISTENCIA (HÍBRIDO: BD REAL + LÓGICA FRONTEND) ---
+	// --- ASISTENCIA ---
 
-	/**
-	 * Obtiene la lista de socios ACTIVOS desde el backend
-	 * y prepara la estructura para tomar lista.
-	 */
-	// --- ASISTENCIA (HÍBRIDO) ---
-
+	// Obtener lista para tomar asistencia (Socios + Estado actual en esa minga)
 	getAsistencia(mingaId: number): Observable<ItemAsistencia[]> {
-		void mingaId; // Usado para futuras peticiones al backend
-
-		// 1. Petición HTTP Real a Django (/socios/)
-		return this.http.get<Socio[]>(this.sociosUrl).pipe(
-			map((sociosReales) => {
-				// 2. Transformamos la data
-				return sociosReales
-					.filter((socio) => socio.esta_activo) // Solo socios activos
-					.map((socio) => {
-						const item: ItemAsistencia = {
-							socio_id: socio.id,
-							nombres: `${socio.nombres} ${socio.apellidos}`,
-							cedula: socio.cedula,
-							estado: 'Falta',
-							observacion: '',
-						};
-						return item;
-					});
-			}),
-		);
+		return this.http.get<ItemAsistencia[]>(`${this.apiUrl}/mingas/${mingaId}/asistencia/`);
 	}
 
-	saveAsistencia(mingaId: number, lista: ItemAsistencia[]): Observable<boolean> {
-		// Aquí convertimos la lista visual a lo que espera la base de datos
-		const payload = lista.map((item) => ({
-			minga_id: mingaId,
-			socio_id: item.socio_id,
-			estado: item.estado,
-			observacion: item.observacion,
-		}));
-
-		void payload; // Preparado para enviar al backend
-
-		// Simular éxito y cambio de estado
-		const index = this.mingasMock.findIndex((m) => m.id === mingaId);
-		if (index !== -1) {
-			this.mingasMock[index].estado = 'Realizada';
-		}
-
-		return of(true).pipe(delay(800));
+	// Guardar la lista de asistencia
+	saveAsistencia(mingaId: number, lista: ItemAsistencia[]): Observable<any> {
+		const payload = { asistencias: lista };
+		return this.http.post(`${this.apiUrl}/mingas/${mingaId}/registrar-asistencia/`, payload);
 	}
 }

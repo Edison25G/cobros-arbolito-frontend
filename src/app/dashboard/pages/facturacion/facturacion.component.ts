@@ -1,35 +1,19 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-
-// PrimeNG
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
 import { ToastModule } from 'primeng/toast';
 import { DatePickerModule } from 'primeng/datepicker';
-import { CardModule } from 'primeng/card';
-import { TagModule } from 'primeng/tag';
-import { TooltipModule } from 'primeng/tooltip';
 import { MessageService } from 'primeng/api';
 
-// Servicios
 import { FacturacionService } from '../../../core/services/facturacion.service';
 import { LecturaPendiente } from '../../../core/interfaces/factura.interface';
 
 @Component({
 	selector: 'app-facturacion',
 	standalone: true,
-	imports: [
-		CommonModule,
-		FormsModule,
-		TableModule,
-		ButtonModule,
-		ToastModule,
-		DatePickerModule,
-		CardModule,
-		TagModule,
-		TooltipModule,
-	],
+	imports: [CommonModule, FormsModule, TableModule, ButtonModule, ToastModule, DatePickerModule],
 	providers: [MessageService],
 	templateUrl: './facturacion.component.html',
 })
@@ -37,90 +21,69 @@ export class FacturacionComponent implements OnInit {
 	private messageService = inject(MessageService);
 	private facturacionService = inject(FacturacionService);
 
-	fechaEmision: Date = new Date(); // Por defecto hoy
+	fechaEmision: Date = new Date();
 	lecturasPendientes: LecturaPendiente[] = [];
 
 	isLoading = false;
 	isProcessing = false;
 
 	// KPIs
-	totalPlanillas = 0;
+	totalPlanillasMedidor = 0;
 	totalAgua = 0;
 	totalMultas = 0;
 	granTotal = 0;
 
 	ngOnInit() {
-		this.buscarPendientes();
+		this.buscarPreEmision(); // ✅ Nombre corregido
 	}
 
 	/**
-	 * Llama al backend para ver qué lecturas faltan por cobrar en ese mes
+	 * ✅ CORREGIDO: Llama a PRE-EMISIÓN (Lecturas listas para cobrar)
+	 * Ya no enviamos mes/anio porque trae TODO lo que está "Registrado" pero no "Facturado".
 	 */
-	buscarPendientes() {
+	buscarPreEmision() {
 		this.isLoading = true;
 
-		// OJO: getMonth() devuelve 0 para Enero, por eso sumamos +1
-		const mes = this.fechaEmision.getMonth() + 1;
-		const anio = this.fechaEmision.getFullYear();
-
-		this.facturacionService.getPendientes(mes, anio).subscribe({
+		this.facturacionService.getPreEmision().subscribe({
 			next: (data) => {
+				console.log('Datos cargados:', data); // Mira la consola del navegador
 				this.lecturasPendientes = data;
 				this.calcularResumen();
 				this.isLoading = false;
 			},
-			error: (_err) => {
+			error: (err) => {
 				this.isLoading = false;
-				this.lecturasPendientes = []; // Limpiamos si hay error
-				this.calcularResumen();
-				this.messageService.add({
-					severity: 'error',
-					summary: 'Error',
-					detail: 'No se pudieron cargar las lecturas pendientes.',
-				});
+				console.error(err);
+				this.lecturasPendientes = [];
 			},
 		});
 	}
 
 	calcularResumen() {
-		this.totalPlanillas = this.lecturasPendientes.length;
-		this.totalAgua = this.lecturasPendientes.reduce((acc, item) => acc + (Number(item.monto_agua) || 0), 0);
-		this.totalMultas = this.lecturasPendientes.reduce((acc, item) => acc + (Number(item.multas_mingas) || 0), 0);
+		this.totalPlanillasMedidor = this.lecturasPendientes.length;
+		this.totalAgua = this.lecturasPendientes.reduce((acc, item) => acc + (item.monto_agua || 0), 0);
+		this.totalMultas = 0;
+
+		// Sumamos visualmente las acometidas fijas ($3.00 c/u) si quisieras,
+		// pero por ahora nos centramos en que aparezca Edison.
 		this.granTotal = this.totalAgua + this.totalMultas;
 	}
 
-	/**
-	 * Botón Verde: Manda a crear las facturas realmente en la BD
-	 */
 	generarEmisionMasiva() {
-		if (this.totalPlanillas === 0) return;
-
 		this.isProcessing = true;
 		const mes = this.fechaEmision.getMonth() + 1;
 		const anio = this.fechaEmision.getFullYear();
-
-		// ID quemado del tesorero (esto luego lo sacarás del login real)
-		const usuarioId = 1;
+		const usuarioId = 1; // Quemado por ahora
 
 		this.facturacionService.generarEmisionMasiva({ mes, anio, usuario_id: usuarioId }).subscribe({
-			next: (resp) => {
-				this.messageService.add({
-					severity: 'success',
-					summary: 'Emisión Exitosa',
-					detail: resp.mensaje || 'Se han generado las facturas correctamente.',
-				});
-
-				// Refrescamos la tabla (debería quedar vacía porque ya no están pendientes)
-				this.buscarPendientes();
+			next: (_resp) => {
+				this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Facturas generadas correctamente.' });
+				this.buscarPreEmision(); // Recargamos la tabla (debería vaciarse)
 				this.isProcessing = false;
 			},
 			error: (err) => {
 				this.isProcessing = false;
-				this.messageService.add({
-					severity: 'error',
-					summary: 'Error de Emisión',
-					detail: err.message,
-				});
+				this.messageService.add({ severity: 'error', summary: 'Error', detail: err.message });
 			},
 		});
 	}

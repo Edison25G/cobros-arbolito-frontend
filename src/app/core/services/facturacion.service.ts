@@ -2,10 +2,9 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { environment } from '../../environments/environment.development';
 import { Observable, throwError } from 'rxjs';
-import { catchError } from 'rxjs/operators';
-// Borramos GenerarFacturaDTO de aquí también
+import { catchError, map } from 'rxjs/operators';
 import { LecturaPendiente, GenerarEmisionDTO } from '../interfaces/factura.interface';
-import { ComprobanteSRI } from '../interfaces/factura.interface';
+
 @Injectable({
 	providedIn: 'root',
 })
@@ -13,36 +12,38 @@ export class FacturacionService {
 	private http = inject(HttpClient);
 	private apiUrl = environment.apiUrl;
 
-	// 1. GET: Obtener lecturas pendientes
-	getPendientes(mes: number, anio: number): Observable<LecturaPendiente[]> {
-		const url = `${this.apiUrl}/facturas-gestion/pendientes/?mes=${mes}&anio=${anio}`;
-		return this.http.get<LecturaPendiente[]>(url).pipe(catchError(this.handleError));
+	// ✅ 1. PRE-EMISIÓN: Esta es la que llena la tabla vacía
+	getPreEmision(): Observable<LecturaPendiente[]> {
+		const url = `${this.apiUrl}/facturas-gestion/pre-emision/`;
+
+		return this.http.get<any[]>(url).pipe(
+			// Mapeamos los nombres del Backend a los de tu Interfaz Frontend
+			map((response) =>
+				response.map((item) => ({
+					id: item.lectura_id,
+					socio_nombre: item.socio,
+					medidor_codigo: item.codigo_medidor,
+					lectura_anterior: Number(item.lectura_anterior),
+					lectura_actual: Number(item.lectura_actual),
+					consumo: Number(item.consumo),
+					monto_agua: Number(item.valor_estimado),
+					multas_mingas: 0, // Por ahora 0, luego lo conectas
+					total_pagar: Number(item.valor_estimado),
+					cedula: '---', // Opcional si el backend no lo manda aún
+				})),
+			),
+			catchError(this.handleError),
+		);
 	}
 
-	// 2. POST: Generar Emisión Masiva
+	// 2. GENERAR EMISIÓN (Botón Verde)
 	generarEmisionMasiva(datos: GenerarEmisionDTO): Observable<any> {
 		return this.http.post(`${this.apiUrl}/facturas-gestion/emision-masiva/`, datos).pipe(catchError(this.handleError));
 	}
 
+	// Manejo de errores estándar
 	private handleError(error: HttpErrorResponse) {
-		console.error('Error en Facturación:', error);
-		let msg = 'Error desconocido en el servidor';
-		if (error.error && error.error.error) msg = error.error.error;
-		return throwError(() => new Error(msg));
-	}
-
-	// 3. GET: Obtener facturas que faltan enviar al SRI
-	getComprobantesPendientesSRI(): Observable<ComprobanteSRI[]> {
-		// Asegúrate de que este endpoint exista en tu backend (FacturaViewSet -> action por_enviar_sri)
-		return this.http
-			.get<ComprobanteSRI[]>(`${this.apiUrl}/facturas-gestion/por-enviar-sri/`)
-			.pipe(catchError(this.handleError));
-	}
-
-	// 4. POST: Enviar una factura individual al SRI
-	enviarFacturaSRI(facturaId: number): Observable<any> {
-		return this.http
-			.post(`${this.apiUrl}/facturas-gestion/enviar-sri/`, { factura_id: facturaId })
-			.pipe(catchError(this.handleError));
+		console.error('Error:', error);
+		return throwError(() => new Error(error.error?.error || 'Error desconocido'));
 	}
 }
