@@ -14,38 +14,43 @@ export interface EstadoCuentaResponse {
 	deudas: DeudaItem[];
 }
 
-// 2. Cada item de la tabla de cobros
+// 2. Cada item de la tabla de cobros (Legacy)
 export interface DeudaItem {
-	id: number; // ID de la factura o multa
-	concepto: string; // "Consumo Agua - Nov 2025"
-	monto: number; // 3.50
-	vencimiento: string; // "2025-12-05"
+	id: number;
+	concepto: string;
+	monto: number;
+	vencimiento: string;
 	tipo: 'AGUA' | 'MINGA' | 'OTROS';
-	seleccionado?: boolean; // Para el checkbox del frontend
+	seleccionado?: boolean;
 }
 
-// 3. Lo que enviamos al backend para pagar
+// 3. Lo que enviamos al backend para pagar (Legacy)
 export interface RegistrarPagoDTO {
-	deudas_ids: number[]; // [101, 103]
+	deudas_ids: number[];
 	metodo_pago: 'EFECTIVO' | 'TRANSFERENCIA';
-	usuario_id: number; // El cajero que cobra
+	usuario_id: number;
 }
 
-// 4. Respuesta al pagar
+// 4. Respuesta al pagar (Legacy)
 export interface PagoResponse {
 	success: boolean;
-	ticket_numero: string; // "TKT-2025-001"
+	ticket_numero: string;
 	mensaje: string;
 }
 
-// 5. Para la pestaña de Transferencias (Opcional por ahora)
+// =========================================
+// 🆕 5. TRANSFERENCIAS PENDIENTES (CORREGIDO)
+// =========================================
+// Esta interfaz debe coincidir EXACTAMENTE con el JSON del backend
 export interface TransferenciaPendiente {
-	id: number;
-	socio_nombre: string;
-	fecha: string;
+	pago_id: number; // ID del pago en tabla 'pagos'
+	factura_id: number; // ID de la factura relacionada
+	socio: string; // "Nombre Apellido"
+	cedula: string;
+	banco_fecha: string; // Fecha de subida
 	monto: number;
-	comprobante_url: string;
-	banco_origen: string;
+	referencia: string; // Número de comprobante
+	comprobante_url: string | null; // URL de la foto
 }
 
 // =========================================
@@ -115,18 +120,19 @@ export interface CobroResponse {
 
 // 13. Factura pendiente de cobro (para tabla principal de caja)
 export interface FacturaPendiente {
-	factura_id: number; // Antes seguro tenías 'id'
-	socio: string; // Antes seguro tenías 'nombre_socio' o 'cliente'
+	factura_id: number;
+	socio: string;
 	cedula: string;
 	fecha_emision: string;
-
-	medidor: string; // Antes seguro tenías 'codigo_medidor'
+	medidor: string;
 	consumo: string;
-
-	agua: string; // Valor numérico en string
+	agua: string;
 	multas: string;
 	total: string;
-
 	estado_sri: string;
 	estado_pago: string;
+
+	// Agregamos estos opcionales por si los necesitas en el futuro
+	direccion?: string;
+	clave_acceso_sri?: string;
 }

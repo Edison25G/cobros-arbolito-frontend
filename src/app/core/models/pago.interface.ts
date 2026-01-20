@@ -1,6 +1,6 @@
 export enum EstadoFactura {
 	Pendiente = 'PENDIENTE',
-	EnVerificacion = 'EN_VERIFICACION',
+	EnVerificacion = 'POR_VALIDAR',
 	Pagada = 'PAGADA',
 	Anulada = 'ANULADA',
 }

@@ -206,59 +206,85 @@
 						Revise los comprobantes subidos por los socios y apruebe el pago si el dinero está en la cuenta.
 					</p>
 
-					<p-table [value]="transferencias" [loading]="cargandoTransferencias">
+					<p-table [value]="transferencias" [loading]="cargandoTransferencias" [rowHover]="true">
 						<ng-template pTemplate="header">
 							<tr>
 								<th>Socio</th>
-								<th>Banco / Fecha</th>
+								<th>Fecha / Referencia</th>
 								<th>Monto</th>
 								<th>Comprobante</th>
 								<th>Acciones</th>
 							</tr>
 						</ng-template>
+
 						<ng-template pTemplate="body" let-t>
 							<tr>
-								<td class="font-bold">{{ t.socio_nombre }}</td>
 								<td>
-									<div class="text-sm">{{ t.banco_origen }}</div>
-									<div class="text-xs text-gray-500">{{ t.fecha }}</div>
+									<div class="flex flex-col">
+										<span class="font-bold text-gray-800">{{ t.socio }}</span>
+										<span class="text-xs text-gray-500">{{ t.cedula }}</span>
+									</div>
 								</td>
-								<td class="font-bold text-green-600">{{ t.monto | currency }}</td>
+
 								<td>
-									<p-image
-										[src]="t.comprobante_url"
-										alt="Comprobante"
-										[preview]="true"
-										width="50"
-										class="rounded shadow-sm"
-									>
-									</p-image>
+									<div class="flex flex-col">
+										<span class="text-sm font-medium">{{ t.banco_fecha }}</span>
+										<span class="text-xs text-blue-600 font-bold" *ngIf="t.referencia">
+											<i class="pi pi-hashtag text-[10px]"></i> {{ t.referencia }}
+										</span>
+									</div>
 								</td>
+
+								<td class="font-bold text-green-600 text-lg">{{ t.monto | currency }}</td>
+
+								<td>
+									<div class="card flex justify-content-center">
+										<p-image
+											[src]="t.comprobante_url"
+											alt="Recibo"
+											width="60"
+											class="rounded shadow-sm border border-gray-200"
+											[preview]="true"
+										>
+											<ng-template pTemplate="indicator">
+												<i class="pi pi-eye"></i>
+											</ng-template>
+										</p-image>
+									</div>
+								</td>
+
 								<td>
 									<div class="flex gap-2">
 										<p-button
 											icon="pi pi-check"
 											severity="success"
 											[rounded]="true"
-											pTooltip="Aprobar"
+											pTooltip="Aprobar Pago"
+											tooltipPosition="top"
 											(onClick)="aprobarTransferencia(t)"
 										></p-button>
+
 										<p-button
 											icon="pi pi-times"
 											severity="danger"
 											[rounded]="true"
-											[text]="true"
+											[outlined]="true"
 											pTooltip="Rechazar"
+											tooltipPosition="top"
+											(onClick)="rechazarTransferencia(t)"
 										></p-button>
 									</div>
 								</td>
 							</tr>
 						</ng-template>
+
 						<ng-template pTemplate="emptymessage">
 							<tr>
 								<td colspan="5" class="text-center p-8 text-gray-400">
-									<i class="pi pi-inbox text-3xl mb-2 opacity-30"></i>
-									<p>No hay transferencias pendientes de validar.</p>
+									<div class="flex flex-col items-center">
+										<i class="pi pi-inbox text-4xl mb-2 opacity-30"></i>
+										<p>No hay transferencias pendientes de validar.</p>
+									</div>
 								</td>
 							</tr>
 						</ng-template>

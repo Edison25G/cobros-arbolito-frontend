@@ -96,6 +96,7 @@ export class CajaComponent implements OnInit {
 	comprobanteActual: Comprobante | null = null;
 
 	ngOnInit(): void {
+		this.cargarTransferencias();
 		// No cargamos todo al inicio para optimizar si son muchos datos.
 		// Solo si el usuario busca se llena la tabla.
 		console.log('Módulo de Caja listo para cobrar.');
@@ -258,15 +259,36 @@ export class CajaComponent implements OnInit {
 		this.montoEfectivo = 0;
 		this.montoTransferencia = 0;
 		this.referenciaTransferencia = '';
-		this.montoRestante = Number(factura.total);
-		this.modalPagoMixtoVisible = true;
-	}
 
+		// 🔍 Consultamos los pagos aprobados de esta factura
+		this.cajaService.getPagosFactura(factura.factura_id).subscribe({
+			next: (pagos) => {
+				// Buscamos el pago que el tesorero ya validó
+				const pagoValidado = pagos.find((p) => p.metodo === 'TRANSFERENCIA' && p.validado);
+
+				if (pagoValidado) {
+					// ✅ Cargamos los datos en el modal
+					this.montoTransferencia = Number(pagoValidado.monto);
+					this.referenciaTransferencia = pagoValidado.referencia;
+
+					// Esto hará que montoRestante sea 0 y el botón SE ACTIVE
+					this.calcularRestante();
+				}
+				this.modalPagoMixtoVisible = true;
+			},
+			error: () => {
+				this.modalPagoMixtoVisible = true;
+				this.calcularRestante();
+			},
+		});
+	}
 	calcularRestante() {
 		if (!this.facturaSeleccionada) return;
-		const total = Number(this.facturaSeleccionada.total);
-		const sumaMontos = (this.montoEfectivo || 0) + (this.montoTransferencia || 0);
-		this.montoRestante = Math.round((total - sumaMontos) * 100) / 100;
+		const totalFactura = Number(this.facturaSeleccionada.total);
+		const entregado = (this.montoEfectivo || 0) + (this.montoTransferencia || 0);
+
+		// Usamos un redondeo a 2 decimales para evitar problemas de precisión de JS
+		this.montoRestante = Math.round((totalFactura - entregado) * 100) / 100;
 	}
 
 	ejecutarPagoMixto() {
@@ -344,15 +366,41 @@ export class CajaComponent implements OnInit {
 
 	aprobarTransferencia(transf: TransferenciaPendiente) {
 		this.confirmationService.confirm({
-			message: `¿Confirmar aprobación del pago de ${transf.socio_nombre}?`,
+			// 🔴 ANTES (Error): message: `¿Confirmar aprobación del pago de ${transf.socio_nombre}?`,
+			// 🟢 AHORA (Correcto): Usamos 'socio' que es lo que viene del Backend
+			message: `¿Confirmar aprobación del pago de ${transf.socio}?`,
 			accept: () => {
-				this.messageService.add({ severity: 'success', summary: 'Aprobado', detail: 'Transferencia validada.' });
-				// Aquí deberías llamar al servicio real para aprobar en BD
-				this.transferencias = this.transferencias.filter((t) => t.id !== transf.id);
+				// Ahora sí existe el método validarTransferencia
+				this.cajaService.validarTransferencia(transf.pago_id, 'APROBAR').subscribe({
+					next: (_res) => {
+						this.messageService.add({ severity: 'success', summary: 'Aprobado', detail: 'Transferencia validada.' });
+						this.cargarTransferencias();
+					},
+					error: (err) => {
+						this.messageService.add({ severity: 'error', summary: 'Error', detail: err.message });
+					},
+				});
 			},
 		});
 	}
-
+	// ✅ NUEVO: Rechazar
+	rechazarTransferencia(transf: TransferenciaPendiente) {
+		this.confirmationService.confirm({
+			message: `¿Rechazar este comprobante? El socio tendrá que subirlo de nuevo.`,
+			header: 'Rechazar Pago',
+			icon: 'pi pi-times-circle',
+			acceptButtonStyleClass: 'p-button-danger',
+			accept: () => {
+				this.cajaService.validarTransferencia(transf.pago_id, 'RECHAZAR').subscribe({
+					next: (_res) => {
+						this.messageService.add({ severity: 'info', summary: 'Rechazado', detail: 'Pago eliminado.' });
+						this.cargarTransferencias();
+					},
+					error: (err) => console.error(err),
+				});
+			},
+		});
+	}
 	// --- UTILIDADES ---
 	getSeverityVencimiento(dias: number | undefined): 'success' | 'warn' | 'danger' | 'info' {
 		if (!dias || dias <= 0) return 'success';

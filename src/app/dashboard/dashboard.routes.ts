@@ -74,7 +74,13 @@ export default [
 				canActivate: [RoleGuard],
 				data: { roles: [RolUsuario.ADMIN, RolUsuario.TESORERO] },
 			},
-
+			{
+				path: 'gestion-sri',
+				loadComponent: () =>
+					import('./pages/facturacion/gestion-sri/gestion-sri.component').then((m) => m.GestionSriComponent),
+				canActivate: [RoleGuard],
+				data: { roles: [RolUsuario.ADMIN, RolUsuario.TESORERO] },
+			},
 			{
 				path: 'caja',
 				loadComponent: () => import('./pages/caja/caja.component').then((m) => m.CajaComponent),

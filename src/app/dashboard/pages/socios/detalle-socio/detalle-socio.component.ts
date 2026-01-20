@@ -128,9 +128,10 @@ export class DetalleSocioComponent implements OnInit {
 
 	cargarHistorialReal() {
 		if (this.socio?.cedula) {
-			this.facturacionService.getFacturasPorSocio(this.socio.cedula).subscribe({
+			// ✅ SENIOR FIX: Enviamos 'true' como segundo parámetro
+			// Esto activa la bandera 'ver_historial=true' en el backend
+			this.facturacionService.getFacturasPorSocio(this.socio.cedula, true).subscribe({
 				next: (res: any) => {
-					// Soporte para respuestas {data: []} o [] directo
 					this.historialPagos = Array.isArray(res) ? res : res.data;
 				},
 				error: (err) => console.error('Error cargando historial:', err),

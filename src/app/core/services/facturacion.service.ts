@@ -48,13 +48,32 @@ export class FacturacionService {
 	}
 
 	// FacturacionService
-	getFacturasPorSocio(cedula: string): Observable<any[]> {
-		const url = `${this.apiUrl}/facturas-gestion/pendientes/?cedula=${cedula}`;
+	getFacturasPorSocio(cedula: string, verTodo = false): Observable<any[]> {
+		// 1. Construimos la URL base
+		let url = `${this.apiUrl}/facturas-gestion/pendientes/?cedula=${cedula}`;
+
+		// 2. Si la bandera es true (Perfil Socio), agregamos el parámetro mágico
+		if (verTodo) {
+			url += '&ver_historial=true';
+		}
+
+		// 3. Hacemos la petición con los operadores RxJS correctos
 		return this.http.get<any>(url).pipe(
-			// El backend v4 a veces devuelve {mensaje: '...', data: []}
-			// o el array directo. Manejamos ambos:
-			map((res) => (Array.isArray(res) ? res : res.data)),
-			catchError(this.handleError),
+			map((res) => {
+				// Validación para soportar respuestas { data: [...] } o [...] directo
+				return Array.isArray(res) ? res : res.data;
+			}),
+			catchError((err) => {
+				console.error('Error fetching facturas:', err);
+				return throwError(() => err);
+			}),
 		);
+	}
+
+	consultarSRI(claveAcceso: string): Observable<any> {
+		// Cambiamos 'facturas-gestion/consultar-autorizacion/' por 'facturas/consultar/'
+		return this.http.get(`${this.apiUrl}/facturas/consultar/`, {
+			params: { clave_acceso: claveAcceso },
+		});
 	}
 }

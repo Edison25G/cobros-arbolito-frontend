@@ -39,13 +39,11 @@ export class MedidorService {
 		const token = localStorage.getItem('token');
 		const headers = token ? new HttpHeaders().set('Authorization', `Bearer ${token}`) : undefined;
 
-		return this.http.get<MedidorBackend[]>(this.apiUrl, { headers }).pipe(
-			map((listaMedidores) => {
-				const nombreLogueado = this.authService.getNombreCompleto();
-				const medidorEncontrado = listaMedidores.find(
-					(m) => m.nombre_socio.trim().toLowerCase() === nombreLogueado.trim().toLowerCase(),
-				);
-				return medidorEncontrado;
+		// Llamamos a la nueva ruta /mi-medidor/ que es segura y directa
+		return this.http.get<MedidorBackend>(`${this.apiUrl}mi-medidor/`, { headers }).pipe(
+			catchError((error) => {
+				console.error('Error obteniendo medidor del socio:', error);
+				return of(undefined);
 			}),
 		);
 	}

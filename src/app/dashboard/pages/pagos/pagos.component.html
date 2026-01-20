@@ -60,6 +60,7 @@
 							tooltipPosition="top"
 							styleClass="p-button-sm p-button-secondary p-button-outlined"
 							(click)="verDetalleFactura(factura)"
+							[disabled]="factura.estado !== EstadoFactura.Pagada"
 						></p-button>
 
 						<p-button
@@ -87,29 +88,84 @@
 	[(visible)]="showUploadModal"
 	[modal]="true"
 	[closable]="true"
-	header="Subir Comprobante (Factura #{{ facturaSeleccionada?.id }})"
-	[style]="{ width: '500px', maxWidth: '90vw' }"
+	[draggable]="false"
+	[resizable]="false"
+	appendTo="body"
+	header="Subir Comprobante"
+	[style]="{ width: '380px' }"
 	(onHide)="closeUploadModal()"
 >
-	<div class="p-4">
-		<div class="text-center mb-6">
-			<p class="text-lg">
-				Total a Pagar:
-				<strong class="text-2xl text-emerald-600">{{ facturaSeleccionada?.total | currency: 'USD' }}</strong>
-			</p>
-			<p class="text-gray-600">Sube foto o PDF de tu transferencia.</p>
+	<div class="flex flex-col gap-5 pt-2" *ngIf="facturaSeleccionada">
+		<div class="text-center bg-gray-50 p-4 rounded-xl border border-gray-100 shadow-sm">
+			<span class="block text-gray-500 text-xs font-bold uppercase tracking-wide mb-1">TOTAL A TRANSFERIR</span>
+			<span class="text-4xl text-emerald-600 font-bold block">
+				{{ facturaSeleccionada.total | currency: 'USD' }}
+			</span>
+			<span class="text-xs text-gray-400 mt-1">Factura #{{ facturaSeleccionada.id }}</span>
 		</div>
-		<p-fileUpload
-			name="comprobante"
-			[auto]="true"
-			[customUpload]="true"
-			(uploadHandler)="onUpload($event)"
-			accept="image/*,.pdf"
-			[maxFileSize]="5000000"
-			chooseLabel="Buscar Archivo"
-			uploadLabel="Subir"
-			cancelLabel="Cancelar"
-		></p-fileUpload>
+
+		<div class="flex flex-col gap-2">
+			<span class="font-bold text-gray-700 text-sm pl-1">Referencia Bancaria</span>
+			<input
+				pInputText
+				[(ngModel)]="referenciaInput"
+				placeholder="Ej: 123456789"
+				class="w-full p-3 border border-gray-300 rounded-lg focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all"
+			/>
+		</div>
+
+		<div class="flex flex-col gap-2">
+			<span class="font-bold text-gray-700 text-sm pl-1">Foto del Recibo</span>
+
+			<div
+				class="flex items-center gap-3 p-2 border border-gray-300 rounded-lg bg-white hover:border-emerald-400 transition-colors"
+			>
+				<p-fileUpload
+					mode="basic"
+					chooseLabel="Foto"
+					chooseIcon="pi pi-camera"
+					accept="image/*"
+					maxFileSize="5000000"
+					(onSelect)="onFileSelect($event)"
+					[auto]="false"
+					styleClass="p-button-sm bg-emerald-600 border-emerald-600"
+				>
+				</p-fileUpload>
+
+				<div class="flex-1 overflow-hidden">
+					<span *ngIf="!archivoSeleccionado" class="text-xs text-gray-400 italic"> Sube tu captura... </span>
+					<span *ngIf="archivoSeleccionado" class="text-sm text-emerald-700 font-medium flex items-center gap-1">
+						<i class="pi pi-check-circle"></i>
+						<span class="truncate w-32">
+							{{ archivoSeleccionado.name }}
+						</span>
+					</span>
+				</div>
+			</div>
+		</div>
+
+		<div class="flex justify-between items-center pt-2 mt-2 border-t border-gray-100">
+			<p-button
+				label="Cancelar"
+				icon="pi pi-times"
+				[text]="true"
+				severity="secondary"
+				styleClass="p-button-sm text-gray-500 hover:text-gray-700"
+				(onClick)="closeUploadModal()"
+			>
+			</p-button>
+
+			<p-button
+				label="Enviar Pago"
+				icon="pi pi-send"
+				[rounded]="true"
+				styleClass="p-button-sm bg-emerald-600 border-emerald-600 hover:bg-emerald-700 font-bold px-4 border-none"
+				(onClick)="enviarComprobante()"
+				[loading]="isUploading"
+				[disabled]="!archivoSeleccionado || !referenciaInput"
+			>
+			</p-button>
+		</div>
 	</div>
 </p-dialog>
 

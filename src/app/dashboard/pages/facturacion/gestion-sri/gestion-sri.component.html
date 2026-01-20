@@ -1,0 +1,64 @@
+<p-toast></p-toast>
+
+<div class="p-6">
+	<div class="flex justify-between items-center mb-4">
+		<div>
+			<h2 class="text-2xl font-bold text-gray-800">Gestión de Comprobantes SRI</h2>
+			<p class="text-gray-500 text-sm">Monitoreo y sincronización de facturas electrónicas.</p>
+		</div>
+		<p-button label="Actualizar Lista" icon="pi pi-refresh" (onClick)="cargarFacturasConProblemas()"></p-button>
+	</div>
+
+	<div class="card shadow-sm border border-gray-100 rounded-xl overflow-hidden bg-white">
+		<p-table
+			[value]="facturasPendientes"
+			[loading]="loading"
+			[rows]="10"
+			[paginator]="true"
+			styleClass="p-datatable-sm"
+		>
+			<ng-template pTemplate="header">
+				<tr>
+					<th>Fecha</th>
+					<th>Socio</th>
+					<th>Nro. Factura</th>
+					<th>Estado SRI</th>
+					<th class="text-center">Acciones</th>
+				</tr>
+			</ng-template>
+			<ng-template pTemplate="body" let-f>
+				<tr>
+					<td>{{ f.fecha_emision | date: 'dd/MM/yyyy' }}</td>
+					<td>{{ f.socio_nombre }}</td>
+					<td class="font-mono text-xs">{{ f.numero_factura }}</td>
+					<td>
+						<p-tag
+							[severity]="f.estado_sri === 'DEVUELTA' ? 'danger' : 'warn'"
+							[value]="f.estado_sri || 'PENDIENTE ENVIAR'"
+						>
+						</p-tag>
+					</td>
+					<td class="text-center">
+						<p-button
+							*ngIf="f.clave_acceso_sri"
+							icon="pi pi-sync"
+							label="Sincronizar"
+							styleClass="p-button-sm p-button-outlined p-button-success"
+							(onClick)="sincronizar(f.clave_acceso_sri)"
+						>
+						</p-button>
+						<span *ngIf="!f.clave_acceso_sri" class="text-xs text-gray-400">Sin clave generada</span>
+					</td>
+				</tr>
+			</ng-template>
+			<ng-template pTemplate="emptymessage">
+				<tr>
+					<td colspan="5" class="text-center p-8 text-gray-500">
+						<i class="pi pi-check-circle text-green-500 text-2xl mb-2"></i>
+						<p>No hay facturas pendientes de autorización.</p>
+					</td>
+				</tr>
+			</ng-template>
+		</p-table>
+	</div>
+</div>
