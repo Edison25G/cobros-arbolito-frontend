@@ -4,11 +4,11 @@
 <div class="card p-4 bg-white rounded-xl shadow-sm border border-gray-100 animate-fade-in">
 	<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
 		<div>
-			<h2 class="text-2xl font-bold text-gray-800">Gestión de Mingas</h2>
-			<p class="text-sm text-gray-500">Programa eventos y define multas por inasistencia</p>
+			<h2 class="text-2xl font-bold text-gray-800">Gestión de Eventos</h2>
+			<p class="text-sm text-gray-500">Programa mingas, sesiones y gestiona la asistencia</p>
 		</div>
 		<p-button
-			label="Nueva Minga"
+			label="Nuevo Evento"
 			icon="pi pi-calendar-plus"
 			(onClick)="openNew()"
 			styleClass="w-full sm:w-auto"
@@ -20,9 +20,10 @@
 			<ng-template pTemplate="header">
 				<tr>
 					<th style="width: 15%">Fecha</th>
-					<th style="width: 25%">Evento</th>
+					<th style="width: 20%">Evento</th>
+					<th style="width: 10%">Tipo</th>
 					<th style="width: 20%">Lugar</th>
-					<th style="width: 15%">Multa</th>
+					<th style="width: 10%">Multa</th>
 					<th style="width: 10%">Estado</th>
 					<th class="text-center" style="width: 15%">Acciones</th>
 				</tr>
@@ -35,6 +36,13 @@
 						<div class="font-bold text-gray-800">{{ minga.titulo }}</div>
 						<div class="text-xs text-gray-500 truncate max-w-[150px]">{{ minga.descripcion }}</div>
 					</td>
+					<td>
+						<p-tag
+							[value]="minga.tipo || 'MINGA'"
+							[severity]="minga.tipo === 'SESION' ? 'warn' : 'info'"
+							styleClass="text-[10px]"
+						></p-tag>
+					</td>
 					<td>{{ minga.lugar }}</td>
 					<td class="font-semibold text-red-600">${{ minga.multa | number: '1.2-2' }}</td>
 					<td>
@@ -46,10 +54,11 @@
 					</td>
 					<td class="text-center">
 						<div class="flex justify-center gap-2">
+							<!-- Botón Asistencia -->
 							<p-button
 								*ngIf="minga.estado === 'Programada'"
 								icon="pi pi-list-check"
-								pTooltip="Asistencia"
+								pTooltip="Tomar Asistencia"
 								tooltipPosition="top"
 								[rounded]="true"
 								[outlined]="true"
@@ -57,12 +66,25 @@
 								(onClick)="irAAsistencia(minga.id)"
 							>
 							</p-button>
+
+							<!-- Botón Cerrar Evento -->
+							<p-button
+								*ngIf="minga.estado === 'Programada'"
+								icon="pi pi-check-circle"
+								pTooltip="Cerrar Evento (Generar Multas)"
+								tooltipPosition="top"
+								severity="success"
+								[rounded]="true"
+								[text]="true"
+								(onClick)="cerrarEvento(minga)"
+							></p-button>
+
 							<p-button
 								icon="pi pi-trash"
 								severity="danger"
 								[text]="true"
 								[rounded]="true"
-								(onClick)="eliminarMinga(minga)"
+								(onClick)="eliminarEvento(minga)"
 							></p-button>
 						</div>
 					</td>
@@ -71,7 +93,7 @@
 
 			<ng-template pTemplate="emptymessage">
 				<tr>
-					<td colspan="6" class="text-center p-6 text-gray-500">No hay mingas registradas.</td>
+					<td colspan="7" class="text-center p-6 text-gray-500">No hay eventos registrados.</td>
 				</tr>
 			</ng-template>
 		</p-table>
@@ -80,24 +102,66 @@
 
 <p-dialog
 	[(visible)]="dialogVisible"
-	header="Programar Nueva Minga"
+	header="Programar Nuevo Evento"
 	[modal]="true"
 	[breakpoints]="{ '960px': '75vw', '640px': '95vw' }"
-	[style]="{ width: '500px' }"
+	[style]="{ width: '550px' }"
 	styleClass="p-fluid"
 	[draggable]="false"
 	[resizable]="false"
 >
 	<ng-template pTemplate="content">
 		<form [formGroup]="mingaForm" class="flex flex-col gap-5 pt-2">
-			<div class="flex flex-col gap-2">
-				<span class="font-bold text-sm text-gray-700">Título del Evento</span>
-				<input pInputText formControlName="titulo" placeholder="Ej: Limpieza de Canales" class="w-full" />
-			</div>
-
+			<!-- Fila 1: Título y Tipo -->
 			<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
 				<div class="flex flex-col gap-2">
-					<span class="font-bold text-sm text-gray-700">Fecha</span>
+					<span class="font-bold text-sm text-gray-700">Título del Evento *</span>
+					<input pInputText formControlName="titulo" placeholder="Ej: Asamblea General" class="w-full" />
+				</div>
+				<div class="flex flex-col gap-2">
+					<span class="font-bold text-sm text-gray-700">Tipo de Evento *</span>
+					<p-select
+						[options]="tiposEvento"
+						formControlName="tipo"
+						optionLabel="label"
+						optionValue="value"
+						appendTo="body"
+						styleClass="w-full"
+					></p-select>
+				</div>
+			</div>
+
+			<!-- Fila 2: Alcance y Barrio (Condicional) -->
+			<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+				<div class="flex flex-col gap-2">
+					<span class="font-bold text-sm text-gray-700">¿A quién aplica? *</span>
+					<p-select
+						[options]="opcionesSeleccion"
+						formControlName="seleccion_socios"
+						optionLabel="label"
+						optionValue="value"
+						appendTo="body"
+						styleClass="w-full"
+					></p-select>
+				</div>
+				<div *ngIf="mingaForm.get('seleccion_socios')?.value === 'BARRIO'" class="flex flex-col gap-2 animate-fade-in">
+					<span class="font-bold text-sm text-gray-700">Seleccione Barrio *</span>
+					<p-select
+						[options]="barrios"
+						formControlName="barrio_id"
+						optionLabel="nombre"
+						optionValue="id"
+						placeholder="Seleccione..."
+						appendTo="body"
+						styleClass="w-full"
+					></p-select>
+				</div>
+			</div>
+
+			<!-- Fila 3: Fecha y Multa -->
+			<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+				<div class="flex flex-col gap-2">
+					<span class="font-bold text-sm text-gray-700">Fecha *</span>
 					<p-datepicker
 						formControlName="fecha"
 						appendTo="body"
@@ -105,12 +169,11 @@
 						[showIcon]="true"
 						styleClass="w-full"
 						[style]="{ width: '100%' }"
-						placeholder="Seleccione fecha"
 					>
 					</p-datepicker>
 				</div>
 				<div class="flex flex-col gap-2">
-					<span class="font-bold text-sm text-gray-700">Multa ($)</span>
+					<span class="font-bold text-sm text-gray-700">Valor Multa ($) *</span>
 					<p-inputNumber
 						formControlName="multa"
 						mode="currency"
@@ -124,7 +187,7 @@
 			</div>
 
 			<div class="flex flex-col gap-2">
-				<span class="font-bold text-sm text-gray-700">Lugar de Encuentro</span>
+				<span class="font-bold text-sm text-gray-700">Lugar de Encuentro *</span>
 				<input pInputText formControlName="lugar" placeholder="Ej: Casa Comunal" class="w-full" />
 			</div>
 
@@ -153,7 +216,7 @@
 			<p-button
 				label="Programar"
 				icon="pi pi-check"
-				(onClick)="guardarMinga()"
+				(onClick)="guardarEvento()"
 				[disabled]="mingaForm.invalid"
 			></p-button>
 		</div>

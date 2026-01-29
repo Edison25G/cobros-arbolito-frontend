@@ -1,33 +1,19 @@
-<p-toast></p-toast>
-<p-confirmDialog [style]="{ width: '450px' }"></p-confirmDialog>
-
+<app-page-header
+	title="Gestión de Socios"
+	subtitle="Administra el padrón de usuarios y sus roles"
+	buttonLabel="Nuevo Socio"
+	icon="pi pi-user-plus"
+	(actionClick)="openNewSocioModal()"
+></app-page-header>
 <div class="card p-4 bg-white rounded-xl shadow-sm border border-gray-100 animate-fade-in">
-	<!-- Encabezado y Buscador -->
-	<div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-		<div>
-			<h2 class="text-2xl font-bold text-gray-800">Gestión de Socios</h2>
-			<p class="text-sm text-gray-500">Administra el padrón de usuarios y sus roles</p>
-		</div>
-
-		<div class="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
-			<p-button
-				label="Nuevo Socio"
-				icon="pi pi-user-plus"
-				(onClick)="openNewSocioModal()"
-				styleClass="w-full sm:w-auto"
-			></p-button>
-		</div>
-	</div>
-
 	<!-- Tabla de Socios -->
 	<div class="card">
 		<p-table
 			#dt
 			[value]="socios"
-			[loading]="isLoading"
 			[paginator]="true"
 			[rows]="5"
-			[globalFilterFields]="['cedula', 'nombres', 'apellidos', 'barrio', 'rol']"
+			[globalFilterFields]="['identificacion', 'nombres', 'apellidos', 'barrio', 'rol']"
 			dataKey="id"
 			rowHover
 			selectionMode="single"
@@ -43,7 +29,7 @@
 						pInputText
 						type="text"
 						(input)="dt.filterGlobal($event.target.value, 'contains')"
-						placeholder="Buscar socio..."
+						placeholder="Buscar por nombre, cédula..."
 					/>
 				</p-iconfield>
 			</ng-template>
@@ -51,10 +37,10 @@
 			<!-- 🧱 HEADER -->
 			<ng-template pTemplate="header">
 				<tr>
-					<th pSortableColumn="cedula" style="width: 15%">
+					<th pSortableColumn="identificacion" style="width: 20%">
 						<div class="flex items-center gap-2">
-							Cédula
-							<p-sortIcon field="cedula" />
+							Identificación
+							<p-sortIcon field="identificacion" />
 						</div>
 					</th>
 
@@ -86,14 +72,23 @@
 						</div>
 					</th>
 
-					<th style="width: 15%" class="text-center">Acciones</th>
+					<th style="width: 10%" class="text-center">Acciones</th>
 				</tr>
 			</ng-template>
 
 			<!-- 📄 BODY -->
 			<ng-template pTemplate="body" let-socio>
 				<tr>
-					<td>{{ socio.cedula }}</td>
+					<td>
+						<div class="flex flex-col">
+							<span class="font-bold text-gray-800">{{ socio.identificacion }}</span>
+							<small class="text-xs text-gray-500">
+								<span *ngIf="socio.tipo_identificacion === 'C'">Cédula</span>
+								<span *ngIf="socio.tipo_identificacion === 'R'">RUC</span>
+								<span *ngIf="socio.tipo_identificacion === 'P'">Pasaporte</span>
+							</small>
+						</div>
+					</td>
 
 					<td>
 						<div class="flex flex-col">
@@ -104,7 +99,7 @@
 						</div>
 					</td>
 
-					<td>{{ getNombreBarrio(socio.barrio) }}</td>
+					<td>{{ getNombreBarrio(socio.barrio_id || socio.barrio) }}</td>
 
 					<td>
 						<p-tag [value]="socio.rol" [severity]="socio.rol === 'ADMINISTRADOR' ? 'danger' : 'info'" />
@@ -120,9 +115,7 @@
 					<td class="text-center">
 						<div class="flex justify-center gap-2">
 							<p-button icon="pi pi-eye" rounded text severity="info" (onClick)="verDetalle(socio.id)" />
-
 							<p-button icon="pi pi-pencil" rounded text severity="warn" (onClick)="openEditSocioModal(socio)" />
-
 							<p-button icon="pi pi-trash" rounded text severity="danger" (onClick)="deleteSocio(socio.id)" />
 						</div>
 					</td>
@@ -152,25 +145,63 @@
 	(onHide)="closeSocioModal()"
 >
 	<form [formGroup]="socioForm" (ngSubmit)="saveSocio()" class="flex flex-col gap-5 pt-2">
-		<!-- Fila 1: Cédula y Barrio -->
-		<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+		<!-- Fila 1: Identificación Dinámica -->
+		<div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+			<!-- Tipo de Identificación -->
 			<div class="flex flex-col gap-2">
-				<span class="font-bold text-sm text-gray-700">Cédula</span>
-				<input
-					pInputText
-					formControlName="cedula"
-					placeholder="Ej: 0501234567"
-					class="w-full"
-					[ngClass]="{ 'ng-invalid ng-dirty': f['cedula'].invalid && f['cedula'].touched }"
-				/>
-				<small *ngIf="f['cedula'].invalid && f['cedula'].touched" class="text-red-500 text-xs">
-					Cédula inválida (10 dígitos).
-				</small>
+				<span class="font-bold text-sm text-gray-700">Tipo de Documento</span>
+				<p-select
+					[options]="tipoIdentificacionOptions"
+					formControlName="tipo_identificacion"
+					optionLabel="label"
+					optionValue="value"
+					appendTo="body"
+					styleClass="w-full"
+				></p-select>
 			</div>
 
+			<!-- Número de Identificación -->
+			<div class="flex flex-col gap-2 sm:col-span-2">
+				<span class="font-bold text-sm text-gray-700">Número de Identificación *</span>
+				<input
+					pInputText
+					id="identificacion"
+					formControlName="identificacion"
+					placeholder="Ingrese el número de documento"
+					class="w-full"
+					[ngClass]="{ 'ng-invalid ng-dirty': f['identificacion'].invalid && f['identificacion'].touched }"
+				/>
+				<!-- Mensajes de Error Dinámicos -->
+				<small *ngIf="f['identificacion'].invalid && f['identificacion'].touched" class="text-red-500 text-xs">
+					{{ getIdentificacionError() }}
+				</small>
+			</div>
+		</div>
+
+		<!-- Fila 2: Nombres y Apellidos -->
+		<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+			<div class="flex flex-col gap-2">
+				<span class="font-bold text-sm text-gray-700">Nombres *</span>
+				<input pInputText formControlName="nombres" placeholder="Ej: Juan José" class="w-full" />
+				<small *ngIf="f['nombres'].invalid && f['nombres'].touched" class="text-red-500 text-xs">
+					El nombre es obligatorio.
+				</small>
+			</div>
+			<div class="flex flex-col gap-2">
+				<span class="font-bold text-sm text-gray-700">Apellidos *</span>
+				<input pInputText formControlName="apellidos" placeholder="Ej: Pérez García" class="w-full" />
+				<small *ngIf="f['apellidos'].invalid && f['apellidos'].touched" class="text-red-500 text-xs">
+					El apellido es obligatorio.
+				</small>
+			</div>
+		</div>
+
+		<!-- Fila 3: Barrio y Dirección -->
+		<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
 			<div class="flex flex-col gap-2">
 				<label for="barrio_id" class="font-bold text-sm text-gray-700">Barrio *</label>
 				<p-select
+					inputId="barrio_id"
 					[options]="listaBarrios"
 					formControlName="barrio_id"
 					optionLabel="nombre"
@@ -183,36 +214,33 @@
 				>
 				</p-select>
 				<small *ngIf="f['barrio_id'].invalid && f['barrio_id'].touched" class="text-red-500 text-xs">
-					El barrio es obligatorio.
+					Dato obligatorio.
 				</small>
 			</div>
 
 			<div class="flex flex-col gap-2">
 				<label for="direccion" class="font-bold text-sm text-gray-700">Dirección Exacta *</label>
-				<input pInputText formControlName="direccion" placeholder="Ej: Calle Principal S/N y Pasaje 2" class="w-full" />
+				<input
+					pInputText
+					id="direccion"
+					formControlName="direccion"
+					placeholder="Ej: Calle Principal S/N"
+					class="w-full"
+				/>
 				<small *ngIf="f['direccion'].invalid && f['direccion'].touched" class="text-red-500 text-xs">
 					La dirección es obligatoria.
 				</small>
 			</div>
 		</div>
 
-		<!-- Fila 2: Nombres y Apellidos -->
-		<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-			<div class="flex flex-col gap-2">
-				<span class="font-bold text-sm text-gray-700">Nombres</span>
-				<input pInputText formControlName="nombres" placeholder="Ej: Juan José" class="w-full" />
-			</div>
-			<div class="flex flex-col gap-2">
-				<span class="font-bold text-sm text-gray-700">Apellidos</span>
-				<input pInputText formControlName="apellidos" placeholder="Ej: Pérez García" class="w-full" />
-			</div>
-		</div>
-
-		<!-- Fila 3: Email y Teléfono -->
+		<!-- Fila 4: Contacto (Opcional) -->
 		<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
 			<div class="flex flex-col gap-2">
 				<span class="font-bold text-sm text-gray-700">Email (Opcional)</span>
 				<input pInputText formControlName="email" placeholder="Ej: juan@correo.com" class="w-full" />
+				<small *ngIf="f['email'].invalid && f['email'].touched" class="text-red-500 text-xs">
+					{{ f['email'].errors?.['email'] ? 'Formato de correo inválido' : f['email'].errors?.['backend'] }}
+				</small>
 			</div>
 			<div class="flex flex-col gap-2">
 				<span class="font-bold text-sm text-gray-700">Teléfono (Opcional)</span>
@@ -220,7 +248,7 @@
 			</div>
 		</div>
 
-		<!-- Fila 4: Rol y Estado -->
+		<!-- Fila 5: Rol y Estado -->
 		<div class="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
 			<div class="flex flex-col gap-2">
 				<span class="font-bold text-sm text-gray-700">Rol del Usuario</span>
@@ -255,7 +283,6 @@
 				label="{{ isEditMode ? 'Actualizar' : 'Guardar' }}"
 				icon="pi pi-check"
 				(onClick)="saveSocio()"
-				[loading]="isLoading"
 				[disabled]="socioForm.invalid"
 			></p-button>
 		</div>

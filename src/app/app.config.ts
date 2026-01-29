@@ -1,13 +1,11 @@
-import { ApplicationConfig, provideZoneChangeDetection, LOCALE_ID } from '@angular/core'; // ✅ AGREGADO LOCALE_ID
+import { ApplicationConfig, provideZoneChangeDetection, LOCALE_ID } from '@angular/core';
 import { provideRouter, withViewTransitions } from '@angular/router';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 
-// ✅ NUEVO: Importar idioma Español de Angular
 import localeEs from '@angular/common/locales/es';
 import { registerLocaleData } from '@angular/common';
 
-// Servicios de PrimeNG
 import { MessageService, ConfirmationService } from 'primeng/api';
 import { providePrimeNG } from 'primeng/config';
 import { DialogService } from 'primeng/dynamicdialog';
@@ -15,8 +13,8 @@ import Aura from '@primeuix/themes/aura';
 
 import { routes } from './app.routes';
 import { tokenInterceptor } from './interceptors/token-interceptor';
+import { loadingInterceptor } from './interceptors/loading.interceptor';
 
-// ✅ NUEVO: Registrar el idioma antes de la configuración
 registerLocaleData(localeEs, 'es');
 
 export const appConfig: ApplicationConfig = {
@@ -26,13 +24,10 @@ export const appConfig: ApplicationConfig = {
 		provideRouter(routes, withViewTransitions()),
 
 		provideAnimationsAsync(),
-		provideHttpClient(withInterceptors([tokenInterceptor])),
+		provideHttpClient(withInterceptors([tokenInterceptor, loadingInterceptor])),
 
-		// ✅ NUEVO: Decirle a Angular que el idioma por defecto es Español ('es')
-		// Esto es lo que arregla el "JAN" -> "ENE"
 		{ provide: LOCALE_ID, useValue: 'es' },
 
-		// ✅ CONFIGURACIÓN CENTRAL DE PRIMENG (v20)
 		providePrimeNG({
 			theme: {
 				preset: Aura,
@@ -42,7 +37,6 @@ export const appConfig: ApplicationConfig = {
 			},
 			ripple: true,
 
-			// Traducción de componentes (Calendarios, Filtros, etc.)
 			translation: {
 				accept: 'Aceptar',
 				reject: 'Cancelar',

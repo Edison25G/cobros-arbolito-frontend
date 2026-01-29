@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { catchError, map } from 'rxjs/operators';
 import { environment } from '../../environments/environment.development';
 import { Barrio, CrearBarrioDTO } from '../interfaces/barrio.interface'; // Ajusta la ruta de importación si es necesario
 
@@ -21,7 +21,15 @@ export class BarriosService {
 	 * Se usa para la tabla y para el dropdown de Lecturas.
 	 */
 	getBarrios(): Observable<Barrio[]> {
-		return this.http.get<Barrio[]>(this.baseUrl).pipe(catchError(this.handleError));
+		return this.http.get<any>(this.baseUrl).pipe(
+			map((response) => {
+				if (response.results) {
+					return response.results;
+				}
+				return Array.isArray(response) ? response : [response];
+			}),
+			catchError(this.handleError),
+		);
 	}
 
 	/**

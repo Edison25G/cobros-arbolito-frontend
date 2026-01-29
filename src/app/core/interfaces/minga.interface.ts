@@ -1,12 +1,20 @@
-export interface Minga {
+export interface Evento {
 	id: number;
-	titulo: string; // Ej: "Limpieza de Acequia Alta"
-	descripcion?: string; // Ej: "Traer pala y machete"
+	titulo: string;
+	descripcion?: string;
 	fecha: string; // YYYY-MM-DD
-	lugar: string; // Ej: "Sector La Loma"
-	multa: number; // Valor en $ (Ej: 5.00)
+	lugar: string;
+	multa: number;
 	estado: 'Programada' | 'Realizada' | 'Cancelada';
+
+	// Nuevos campos para Gobernanza
+	tipo: 'MINGA' | 'SESION' | 'APORTE';
+	seleccion_socios: 'TODOS' | 'BARRIO' | 'MANUAL';
+	barrio_id?: number; // Solo si seleccion_socios === 'BARRIO'
 }
+
+// Alias para compatibilidad temporal si es necesario, o refactorizar todo a Evento
+export type Minga = Evento;
 
 export interface AsistenciaMinga {
 	id: number;

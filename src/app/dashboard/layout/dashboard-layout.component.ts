@@ -50,14 +50,15 @@ export class DashboardLayoutComponent implements OnInit {
 
 		// 2. SECCIÓN DE TRABAJO (Solo Roles Administrativos)
 		// -----------------------------------------------------
+		// {
+		// 	header: 'GESTIÓN ADMINISTRATIVA', // Título visual
+		// 	label: 'Gestión de Usuarios',
+		// 	icon: 'pi pi-shield',
+		// 	link: '/dashboard/usuarios',
+		// 	roles: [RolUsuario.ADMIN],
+		// },
 		{
-			header: 'GESTIÓN ADMINISTRATIVA', // Título visual
-			label: 'Gestión de Usuarios',
-			icon: 'pi pi-shield',
-			link: '/dashboard/usuarios',
-			roles: [RolUsuario.ADMIN],
-		},
-		{
+			header: 'GESTIÓN ADMINISTRATIVA',
 			label: 'Gestión de Socios',
 			icon: 'pi pi-users',
 			link: '/dashboard/socios',

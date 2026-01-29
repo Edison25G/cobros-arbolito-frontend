@@ -7,12 +7,10 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { CardModule } from 'primeng/card';
 import { ButtonModule } from 'primeng/button';
 import { SkeletonModule } from 'primeng/skeleton';
-import { ToastModule } from 'primeng/toast';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
 import { TextareaModule } from 'primeng/textarea';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
-import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { MessageService, ConfirmationService } from 'primeng/api';
 
 // Servicios y Modelos
@@ -30,23 +28,24 @@ interface BarrioUI extends Barrio {
 	inactivos?: number;
 }
 
+import { PageHeaderComponent } from '../../../common/components/page-header/page-header.component';
+
 @Component({
 	selector: 'amc-barrios',
 	standalone: true,
 	imports: [
 		CommonModule,
 		ReactiveFormsModule,
+		PageHeaderComponent,
 		CardModule,
 		ButtonModule,
 		SkeletonModule,
-		ToastModule,
 		DialogModule,
 		InputTextModule,
 		TextareaModule,
 		ToggleSwitchModule,
-		ConfirmDialogModule,
 	],
-	providers: [MessageService, ConfirmationService],
+	// providers: [MessageService, ConfirmationService],
 	templateUrl: './barrios.component.html',
 })
 export class BarriosComponent implements OnInit {
@@ -61,7 +60,6 @@ export class BarriosComponent implements OnInit {
 	private authService = inject(AuthService);
 	// Datos
 	barrios: BarrioUI[] = [];
-	loading = true;
 
 	// Estado Modal
 	mostrarModalCrear = false;
@@ -85,8 +83,6 @@ export class BarriosComponent implements OnInit {
 	}
 
 	cargarDatosReales() {
-		this.loading = true;
-
 		// 1. Cargamos los Barrios
 		this.barriosService.getBarrios().subscribe({
 			next: (dataBarrios) => {
@@ -99,7 +95,7 @@ export class BarriosComponent implements OnInit {
 				}));
 
 				if (this.currentUserRole === RolUsuario.OPERADOR) {
-					this.loading = false;
+					// Nada
 				} else {
 					// Si es Admin o Tesorero, calculamos los contadores
 					this.calcularContadores();
@@ -107,7 +103,6 @@ export class BarriosComponent implements OnInit {
 			},
 			error: (err) => {
 				console.error(err);
-				this.loading = false;
 				this.errorService.showError('Error al cargar la lista de barrios.');
 			},
 		});
@@ -119,7 +114,7 @@ export class BarriosComponent implements OnInit {
 			next: (socios) => {
 				socios.forEach((socio: any) => {
 					// 1. EXTRACTOR DE ID INTELIGENTE
-					let idDelSocio = null;
+					let idDelSocio: any = null;
 
 					if (socio.barrio_id) {
 						idDelSocio = socio.barrio_id;
@@ -146,12 +141,8 @@ export class BarriosComponent implements OnInit {
 						}
 					}
 				});
-
-				this.loading = false;
 			},
-			error: (_err) => {
-				this.loading = false;
-			},
+			error: (_err) => {},
 		});
 	}
 

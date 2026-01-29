@@ -1,0 +1,15 @@
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4 animate-fade-in">
+	<div>
+		<h2 class="text-2xl font-bold text-gray-800">{{ title }}</h2>
+		<p class="text-sm text-gray-500" *ngIf="subtitle">{{ subtitle }}</p>
+	</div>
+
+	<div class="flex flex-col sm:flex-row gap-3 w-full md:w-auto" *ngIf="showButton">
+		<p-button
+			[label]="buttonLabel"
+			[icon]="buttonIcon"
+			(onClick)="onButtonClick()"
+			styleClass="w-full sm:w-auto"
+		></p-button>
+	</div>
+</div>

@@ -127,10 +127,10 @@ export class DetalleSocioComponent implements OnInit {
 	}
 
 	cargarHistorialReal() {
-		if (this.socio?.cedula) {
+		if (this.socio?.identificacion) {
 			// ✅ SENIOR FIX: Enviamos 'true' como segundo parámetro
 			// Esto activa la bandera 'ver_historial=true' en el backend
-			this.facturacionService.getFacturasPorSocio(this.socio.cedula, true).subscribe({
+			this.facturacionService.getFacturasPorSocio(this.socio.identificacion, true).subscribe({
 				next: (res: any) => {
 					this.historialPagos = Array.isArray(res) ? res : res.data;
 				},
@@ -274,7 +274,7 @@ export class DetalleSocioComponent implements OnInit {
 		const socioData = {
 			nombres: this.socio?.nombres,
 			apellidos: this.socio?.apellidos,
-			cedula: this.socio?.cedula,
+			cedula: this.socio?.identificacion,
 			direccion: this.socio?.direccion || 'S/N',
 		};
 

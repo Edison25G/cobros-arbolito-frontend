@@ -9,6 +9,7 @@ import {
 import { CommonModule } from '@angular/common'; // <-- 3. IMPORTAR CommonModule
 import { ButtonModule } from 'primeng/button';
 import { ToastModule } from 'primeng/toast';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { filter } from 'rxjs/operators'; // <-- 4. IMPORTAR filter de RxJS
 
 // --- Tus Imports ---
@@ -23,6 +24,7 @@ import { LoadingService } from './core/services/loading.service'; // <-- 5. IMPO
 		RouterOutlet,
 		ButtonModule,
 		ToastModule,
+		ConfirmDialogModule,
 		LoadingOverlayComponent,
 	],
 	providers: [],

@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { catchError, map } from 'rxjs/operators';
 import { Socio } from '../models/socio.interface';
 
 import { environment } from '../../environments/environment.development';
@@ -15,7 +15,17 @@ export class SocioService {
 	private baseUrl = environment.apiUrl + '/socios/';
 
 	getSocios(): Observable<Socio[]> {
-		return this.http.get<Socio[]>(this.baseUrl).pipe(catchError(this.handleError));
+		return this.http.get<any>(this.baseUrl).pipe(
+			map((response) => {
+				// Si viene paginado (Django REST Framework por defecto devuelve { count, next, previous, results: [] })
+				if (response.results) {
+					return response.results;
+				}
+				// Si es un array directo
+				return Array.isArray(response) ? response : [response];
+			}),
+			catchError(this.handleError),
+		);
 	}
 	getSocioById(id: number): Observable<Socio> {
 		return this.http.get<Socio>(`${this.baseUrl}${id}/`).pipe(catchError(this.handleError));
@@ -33,23 +43,20 @@ export class SocioService {
 	}
 
 	private handleError(error: HttpErrorResponse) {
-		let errorMessage = 'Ocurrió un error desconocido.';
+		// Si es error de validación (400), lo devolvemos tal cual para que el componente lo maneje
+		if (error.status === 400) {
+			return throwError(() => error);
+		}
 
+		let errorMessage = 'Ocurrió un error desconocido.';
 		if (error.status === 0) {
-			errorMessage = 'Error de Conexión. ¿Está el servidor de Django (backend) corriendo en http://localhost:8000?';
-		} else if (error.status === 400 && error.error) {
-			try {
-				const errors = error.error;
-				const firstKey = Object.keys(errors)[0];
-				const firstMessage = Array.isArray(errors[firstKey]) ? errors[firstKey][0] : errors[firstKey];
-				errorMessage = `Error de validación: ${firstMessage}`;
-			} catch (_e) {
-				errorMessage = `Error ${error.status}: ${error.message}`;
-			}
+			errorMessage = 'Error de Conexión. Verifique su conexión a internet o el servidor.';
 		} else if (error.status === 404) {
-			errorMessage = 'El API (http://localhost:8000/api/v1/socios/) no fue encontrado (Error 404). Revisa la URL.';
+			errorMessage = 'Recurso no encontrado (404).';
 		} else if (error.status === 403) {
-			errorMessage = 'No tienes permisos (IsAdminUser) para realizar esta acción. Necesitas un token JWT válido.';
+			errorMessage = 'No tiene permisos para realizar esta acción.';
+		} else {
+			errorMessage = `Error ${error.status}: ${error.message}`;
 		}
 
 		console.error(error);

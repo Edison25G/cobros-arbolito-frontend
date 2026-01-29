@@ -18,14 +18,13 @@ import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { SelectModule } from 'primeng/select';
-import { ToggleSwitchModule } from 'primeng/toggleswitch'; // <-- CORREGIDO (Era InputSwitch)
-import { ToastModule } from 'primeng/toast';
-import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { MessageService, ConfirmationService } from 'primeng/api';
+import { PageHeaderComponent } from '../../../common/components/page-header/page-header.component';
 
 @Component({
 	selector: 'amc-socios',
@@ -34,21 +33,20 @@ import { MessageService, ConfirmationService } from 'primeng/api';
 		CommonModule,
 		HttpClientModule,
 		ReactiveFormsModule,
+		PageHeaderComponent,
 		// Componentes PrimeNG v20 Standalone
 		TableModule,
 		DialogModule,
 		ButtonModule,
 		InputTextModule,
-		SelectModule, // <-- CORREGIDO
-		ToggleSwitchModule, // <-- CORREGIDO
-		ToastModule,
-		ConfirmDialogModule,
+		SelectModule,
+		ToggleSwitchModule,
 		TagModule,
 		TooltipModule,
 		IconFieldModule,
 		InputIconModule,
 	],
-	providers: [MessageService, ConfirmationService],
+	// providers: [MessageService, ConfirmationService], // <-- ELIMINADO para usar instancias globales
 	templateUrl: './socios.component.html',
 	styleUrls: ['./socios.component.css'],
 })
@@ -64,7 +62,6 @@ export class SociosComponent implements OnInit {
 	// Estado del componente
 	socios: Socio[] = [];
 	listaBarrios: Barrio[] = [];
-	isLoading = true;
 
 	// Control del Modal
 	showSocioModal = false;
@@ -74,13 +71,20 @@ export class SociosComponent implements OnInit {
 	// Formulario
 	socioForm: FormGroup;
 
-	// Opciones para el Dropdown de Rol
+	// Opciones para Dropdowns
 	public rolUsuarioEnum = RolUsuario;
-	rolesOptions: any[];
+	rolesOptions = Object.values(RolUsuario).map((rol) => ({ label: rol, value: rol }));
+
+	tipoIdentificacionOptions = [
+		{ label: 'Cédula', value: 'C' },
+		{ label: 'RUC', value: 'R' },
+		{ label: 'Pasaporte', value: 'P' },
+	];
 
 	constructor() {
 		this.socioForm = this.fb.group({
-			cedula: ['', [Validators.required, Validators.pattern(/^\d{10}$/)]],
+			tipo_identificacion: ['C', Validators.required],
+			identificacion: ['', [Validators.required]], // Validadores dinámicos se agregan luego
 			nombres: ['', Validators.required],
 			apellidos: ['', Validators.required],
 			barrio_id: [null, Validators.required],
@@ -91,79 +95,88 @@ export class SociosComponent implements OnInit {
 			esta_activo: [true],
 		});
 
-		// Preparamos las opciones para el p-select
-		this.rolesOptions = Object.values(RolUsuario).map((rol) => ({
-			label: rol, // El texto que se muestra
-			value: rol, // El valor que se guarda
-		}));
+		// Escuchar cambios en tipo de identificación para actualizar validadores
+		this.socioForm.get('tipo_identificacion')?.valueChanges.subscribe((tipo) => {
+			this.updateIdentificacionValidators(tipo);
+			this.socioForm.get('identificacion')?.updateValueAndValidity();
+		});
 	}
 
 	ngOnInit(): void {
 		this.loadSocios();
 		this.cargarBarrios();
+		// Inicializar validadores con el valor por defecto ('C')
+		this.updateIdentificacionValidators('C');
+	}
+
+	updateIdentificacionValidators(tipo: string) {
+		const identControl = this.socioForm.get('identificacion');
+		identControl?.clearValidators();
+		identControl?.addValidators(Validators.required);
+
+		if (tipo === 'C') {
+			identControl?.addValidators([Validators.pattern(/^\d{10}$/)]); // 10 dígitos numéricos
+		} else if (tipo === 'R') {
+			identControl?.addValidators([Validators.pattern(/^\d{13}$/)]); // 13 dígitos numéricos
+		} else if (tipo === 'P') {
+			identControl?.addValidators([Validators.minLength(5)]); // Mínimo 5 caracteres
+		}
 	}
 
 	loadSocios(): void {
-		this.isLoading = true;
 		this.socioService
 			.getSocios()
 			.pipe(
-				tap((data) => {
-					this.socios = data;
-					this.isLoading = false;
-				}),
+				tap((data) => (this.socios = data)),
 				catchError((err) => {
-					this.messageService.add({
-						severity: 'error',
-						summary: 'Error',
-						detail: `Error al cargar socios: ${err.message}`,
-					});
-					this.isLoading = false;
+					this.mostrarError('Error al cargar socios', err.message);
 					return of([]);
 				}),
 			)
 			.subscribe();
 	}
+
 	cargarBarrios() {
 		this.barriosService.getBarrios().subscribe({
 			next: (data) => {
-				// Solo mostramos los barrios activos para que no registren en uno borrado
-				// Asegúrate de que tu interfaz Barrio tenga la propiedad 'activo'
 				this.listaBarrios = data.filter((b) => b.activo);
 			},
 			error: (err) => {
-				console.error('Error cargando barrios', err);
-				this.messageService.add({
-					severity: 'error',
-					summary: 'Error',
-					detail: 'No se pudieron cargar los barrios.',
-				});
+				console.error(err);
+				this.mostrarError('Error', 'No se pudieron cargar los barrios.');
 			},
 		});
 	}
+
 	// --- MÉTODOS DEL MODAL ---
 
 	openNewSocioModal(): void {
 		this.isEditMode = false;
 		this.currentSocioId = null;
 		this.socioForm.reset({
+			tipo_identificacion: 'C',
 			rol: RolUsuario.SOCIO,
 			esta_activo: true,
 		});
-		this.f['cedula'].enable();
+		this.updateIdentificacionValidators('C');
+		this.socioForm.enable(); // Habilita todo
 		this.showSocioModal = true;
 	}
 
 	verDetalle(id: number) {
 		this.router.navigate(['/dashboard/socios/detalle', id]);
 	}
+
 	openEditSocioModal(socio: Socio): void {
 		this.isEditMode = true;
 		this.currentSocioId = socio.id!;
+
 		const rawBarrio = socio.barrio_id || (socio as any).barrio_domicilio_id || (socio as any).barrio;
 		const idBarrioReal = rawBarrio ? Number(rawBarrio) : null;
+
 		this.socioForm.patchValue({
-			cedula: socio.cedula,
+			tipo_identificacion: socio.tipo_identificacion || 'C',
+			identificacion: socio.identificacion,
 			nombres: socio.nombres,
 			apellidos: socio.apellidos,
 			email: socio.email,
@@ -174,7 +187,11 @@ export class SociosComponent implements OnInit {
 			esta_activo: socio.esta_activo,
 		});
 
-		this.f['cedula'].disable(); // La cédula no se debe editar
+		// En modo edición, a veces no se permite cambiar la identificación.
+		// Si quieres permitirlo, comenta la siguiente línea:
+		// this.f['identificacion'].disable();
+
+		this.updateIdentificacionValidators(this.f['tipo_identificacion'].value);
 		this.showSocioModal = true;
 	}
 
@@ -190,94 +207,89 @@ export class SociosComponent implements OnInit {
 			this.messageService.add({
 				severity: 'warn',
 				summary: 'Formulario Inválido',
-				detail: 'Por favor, revise los campos requeridos (Barrio y Dirección son obligatorios).',
+				detail: 'Por favor, revise los errores en el formulario.',
 			});
 			return;
 		}
 
 		const formValues = this.socioForm.getRawValue();
 
-		// ✅ CORRECCIÓN: Preparamos el objeto limpio
-		const datosParaEnviar = {
-			cedula: formValues.cedula,
-			nombres: formValues.nombres,
-			apellidos: formValues.apellidos,
-			email: formValues.email,
-			telefono: formValues.telefono,
-
-			// Los campos nuevos obligatorios
-			barrio_id: formValues.barrio_id,
-
-			direccion: formValues.direccion,
-
-			rol: formValues.rol,
-			esta_activo: formValues.esta_activo,
+		// Construir objeto DTO
+		const datosParaEnviar: any = {
+			...formValues,
+			// Asegurar que barrio_id sea número
+			barrio_id: Number(formValues.barrio_id),
 		};
 
 		let request$: Observable<any>;
 
 		if (this.isEditMode && this.currentSocioId) {
-			// EDITAR
 			request$ = this.socioService.updateSocio(this.currentSocioId, datosParaEnviar);
 		} else {
-			// CREAR
-			// Al crear, no solemos enviar 'esta_activo' (el backend lo pone true por defecto),
-			// pero si tu backend lo acepta, déjalo.
 			request$ = this.socioService.createSocio(datosParaEnviar);
 		}
 
-		request$
-			.pipe(
-				tap(() => {
-					this.messageService.add({
-						severity: 'success',
-						summary: 'Éxito',
-						detail: `Socio ${this.isEditMode ? 'actualizado' : 'creado'} correctamente.`,
+		request$.subscribe({
+			next: () => {
+				this.messageService.add({
+					severity: 'success',
+					summary: 'Éxito',
+					detail: `Socio ${this.isEditMode ? 'actualizado' : 'creado'} correctamente.`,
+				});
+				this.loadSocios();
+				this.closeSocioModal();
+			},
+			error: (err) => {
+				console.error('Error al guardar socio:', err);
+
+				// Manejo de errores de validación del backend (400)
+				if (err.status === 400 && err.error) {
+					// err.error es objeto tipo { identificacion: ['Error...'], email: ['Error...'] }
+					const validationErrors = err.error;
+
+					// Recorremos los errores y los asignamos a los controles del formulario
+					Object.keys(validationErrors).forEach((key) => {
+						const control = this.socioForm.get(key);
+						if (control) {
+							// Seteamos el error en el control
+							control.setErrors({ backend: validationErrors[key][0] });
+							control.markAsTouched();
+						}
 					});
-					this.loadSocios();
-					this.closeSocioModal();
-				}),
-				catchError((err) => {
-					console.error(err);
+
 					this.messageService.add({
 						severity: 'error',
-						summary: 'Error',
-						detail: 'No se pudo guardar. Verifique los datos.',
+						summary: 'Error de Validación',
+						detail: 'Verifique los campos marcados en rojo.',
 					});
-					return of(null);
-				}),
-			)
-			.subscribe();
+				} else {
+					// Otro tipo de error (500, conexión, etc)
+					const msg = err.message || 'Ocurrió un error inesperado.';
+					this.mostrarError('Error al guardar', msg);
+				}
+			},
+		});
 	}
+
 	deleteSocio(id: number): void {
 		this.confirmationService.confirm({
-			message: '¿Está seguro de que desea eliminar (desactivar) este socio? Esta acción es reversible.',
+			message: '¿Está seguro de que desea eliminar este socio?',
 			header: 'Confirmar Eliminación',
 			icon: 'pi pi-exclamation-triangle',
 			acceptLabel: 'Sí, eliminar',
 			rejectLabel: 'Cancelar',
 			accept: () => {
-				this.socioService
-					.deleteSocio(id)
-					.pipe(
-						tap(() => {
-							this.messageService.add({
-								severity: 'success',
-								summary: 'Eliminado',
-								detail: 'Socio marcado como inactivo.',
-							});
-							this.loadSocios();
-						}),
-						catchError((err) => {
-							this.messageService.add({
-								severity: 'error',
-								summary: 'Error',
-								detail: err.message,
-							});
-							return of(null);
-						}),
-					)
-					.subscribe();
+				this.socioService.deleteSocio(id).subscribe({
+					next: () => {
+						this.messageService.add({
+							severity: 'success',
+							summary: 'Eliminado',
+							detail: 'Socio eliminado correctamente.',
+						});
+						this.loadSocios();
+					},
+					error: (err) => this.mostrarError('Error', err.message),
+				});
 			},
 		});
 	}
@@ -290,14 +302,31 @@ export class SociosComponent implements OnInit {
 	filterGlobal(event: Event, dt: Table) {
 		dt.filterGlobal((event.target as HTMLInputElement).value, 'contains');
 	}
+
 	getNombreBarrio(id: any): string {
-		// Si la lista no ha cargado o el id es nulo
+		// Implementación solicitada: Buscar nombre en lista local por ID
 		if (!this.listaBarrios || !id) return '---';
-
-		// Buscamos el barrio en la lista que ya tienes descargada
-		// Nota: Asegúrate que tu interfaz Barrio tenga 'id' y 'nombre'
 		const barrioEncontrado = this.listaBarrios.find((b) => b.id === Number(id));
-
 		return barrioEncontrado ? barrioEncontrado.nombre : 'Desconocido';
+	}
+
+	mostrarError(summary: string, detail: string) {
+		this.messageService.add({ severity: 'error', summary, detail });
+	}
+
+	// Helper para mostrar errores en el template
+	getIdentificacionError(): string {
+		const control = this.f['identificacion'];
+		if (control.errors) {
+			if (control.errors['required']) return 'La identificación es obligatoria.';
+			if (control.errors['pattern']) {
+				const tipo = this.f['tipo_identificacion'].value;
+				if (tipo === 'C') return 'La cédula debe tener 10 dígitos numéricos.';
+				if (tipo === 'R') return 'El RUC debe tener 13 dígitos numéricos.';
+			}
+			if (control.errors['minlength']) return 'Debe tener al menos 5 caracteres.';
+			if (control.errors['backend']) return control.errors['backend']; // Error que viene del backend
+		}
+		return '';
 	}
 }

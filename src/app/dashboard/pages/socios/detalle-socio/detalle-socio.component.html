@@ -23,7 +23,7 @@
 				<h1 class="text-xl font-bold text-gray-800 m-0 leading-tight">{{ socio.nombres }} {{ socio.apellidos }}</h1>
 				<div class="text-sm text-gray-500 flex items-center gap-2">
 					<i class="pi pi-id-card text-green-600"></i>
-					<span>{{ socio.cedula }}</span>
+					<span>{{ socio.identificacion }}</span>
 					<p-tag
 						[value]="socio.esta_activo ? 'ACTIVO' : 'INACTIVO'"
 						[severity]="socio.esta_activo ? 'success' : 'danger'"

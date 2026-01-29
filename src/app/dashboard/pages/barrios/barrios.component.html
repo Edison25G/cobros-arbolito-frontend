@@ -1,27 +1,13 @@
-<p-toast></p-toast>
-<p-confirmDialog></p-confirmDialog>
+<app-page-header
+	title="Organización por Barrios"
+	subtitle="Gestione los sectores y zonas de cobro."
+	buttonLabel="Nuevo Barrio"
+	icon="pi pi-plus"
+	(actionClick)="abrirModalNuevo()"
+></app-page-header>
 
 <div class="p-4 animate-fade-in">
-	<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-		<div>
-			<h2 class="text-2xl font-bold text-gray-800">Organización por Barrios</h2>
-			<p class="text-sm text-gray-500">Gestione los sectores y zonas de cobro.</p>
-		</div>
-
-		<p-button
-			label="Nuevo Barrio"
-			icon="pi pi-plus"
-			styleClass="bg-[#23A455] border-none hover:bg-[#1b8744]"
-			(onClick)="abrirModalNuevo()"
-		>
-		</p-button>
-	</div>
-
-	<div *ngIf="loading" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-		<p-skeleton height="150px" styleClass="rounded-xl" *ngFor="let i of [1, 2, 3, 4]"></p-skeleton>
-	</div>
-
-	<div *ngIf="!loading" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+	<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
 		<div
 			*ngFor="let barrio of barrios"
 			class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-all duration-300 cursor-pointer group relative overflow-hidden focus:ring-2 focus:ring-blue-400 focus:outline-none flex flex-col justify-between"
@@ -79,7 +65,7 @@
 		</div>
 	</div>
 
-	<div *ngIf="!loading && barrios.length === 0" class="text-center py-10">
+	<div *ngIf="barrios.length === 0" class="text-center py-10">
 		<div class="flex flex-col items-center justify-center text-gray-500">
 			<i class="pi pi-map text-4xl mb-2 text-gray-300"></i>
 			<p class="font-medium">No se encontraron barrios registrados.</p>

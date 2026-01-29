@@ -18,32 +18,39 @@ export class MingasService {
 	// --- CRUD REAL (CONECTADO AL BACKEND) ---
 
 	getAll(): Observable<Minga[]> {
-		// Busca las mingas en el backend
-		return this.http.get<Minga[]>(`${this.apiUrl}/mingas/`);
+		return this.http.get<Minga[]>(`${this.apiUrl}/eventos/`);
 	}
 
 	getById(id: number): Observable<Minga> {
-		return this.http.get<Minga>(`${this.apiUrl}/mingas/${id}/`);
+		return this.http.get<Minga>(`${this.apiUrl}/eventos/${id}/`);
 	}
 
 	create(minga: Minga): Observable<Minga> {
-		return this.http.post<Minga>(`${this.apiUrl}/mingas/`, minga);
+		return this.http.post<Minga>(`${this.apiUrl}/eventos/`, minga);
 	}
 
 	delete(id: number): Observable<void> {
-		return this.http.delete<void>(`${this.apiUrl}/mingas/${id}/`);
+		return this.http.delete<void>(`${this.apiUrl}/eventos/${id}/`);
 	}
 
 	// --- ASISTENCIA ---
 
 	// Obtener lista para tomar asistencia (Socios + Estado actual en esa minga)
 	getAsistencia(mingaId: number): Observable<ItemAsistencia[]> {
-		return this.http.get<ItemAsistencia[]>(`${this.apiUrl}/mingas/${mingaId}/asistencia/`);
+		return this.http.get<ItemAsistencia[]>(`${this.apiUrl}/eventos/${mingaId}/asistencia/`);
 	}
 
 	// Guardar la lista de asistencia
-	saveAsistencia(mingaId: number, lista: ItemAsistencia[]): Observable<any> {
-		const payload = { asistencias: lista };
-		return this.http.post(`${this.apiUrl}/mingas/${mingaId}/registrar-asistencia/`, payload);
+	// Guardar la lista de asistencia (Enviar solo IDs de presentes)
+	saveAsistencia(eventoId: number, lista: ItemAsistencia[]): Observable<any> {
+		// Filtramos solo los que están presentes
+		const sociosIds = lista.filter((item) => item.estado === 'Presente').map((item) => item.socio_id);
+		const payload = { socios_ids: sociosIds };
+		return this.http.put(`${this.apiUrl}/eventos/${eventoId}/registrar_asistencia/`, payload);
+	}
+
+	// Cerrar evento (Generar multas)
+	cerrarEvento(id: number): Observable<any> {
+		return this.http.post(`${this.apiUrl}/eventos/${id}/cerrar/`, {});
 	}
 }
