@@ -62,7 +62,7 @@ export class AsistenciaComponent implements OnInit {
 	// Opciones visuales para los botones
 	estados = [
 		{ value: 'PRESENTE', icon: 'pi pi-check', class: 'bg-green-100 text-green-700 border-green-500', label: 'Asiste' },
-		{ value: 'Falta', icon: 'pi pi-times', class: 'bg-red-100 text-red-700 border-red-500', label: 'Falta' },
+		{ value: 'FALTA', icon: 'pi pi-times', class: 'bg-red-100 text-red-700 border-red-500', label: 'Falta' },
 		{
 			value: 'JUSTIFICADO',
 			icon: 'pi pi-shield',

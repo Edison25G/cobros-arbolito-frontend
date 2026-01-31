@@ -13,13 +13,16 @@ import { InputNumberModule } from 'primeng/inputnumber';
 import { DatePickerModule } from 'primeng/datepicker';
 import { TagModule } from 'primeng/tag';
 import { SelectModule } from 'primeng/select';
+import { MultiSelectModule } from 'primeng/multiselect';
 import { ToastModule } from 'primeng/toast';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { TooltipModule } from 'primeng/tooltip';
 import { MessageService, ConfirmationService } from 'primeng/api';
 
 // Servicios
 import { MingasService } from '../../../core/services/mingas.service';
 import { BarriosService } from '../../../core/services/barrios.service';
+import { SocioService } from '../../../core/services/socio.service';
 import { Minga } from '../../../core/interfaces/minga.interface';
 
 @Component({
@@ -37,8 +40,10 @@ import { Minga } from '../../../core/interfaces/minga.interface';
 		DatePickerModule,
 		TagModule,
 		SelectModule,
+		MultiSelectModule,
 		ToastModule,
 		ConfirmDialogModule,
+		TooltipModule,
 	],
 	providers: [MessageService, ConfirmationService, DatePipe],
 	templateUrl: './gestion-mingas.component.html',
@@ -46,6 +51,7 @@ import { Minga } from '../../../core/interfaces/minga.interface';
 export class GestionMingasComponent implements OnInit {
 	private mingasService = inject(MingasService);
 	private barriosService = inject(BarriosService); // Inyección de Barrios
+	private sociosService = inject(SocioService); // Inyección de Socios
 	private messageService = inject(MessageService);
 	private confirmationService = inject(ConfirmationService);
 	private fb = inject(FormBuilder);
@@ -54,6 +60,7 @@ export class GestionMingasComponent implements OnInit {
 
 	mingas: Minga[] = [];
 	barrios: any[] = []; // Lista de barrios para el dropdown
+	socios: any[] = []; // Lista de socios para selección manual
 	loading = true;
 	dialogVisible = false;
 	mingaForm!: FormGroup;
@@ -69,11 +76,13 @@ export class GestionMingasComponent implements OnInit {
 	opcionesSeleccion = [
 		{ label: 'Todos los Socios', value: 'TODOS' },
 		{ label: 'Por Barrio', value: 'BARRIO' },
+		{ label: 'Selección Manual', value: 'MANUAL' },
 	];
 
 	ngOnInit() {
 		this.cargarEventos();
 		this.cargarBarrios();
+		this.cargarSocios();
 		this.initForm();
 	}
 
@@ -83,22 +92,35 @@ export class GestionMingasComponent implements OnInit {
 			tipo: ['MINGA', Validators.required], // Nuevo campo
 			seleccion_socios: ['TODOS', Validators.required], // Nuevo campo
 			barrio_id: [null], // Opcional, validar dinámicamente
+			lista_socios_ids: [[]], // Nuevo campo para selección manual
 			// lugar: ['', Validators.required],
 			fecha: [new Date(), Validators.required],
 			multa: [5.0, [Validators.required, Validators.min(0)]],
 			descripcion: [''],
 		});
 
-		// Validación dinámica: Barrio requerido si seleccion_socios es BARRIO
+		// Validación dinámica: Barrio o Lista de Socios según selección
 		this.mingaForm.get('seleccion_socios')?.valueChanges.subscribe((val) => {
 			const barrioControl = this.mingaForm.get('barrio_id');
+			const listaSociosControl = this.mingaForm.get('lista_socios_ids');
+
 			if (val === 'BARRIO') {
 				barrioControl?.setValidators(Validators.required);
-			} else {
+				listaSociosControl?.clearValidators();
+				listaSociosControl?.setValue([]);
+			} else if (val === 'MANUAL') {
+				listaSociosControl?.setValidators(Validators.required);
 				barrioControl?.clearValidators();
 				barrioControl?.setValue(null);
+			} else {
+				// TODOS
+				barrioControl?.clearValidators();
+				barrioControl?.setValue(null);
+				listaSociosControl?.clearValidators();
+				listaSociosControl?.setValue([]);
 			}
 			barrioControl?.updateValueAndValidity();
+			listaSociosControl?.updateValueAndValidity();
 		});
 	}
 
@@ -119,6 +141,21 @@ export class GestionMingasComponent implements OnInit {
 		});
 	}
 
+	cargarSocios() {
+		this.sociosService.getSocios().subscribe({
+			next: (data) => {
+				// Filtramos solo activos y creamos el campo 'nombre_completo' para el dropdown
+				this.socios = data
+					.filter((s) => s.esta_activo)
+					.map((s) => ({
+						...s,
+						nombre_completo: `${s.nombres} ${s.apellidos} - ${s.identificacion}`,
+					}));
+			},
+			error: (err) => console.error('Error cargando socios:', err),
+		});
+	}
+
 	openNew() {
 		this.isEditing = false;
 		this.currentEventoId = null;
@@ -127,6 +164,7 @@ export class GestionMingasComponent implements OnInit {
 			multa: 5.0,
 			tipo: 'MINGA',
 			seleccion_socios: 'TODOS',
+			lista_socios_ids: [],
 		});
 		this.dialogVisible = true;
 	}
@@ -168,6 +206,7 @@ export class GestionMingasComponent implements OnInit {
 			tipo: tipoValue,
 			seleccion_socios: sociosValue,
 			barrio_id: formValue.barrio_id ? Number(formValue.barrio_id) : null,
+			lista_socios_ids: formValue.lista_socios_ids || [], // Enviamos la lista manual si existe
 		};
 
 		console.log('DTO Generado (Payload):', payload);

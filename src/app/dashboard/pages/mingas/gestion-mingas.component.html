@@ -62,7 +62,7 @@
 					<td class="text-center">
 						<div class="flex justify-center gap-2">
 							<p-button
-								*ngIf="minga.estado === 'Programada' || minga.estado === 'BORRADOR'"
+								*ngIf="(minga.estado === 'Programada' || minga.estado === 'BORRADOR') && minga.tipo !== 'APORTE'"
 								icon="pi pi-list-check"
 								pTooltip="Tomar Asistencia"
 								tooltipPosition="top"
@@ -76,7 +76,7 @@
 							<p-button
 								*ngIf="minga.estado === 'Programada' || minga.estado === 'BORRADOR'"
 								icon="pi pi-check-circle"
-								pTooltip="Cerrar Evento (Generar Multas)"
+								[pTooltip]="minga.tipo === 'APORTE' ? 'Generar Cobros Masivos' : 'Cerrar Evento (Generar Multas)'"
 								tooltipPosition="top"
 								severity="success"
 								[rounded]="true"
@@ -154,6 +154,7 @@
 						styleClass="w-full"
 					></p-select>
 				</div>
+
 				<div *ngIf="mingaForm.get('seleccion_socios')?.value === 'BARRIO'" class="flex flex-col gap-2 animate-fade-in">
 					<span class="font-bold text-sm text-gray-700">Seleccione Barrio *</span>
 					<p-select
@@ -165,6 +166,22 @@
 						appendTo="body"
 						styleClass="w-full"
 					></p-select>
+				</div>
+				<div *ngIf="mingaForm.get('seleccion_socios')?.value === 'MANUAL'" class="flex flex-col gap-2 animate-fade-in">
+					<span class="font-bold text-sm text-gray-700">Seleccione Socios *</span>
+					<p-multiSelect
+						[options]="socios"
+						formControlName="lista_socios_ids"
+						defaultLabel="Busque y seleccione..."
+						optionLabel="nombre_completo"
+						optionValue="id"
+						display="chip"
+						[filter]="true"
+						filterBy="nombre_completo"
+						appendTo="body"
+						styleClass="w-full"
+						[showClear]="true"
+					></p-multiSelect>
 				</div>
 			</div>
 
@@ -194,13 +211,6 @@
 					</p-inputNumber>
 				</div>
 			</div>
-
-			<!-- <div class="flex flex-col gap-2">
-				<span class="font-bold text-sm text-gray-700">Lugar de Encuentro *</span>
-				<input pInputText formControlName="lugar" placeholder="Ej: Casa Comunal" class="w-full" />
-				<small class="text-gray-400 text-xs">Nota: Este dato es informativo (se puede guardar en descripción).</small>
-			</div> -->
-
 			<div class="flex flex-col gap-2">
 				<span class="font-bold text-sm text-gray-700">Descripción / Notas</span>
 				<textarea
