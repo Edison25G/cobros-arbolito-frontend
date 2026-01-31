@@ -48,9 +48,9 @@ export class FacturacionService {
 	}
 
 	// FacturacionService
-	getFacturasPorSocio(cedula: string, verTodo = false): Observable<any[]> {
+	getFacturasPorSocio(identificacion: string, verTodo = false): Observable<any[]> {
 		// 1. Construimos la URL base
-		let url = `${this.apiUrl}/facturas-gestion/pendientes/?cedula=${cedula}`;
+		let url = `${this.apiUrl}/facturas-gestion/pendientes/?identificacion=${identificacion}`;
 
 		// 2. Si la bandera es true (Perfil Socio), agregamos el parámetro mágico
 		if (verTodo) {

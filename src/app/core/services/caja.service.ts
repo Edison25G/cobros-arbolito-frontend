@@ -42,7 +42,7 @@ export class CajaService {
 		let url = `${this.apiUrl}/facturas-gestion/pendientes/`;
 		const params: string[] = [];
 
-		if (q) params.push(`cedula=${encodeURIComponent(q)}`);
+		if (q) params.push(`identificacion=${encodeURIComponent(q)}`);
 		if (dia) params.push(`dia=${dia}`);
 		if (mes) params.push(`mes=${mes}`);
 		if (anio) params.push(`anio=${anio}`);

@@ -160,7 +160,7 @@ export class CajaComponent implements OnInit {
 			this.facturasFiltradas = this.facturasPendientes.filter(
 				(f) =>
 					f.socio.toLowerCase().includes(filtro) ||
-					f.cedula.includes(filtro) ||
+					f.identificacion.includes(filtro) ||
 					(f.medidor && f.medidor.toLowerCase().includes(filtro)),
 			);
 		}

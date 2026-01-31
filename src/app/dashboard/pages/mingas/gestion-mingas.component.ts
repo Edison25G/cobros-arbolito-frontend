@@ -57,7 +57,8 @@ export class GestionMingasComponent implements OnInit {
 	loading = true;
 	dialogVisible = false;
 	mingaForm!: FormGroup;
-
+	isEditing = false;
+	currentEventoId: number | null = null;
 	// Opciones para Dropdowns
 	tiposEvento = [
 		{ label: 'Minga', value: 'MINGA' },
@@ -82,7 +83,7 @@ export class GestionMingasComponent implements OnInit {
 			tipo: ['MINGA', Validators.required], // Nuevo campo
 			seleccion_socios: ['TODOS', Validators.required], // Nuevo campo
 			barrio_id: [null], // Opcional, validar dinámicamente
-			lugar: ['', Validators.required],
+			// lugar: ['', Validators.required],
 			fecha: [new Date(), Validators.required],
 			multa: [5.0, [Validators.required, Validators.min(0)]],
 			descripcion: [''],
@@ -119,6 +120,8 @@ export class GestionMingasComponent implements OnInit {
 	}
 
 	openNew() {
+		this.isEditing = false;
+		this.currentEventoId = null;
 		this.mingaForm.reset({
 			fecha: new Date(),
 			multa: 5.0,
@@ -134,25 +137,63 @@ export class GestionMingasComponent implements OnInit {
 			return;
 		}
 
+		console.log('Form Value Raw:', this.mingaForm.value);
+
 		const formValue = this.mingaForm.value;
 
-		// Preparar objeto
-		const nuevoEvento: any = {
-			...formValue,
-			fecha: this.datePipe.transform(formValue.fecha, 'yyyy-MM-dd'),
-			// Asegurar barrio_id numérico si existe
+		// 1. Transformación de Fecha (Ignorando zona horaria)
+		// Creamos una fecha "limpia" manipulando el string ISO para evitar problemas de timezone
+		const fechaRaw = new Date(formValue.fecha);
+		const fechaISO = new Date(fechaRaw.getTime() - fechaRaw.getTimezoneOffset() * 60000).toISOString().split('T')[0];
+
+		// 2. Extracción de valores de Dropdowns (si vienen como objetos)
+		const tipoValue =
+			typeof formValue.tipo === 'object' && formValue.tipo !== null
+				? formValue.tipo.code || formValue.tipo.value
+				: formValue.tipo;
+		const sociosValue =
+			typeof formValue.seleccion_socios === 'object' && formValue.seleccion_socios !== null
+				? formValue.seleccion_socios.code || formValue.seleccion_socios.value
+				: formValue.seleccion_socios;
+
+		// 3. Creación del Payload (DTO)
+		// Mapeamos explícitamente del Modelo del Formulario (UI) al Contrato de la API (Backend)
+		const payload: any = {
+			nombre: formValue.titulo, // Mapeo: titulo -> nombre
+			valor_multa: formValue.multa, // Mapeo: multa -> valor_multa
+			fecha: fechaISO, // Mapeo: Date -> YYYY-MM-DD
+			descripcion: formValue.descripcion || '',
+			hora: '08:00', // Valor por defecto requerido por backend
+			// lugar: formValue.lugar,
+			tipo: tipoValue,
+			seleccion_socios: sociosValue,
 			barrio_id: formValue.barrio_id ? Number(formValue.barrio_id) : null,
 		};
 
-		this.mingasService.create(nuevoEvento).subscribe({
-			next: () => {
-				this.messageService.add({ severity: 'success', summary: 'Creado', detail: 'Evento creado correctamente' });
-				this.dialogVisible = false;
+		console.log('DTO Generado (Payload):', payload);
+
+		const request$ =
+			this.isEditing && this.currentEventoId
+				? this.mingasService.updateEvento(this.currentEventoId, payload)
+				: this.mingasService.create(payload);
+
+		request$.subscribe({
+			next: (_res) => {
+				const msg = this.isEditing ? 'Evento actualizado correctamente' : 'Evento creado correctamente';
+				this.messageService.add({ severity: 'success', summary: 'Éxito', detail: msg });
 				this.cargarEventos();
+				this.dialogVisible = false;
+				this.isEditing = false;
+				this.currentEventoId = null;
 			},
 			error: (err) => {
-				console.error(err);
-				this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo crear el evento.' });
+				console.error('Error al guardar evento:', err);
+				console.error('Detalle del error (Backend):', err.error);
+				this.messageService.add({
+					severity: 'error',
+					summary: 'Error',
+					detail: 'No se pudo guardar el evento. Revisa la consola.',
+				});
 			},
 		});
 	}
@@ -200,6 +241,31 @@ export class GestionMingasComponent implements OnInit {
 					this.cargarEventos();
 				});
 			},
+		});
+	}
+	editarEvento(evento: any) {
+		this.isEditing = true;
+		this.currentEventoId = evento.id;
+		this.dialogVisible = true;
+
+		// Truco para la fecha: Convertir string "2026-01-31" a Objeto Date
+		// Agregamos 'T00:00:00' para evitar problemas de zona horaria (-1 día)
+		const fechaDate = new Date(evento.fecha + 'T00:00:00');
+
+		// Determinación automática de 'seleccion_socios'
+		const esBarrio = evento.barrio_id !== null && evento.barrio_id !== undefined;
+		const seleccionSocios = esBarrio ? 'BARRIO' : 'TODOS';
+
+		// Llenamos el formulario
+		this.mingaForm.patchValue({
+			titulo: evento.nombre, // Recordar: Backend 'nombre' -> Front 'titulo'
+			tipo: evento.tipo,
+			fecha: fechaDate,
+			multa: evento.valor_multa, // Backend 'valor_multa' -> Front 'multa'
+			// lugar: evento.lugar,     // (Si decidiste usarlo o guardarlo en descripción)
+			descripcion: evento.descripcion,
+			seleccion_socios: seleccionSocios,
+			barrio_id: evento.barrio_id,
 		});
 	}
 }

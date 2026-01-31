@@ -59,14 +59,15 @@ export class AsistenciaComponent implements OnInit {
 	loading = true;
 
 	// Opciones visuales para los botones
+	// Opciones visuales para los botones
 	estados = [
-		{ value: 'Presente', icon: 'pi pi-check', class: 'bg-green-100 text-green-700 border-green-500', label: 'Asiste' },
+		{ value: 'PRESENTE', icon: 'pi pi-check', class: 'bg-green-100 text-green-700 border-green-500', label: 'Asiste' },
 		{ value: 'Falta', icon: 'pi pi-times', class: 'bg-red-100 text-red-700 border-red-500', label: 'Falta' },
 		{
-			value: 'Exonerado',
+			value: 'JUSTIFICADO',
 			icon: 'pi pi-shield',
 			class: 'bg-yellow-100 text-yellow-700 border-yellow-500',
-			label: 'Exonerado',
+			label: 'Justificado',
 		},
 	];
 
@@ -86,15 +87,29 @@ export class AsistenciaComponent implements OnInit {
 		this.mingasService.getById(this.mingaId).subscribe((m) => (this.minga = m));
 
 		// 2. Cargar Lista Socios
-		this.mingasService.getAsistencia(this.mingaId).subscribe((data) => {
-			this.asistenciaList = data;
-			this.loading = false;
+		this.mingasService.getAsistencia(this.mingaId).subscribe({
+			next: (data) => {
+				this.asistenciaList = data;
+				this.loading = false;
+			},
+			error: (err) => {
+				console.error('Error cargando asistencia:', err);
+				this.loading = false;
+				this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo cargar la lista' });
+			},
 		});
 	}
 
-	// ✅ CORRECCIÓN 3: Tipado estricto para evitar errores de escritura
-	marcarTodos(estado: 'Presente' | 'Falta' | 'Exonerado') {
-		this.asistenciaList.forEach((s) => (s.estado = estado));
+	marcarTodos(estado: 'PRESENTE' | 'Falta' | 'JUSTIFICADO') {
+		// Validar que el estado sea compatible con el tipo EstadoAsistencia (excepto 'Falta' visual que mapeamos interno)
+		// Simplemente iteramos
+		this.asistenciaList.forEach((s) => {
+			if (estado === 'Falta') {
+				s.estado = 'FALTA'; // O PENDIENTE si queremos limpiar
+			} else {
+				s.estado = estado;
+			}
+		});
 		this.messageService.add({ severity: 'info', summary: 'Actualizado', detail: `Todos marcados como ${estado}` });
 	}
 

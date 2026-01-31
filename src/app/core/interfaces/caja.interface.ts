@@ -7,7 +7,7 @@ export interface EstadoCuentaResponse {
 		id: number;
 		nombres: string;
 		apellidos: string;
-		cedula: string;
+		identificacion: string;
 		barrio: string;
 		estado: string; // 'ACTIVO' | 'INACTIVO'
 	};
@@ -46,7 +46,7 @@ export interface TransferenciaPendiente {
 	pago_id: number; // ID del pago en tabla 'pagos'
 	factura_id: number; // ID de la factura relacionada
 	socio: string; // "Nombre Apellido"
-	cedula: string;
+	identificacion: string;
 	banco_fecha: string; // Fecha de subida
 	monto: number;
 	referencia: string; // Número de comprobante
@@ -86,7 +86,7 @@ export interface ComprobanteFactura {
 
 // 9. Datos del socio en el comprobante
 export interface ComprobanteSocio {
-	cedula: string;
+	identificacion: string;
 	nombres: string;
 	apellidos: string;
 	direccion: string;
@@ -122,7 +122,7 @@ export interface CobroResponse {
 export interface FacturaPendiente {
 	factura_id: number;
 	socio: string;
-	cedula: string;
+	identificacion: string;
 	fecha_emision: string;
 	medidor: string;
 	consumo: string;

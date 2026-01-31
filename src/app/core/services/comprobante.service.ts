@@ -34,7 +34,7 @@ export class ComprobanteService {
 
 		// --- 3. DATOS DEL SOCIO ---
 		doc.text(`SOCIO: ${socio.nombres} ${socio.apellidos}`, 5, 36);
-		doc.text(`CÉDULA: ${socio.cedula}`, 5, 40);
+		doc.text(`IDENTIFICACIÓN: ${socio.identificacion}`, 5, 40);
 		doc.text(`DIRECCIÓN: ${socio.direccion || 'S/N'}`, 5, 44);
 		doc.text('--------------------------------------------------', 40, 48, { align: 'center' });
 

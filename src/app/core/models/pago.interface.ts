@@ -15,7 +15,7 @@ export interface FacturaSocio {
 	socio?: {
 		nombres: string;
 		apellidos: string;
-		cedula: string;
+		identificacion: string;
 		direccion: string;
 	};
 	detalle?: {

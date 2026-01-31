@@ -17,7 +17,7 @@ export interface LecturaPendiente {
 
 	medidor_codigo: string; // Backend manda: codigo_medidor
 	socio_nombre: string; // Backend manda: socio
-	cedula?: string;
+	identificacion?: string;
 
 	monto_agua: number; // Backend manda: valor_estimado
 	multas_mingas: number;

@@ -20,11 +20,10 @@
 			<ng-template pTemplate="header">
 				<tr>
 					<th style="width: 15%">Fecha</th>
-					<th style="width: 20%">Evento</th>
-					<th style="width: 10%">Tipo</th>
-					<th style="width: 20%">Lugar</th>
-					<th style="width: 10%">Multa</th>
-					<th style="width: 10%">Estado</th>
+					<th style="width: 25%">Evento</th>
+					<th style="width: 15%">Tipo</th>
+					<th style="width: 15%">Multa</th>
+					<th style="width: 15%">Estado</th>
 					<th class="text-center" style="width: 15%">Acciones</th>
 				</tr>
 			</ng-template>
@@ -33,8 +32,8 @@
 				<tr>
 					<td class="whitespace-nowrap">{{ minga.fecha | date: 'dd/MM/yyyy' }}</td>
 					<td>
-						<div class="font-bold text-gray-800">{{ minga.titulo }}</div>
-						<div class="text-xs text-gray-500 truncate max-w-[150px]">{{ minga.descripcion }}</div>
+						<div class="font-bold text-gray-800">{{ minga.nombre }}</div>
+						<div class="text-xs text-gray-500 truncate max-w-[200px]">{{ minga.descripcion }}</div>
 					</td>
 					<td>
 						<p-tag
@@ -43,20 +42,27 @@
 							styleClass="text-[10px]"
 						></p-tag>
 					</td>
-					<td>{{ minga.lugar }}</td>
-					<td class="font-semibold text-red-600">${{ minga.multa | number: '1.2-2' }}</td>
+					<td class="font-semibold text-red-600">${{ minga.valor_multa | number: '1.2-2' }}</td>
+
 					<td>
 						<p-tag
 							[value]="minga.estado"
-							[severity]="minga.estado === 'Realizada' ? 'success' : minga.estado === 'Programada' ? 'info' : 'danger'"
+							[severity]="
+								minga.estado === 'Realizada'
+									? 'success'
+									: minga.estado === 'Programada'
+										? 'info'
+										: minga.estado === 'BORRADOR'
+											? 'warn'
+											: 'danger'
+							"
 							[rounded]="true"
 						></p-tag>
 					</td>
 					<td class="text-center">
 						<div class="flex justify-center gap-2">
-							<!-- Botón Asistencia -->
 							<p-button
-								*ngIf="minga.estado === 'Programada'"
+								*ngIf="minga.estado === 'Programada' || minga.estado === 'BORRADOR'"
 								icon="pi pi-list-check"
 								pTooltip="Tomar Asistencia"
 								tooltipPosition="top"
@@ -67,9 +73,8 @@
 							>
 							</p-button>
 
-							<!-- Botón Cerrar Evento -->
 							<p-button
-								*ngIf="minga.estado === 'Programada'"
+								*ngIf="minga.estado === 'Programada' || minga.estado === 'BORRADOR'"
 								icon="pi pi-check-circle"
 								pTooltip="Cerrar Evento (Generar Multas)"
 								tooltipPosition="top"
@@ -78,7 +83,14 @@
 								[text]="true"
 								(onClick)="cerrarEvento(minga)"
 							></p-button>
-
+							<p-button
+								*ngIf="minga.estado === 'BORRADOR' || minga.estado === 'Programada'"
+								icon="pi pi-pencil"
+								severity="info"
+								[text]="true"
+								[rounded]="true"
+								(onClick)="editarEvento(minga)"
+							></p-button>
 							<p-button
 								icon="pi pi-trash"
 								severity="danger"
@@ -93,7 +105,7 @@
 
 			<ng-template pTemplate="emptymessage">
 				<tr>
-					<td colspan="7" class="text-center p-6 text-gray-500">No hay eventos registrados.</td>
+					<td colspan="6" class="text-center p-6 text-gray-500">No hay eventos registrados.</td>
 				</tr>
 			</ng-template>
 		</p-table>
@@ -112,7 +124,6 @@
 >
 	<ng-template pTemplate="content">
 		<form [formGroup]="mingaForm" class="flex flex-col gap-5 pt-2">
-			<!-- Fila 1: Título y Tipo -->
 			<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
 				<div class="flex flex-col gap-2">
 					<span class="font-bold text-sm text-gray-700">Título del Evento *</span>
@@ -131,7 +142,6 @@
 				</div>
 			</div>
 
-			<!-- Fila 2: Alcance y Barrio (Condicional) -->
 			<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
 				<div class="flex flex-col gap-2">
 					<span class="font-bold text-sm text-gray-700">¿A quién aplica? *</span>
@@ -158,7 +168,6 @@
 				</div>
 			</div>
 
-			<!-- Fila 3: Fecha y Multa -->
 			<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
 				<div class="flex flex-col gap-2">
 					<span class="font-bold text-sm text-gray-700">Fecha *</span>
@@ -186,10 +195,11 @@
 				</div>
 			</div>
 
-			<div class="flex flex-col gap-2">
+			<!-- <div class="flex flex-col gap-2">
 				<span class="font-bold text-sm text-gray-700">Lugar de Encuentro *</span>
 				<input pInputText formControlName="lugar" placeholder="Ej: Casa Comunal" class="w-full" />
-			</div>
+				<small class="text-gray-400 text-xs">Nota: Este dato es informativo (se puede guardar en descripción).</small>
+			</div> -->
 
 			<div class="flex flex-col gap-2">
 				<span class="font-bold text-sm text-gray-700">Descripción / Notas</span>

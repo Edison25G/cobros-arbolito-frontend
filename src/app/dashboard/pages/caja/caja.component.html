@@ -132,7 +132,7 @@
 								</td>
 								<td>
 									<div class="font-bold text-gray-800">{{ factura.socio }}</div>
-									<div class="text-xs text-gray-400">{{ factura.cedula }}</div>
+									<div class="text-xs text-gray-400">{{ factura.identificacion }}</div>
 								</td>
 								<td>
 									<span
@@ -222,7 +222,7 @@
 								<td>
 									<div class="flex flex-col">
 										<span class="font-bold text-gray-800">{{ t.socio }}</span>
-										<span class="text-xs text-gray-500">{{ t.cedula }}</span>
+										<span class="text-xs text-gray-500">{{ t.identificacion }}</span>
 									</div>
 								</td>
 
@@ -436,7 +436,7 @@
 						>{{ comprobanteActual.socio.nombres }} {{ comprobanteActual.socio.apellidos }}</span
 					>
 					<span class="text-gray-600">Cédula:</span>
-					<span class="font-medium text-gray-800">{{ comprobanteActual.socio.cedula }}</span>
+					<span class="font-medium text-gray-800">{{ comprobanteActual.socio.identificacion }}</span>
 					<span class="text-gray-600">Dirección:</span>
 					<span class="font-medium text-gray-800">{{ comprobanteActual.socio.direccion || '-' }}</span>
 				</div>

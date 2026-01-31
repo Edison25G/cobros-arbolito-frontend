@@ -3,7 +3,6 @@ export interface Evento {
 	titulo: string;
 	descripcion?: string;
 	fecha: string; // YYYY-MM-DD
-	lugar: string;
 	multa: number;
 	estado: 'Programada' | 'Realizada' | 'Cancelada';
 
@@ -21,14 +20,21 @@ export interface AsistenciaMinga {
 	minga_id: number;
 	socio_id: number;
 	// Estados posibles de la asistencia
-	estado: 'Presente' | 'Falta' | 'Exonerado';
+	estado: 'Presente' | 'Falta' | 'Exonerado' | 'Pendiente';
 	observacion?: string;
 }
 
+// Nuevos tipos para integración
+export type EstadoAsistencia = 'PENDIENTE' | 'PRESENTE' | 'FALTA' | 'JUSTIFICADO';
+export type EstadoJustificacion = 'SIN_SOLICITUD' | 'PENDIENTE' | 'APROBADA' | 'RECHAZADA';
+
 export interface ItemAsistencia {
+	id: number;
 	socio_id: number;
-	nombres: string; // Para mostrar "Juan Pérez"
-	cedula: string; // Para verificar identidad
-	estado: 'Presente' | 'Falta' | 'Exonerado';
-	observacion?: string;
+	nombres: string;
+	identificacion: string;
+	estado: EstadoAsistencia;
+	estado_justificacion: EstadoJustificacion;
+	observacion: string;
+	multa_factura: number | null;
 }

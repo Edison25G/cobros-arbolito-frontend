@@ -38,7 +38,7 @@ export class PagoService {
 						? {
 								nombres: typeof item.socio === 'string' ? item.socio : item.socio.nombres,
 								apellidos: '',
-								cedula: item.cedula || '',
+								identificacion: item.identificacion || item.cedula || '',
 								direccion: item.direccion,
 							}
 						: undefined,
