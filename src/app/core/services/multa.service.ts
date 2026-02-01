@@ -1,9 +1,9 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { Observable, throwError } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { environment } from '../../environments/environment.development';
-import { Multa, ImpugnarMultaDTO, ImpugnarMultaResponse } from '../interfaces/multa.interface';
+import { Multa, ImpugnarMultaDTO } from '../interfaces/multa.interface';
 
 @Injectable({
 	providedIn: 'root',
@@ -12,49 +12,27 @@ export class MultaService {
 	private http = inject(HttpClient);
 	private apiUrl = environment.apiUrl;
 
-	/**
-	 * Obtener todas las multas (opcional - si el backend lo tiene)
-	 */
+	// 1. Obtener todas las Multas (Usando la ruta de gestión de facturas que sí funciona)
 	getAll(): Observable<Multa[]> {
-		return this.http.get<Multa[]>(`${this.apiUrl}/multas/`).pipe(catchError(this.handleError));
+		return this.http.get<any[]>(`${this.apiUrl}/facturas-gestion/pendientes/?ver_historial=true`).pipe(
+			map((response) => {
+				return response.map((item) => ({
+					id: item.factura_id,
+					socio_id: 0,
+					socio_nombre: item.socio,
+					minga_titulo: item.medidor === 'SIN MEDIDOR' ? 'Multa / Aporte' : 'Consumo Agua',
+					fecha: item.fecha_emision,
+					monto: parseFloat(item.total),
+					estado: item.estado_pago,
+				}));
+			}),
+		);
 	}
 
-	/**
-	 * Obtener multas de un socio específico
-	 */
-	getBySocio(socioId: number): Observable<Multa[]> {
-		return this.http.get<Multa[]>(`${this.apiUrl}/multas/?socio_id=${socioId}`).pipe(catchError(this.handleError));
-	}
-
-	/**
-	 * Impugnar o Rectificar una multa
-	 * Endpoint: PATCH /api/v1/multas/{id}/impugnar/
-	 *
-	 * @param multaId - ID de la multa a impugnar
-	 * @param datos - Acción a realizar (ANULAR o RECTIFICAR)
-	 *
-	 * Ejemplos de uso:
-	 * - Anular: { accion: 'ANULAR', motivo: 'Error humano' }
-	 * - Rectificar: { accion: 'RECTIFICAR', nuevo_monto: 5.00, motivo: 'Medio día' }
-	 */
-	impugnar(multaId: number, datos: ImpugnarMultaDTO): Observable<ImpugnarMultaResponse> {
-		return this.http
-			.patch<ImpugnarMultaResponse>(`${this.apiUrl}/multas/${multaId}/impugnar/`, datos)
-			.pipe(catchError(this.handleError));
-	}
-
-	private handleError(error: HttpErrorResponse) {
-		console.error('Error en MultaService:', error);
-		let msg = 'Error desconocido en el servidor';
-
-		if (error.status === 403) {
-			msg = 'No tienes permisos para realizar esta acción.';
-		} else if (error.status === 404) {
-			msg = 'Multa no encontrada.';
-		} else if (error.error && error.error.error) {
-			msg = error.error.error;
-		}
-
-		return throwError(() => new Error(msg));
+	// 2. Impugnar (CORREGIDO)
+	impugnar(id: number, datos: ImpugnarMultaDTO): Observable<any> {
+		// ⚠️ CAMBIO IMPORTANTE:
+		// Tu backend multa_views.py usa methods=['patch'], así que aquí usamos .patch
+		return this.http.patch(`${this.apiUrl}/multas/${id}/impugnar/`, datos);
 	}
 }

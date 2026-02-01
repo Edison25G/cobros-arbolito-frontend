@@ -55,15 +55,14 @@ export class GestionMultasComponent implements OnInit {
 	impugnarForm!: FormGroup;
 	procesando = false;
 
-	// Opciones para el select
 	accionesOptions = [
 		{ label: 'Anular Multa', value: 'ANULAR' },
 		{ label: 'Rectificar Monto', value: 'RECTIFICAR' },
 	];
 
 	ngOnInit() {
-		this.cargarMultas();
 		this.initForm();
+		this.cargarMultas();
 	}
 
 	initForm() {
@@ -73,7 +72,6 @@ export class GestionMultasComponent implements OnInit {
 			nuevo_monto: [null],
 		});
 
-		// Escuchar cambios en 'accion' para validar nuevo_monto
 		this.impugnarForm.get('accion')?.valueChanges.subscribe((val) => {
 			const nuevoMontoCtrl = this.impugnarForm.get('nuevo_monto');
 			if (val === 'RECTIFICAR') {
@@ -88,54 +86,22 @@ export class GestionMultasComponent implements OnInit {
 
 	cargarMultas() {
 		this.loading = true;
+		// ✅ USAMOS EL SERVICIO REAL
 		this.multaService.getAll().subscribe({
 			next: (data) => {
 				this.multas = data;
 				this.loading = false;
 			},
 			error: (err) => {
-				console.error(err);
+				console.error('Error cargando multas:', err);
 				this.loading = false;
-				// Mostrar datos mock si el backend aún no está listo
-				this.multas = this.getMultasMock();
+				this.messageService.add({
+					severity: 'error',
+					summary: 'Error de Conexión',
+					detail: 'No se pudieron cargar las multas.',
+				});
 			},
 		});
-	}
-
-	// Datos de ejemplo mientras el backend no esté listo
-	private getMultasMock(): Multa[] {
-		return [
-			{
-				id: 1,
-				socio_id: 10,
-				socio_nombre: 'Juan Pérez',
-				minga_id: 1,
-				minga_titulo: 'Limpieza de Canales',
-				monto: 10.0,
-				fecha: '2025-12-15',
-				estado: 'PENDIENTE',
-			},
-			{
-				id: 2,
-				socio_id: 15,
-				socio_nombre: 'María García',
-				minga_id: 1,
-				minga_titulo: 'Limpieza de Canales',
-				monto: 10.0,
-				fecha: '2025-12-15',
-				estado: 'PENDIENTE',
-			},
-			{
-				id: 3,
-				socio_id: 8,
-				socio_nombre: 'Carlos López',
-				minga_id: 2,
-				minga_titulo: 'Reforestación',
-				monto: 5.0,
-				fecha: '2025-11-20',
-				estado: 'PAGADA',
-			},
-		];
 	}
 
 	abrirDialogImpugnar(multa: Multa) {
@@ -189,13 +155,13 @@ export class GestionMultasComponent implements OnInit {
 				});
 				this.dialogVisible = false;
 				this.procesando = false;
-				this.cargarMultas();
+				this.cargarMultas(); // Recargar lista
 			},
 			error: (err) => {
 				this.messageService.add({
 					severity: 'error',
 					summary: 'Error',
-					detail: err.message,
+					detail: err.error?.detail || 'No se pudo procesar la solicitud',
 				});
 				this.procesando = false;
 			},
@@ -217,10 +183,8 @@ export class GestionMultasComponent implements OnInit {
 		}
 	}
 
-	// Solo admins pueden impugnar
 	puedeImpugnar(multa: Multa): boolean {
-		// TODO: Verificar rol del usuario actual
-		// Por ahora retornamos true si la multa está pendiente
+		// Solo permitir editar si está pendiente
 		return multa.estado === 'PENDIENTE';
 	}
 }
