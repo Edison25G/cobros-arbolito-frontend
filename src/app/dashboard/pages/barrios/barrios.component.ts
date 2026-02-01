@@ -2,7 +2,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-
+import { PageHeaderComponent } from '../../../common/components/page-header/page-header.component';
 // --- PrimeNG IMPORTS ---
 import { CardModule } from 'primeng/card';
 import { ButtonModule } from 'primeng/button';
@@ -27,8 +27,6 @@ interface BarrioUI extends Barrio {
 	activos?: number;
 	inactivos?: number;
 }
-
-import { PageHeaderComponent } from '../../../common/components/page-header/page-header.component';
 
 @Component({
 	selector: 'amc-barrios',

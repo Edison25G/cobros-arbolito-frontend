@@ -1,76 +1,124 @@
 <p-toast></p-toast>
-<p-confirmDialog [style]="{ width: '450px' }"></p-confirmDialog>
+<p-confirmDialog [style]="{ width: '450px' }" styleClass="modern-confirm-dialog"></p-confirmDialog>
 
-<div class="card p-4 bg-white rounded-xl shadow-sm border border-gray-100 animate-fade-in">
-	<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+<div class="h-full flex flex-col p-4 md:p-6 bg-slate-50/50 animate-fade-in font-sans overflow-hidden">
+	<div class="flex-none flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
 		<div>
-			<h2 class="text-2xl font-bold text-gray-800 flex items-center gap-2">
+			<h2 class="text-2xl font-extrabold text-slate-800 tracking-tight flex items-center gap-2 m-0">
 				<i class="pi pi-exclamation-circle text-orange-500"></i>
 				Gestión de Multas
 			</h2>
-			<p class="text-sm text-gray-500">Administra las multas por inasistencia a eventos (Solo Administradores)</p>
+			<p class="text-slate-500 text-xs mt-1 uppercase font-bold tracking-tighter">
+				Administración de sanciones por inasistencia
+			</p>
+		</div>
+
+		<div
+			class="hidden md:flex items-center px-4 py-2 bg-white rounded-xl border border-slate-200 shadow-sm text-[11px] font-bold text-slate-600"
+		>
+			<span class="w-2 h-2 rounded-full bg-orange-500 mr-2 animate-pulse"></span>
+			Acciones Administrativas Requeridas
 		</div>
 	</div>
 
-	<div class="overflow-x-auto">
+	<div class="flex-1 min-h-0 bg-white rounded-2xl shadow-xl border border-slate-100 flex flex-col overflow-hidden">
 		<p-table
 			[value]="multas"
 			[loading]="loading"
 			[rowHover]="true"
-			styleClass="p-datatable-sm min-w-[700px]"
+			styleClass="p-datatable-modern h-full"
+			[scrollable]="true"
+			scrollHeight="flex"
 			[paginator]="true"
 			[rows]="10"
+			[showCurrentPageReport]="true"
+			currentPageReportTemplate="{first}-{last} de {totalRecords}"
 		>
 			<ng-template pTemplate="header">
-				<tr>
-					<th style="width: 20%">Socio</th>
-					<th style="width: 25%">Evento</th>
-					<th style="width: 12%">Fecha</th>
-					<th style="width: 12%">Monto</th>
-					<th style="width: 12%">Estado</th>
-					<th class="text-center" style="width: 19%">Acciones</th>
+				<tr
+					class="bg-slate-50 text-[10px] uppercase tracking-widest text-slate-500 font-bold border-b border-slate-100"
+				>
+					<th style="min-width: 200px" class="pl-8 py-4">Socio Afectado</th>
+					<th style="min-width: 200px">Origen (Evento)</th>
+					<th style="min-width: 120px" class="text-center">Fecha</th>
+					<th style="min-width: 100px" class="text-center">Monto</th>
+					<th style="min-width: 120px" class="text-center">Resolución</th>
+					<th style="min-width: 150px" class="text-center pr-6">Acciones</th>
 				</tr>
 			</ng-template>
 
 			<ng-template pTemplate="body" let-multa>
-				<tr>
-					<td>
-						<div class="font-bold text-gray-800">{{ multa.socio_nombre }}</div>
+				<tr class="hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-0 group">
+					<td class="pl-8 py-3">
+						<div class="flex items-center gap-3">
+							<div
+								class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center font-bold text-xs border border-slate-200"
+							>
+								{{ multa.socio_nombre.charAt(0) }}
+							</div>
+							<span class="font-bold text-slate-700 text-sm uppercase tracking-tight">{{ multa.socio_nombre }}</span>
+						</div>
 					</td>
-					<td>
-						<div class="text-gray-700">{{ multa.minga_titulo }}</div>
+
+					<td class="py-3">
+						<div class="flex flex-col">
+							<span class="text-xs font-semibold text-slate-600 leading-tight">{{ multa.minga_titulo }}</span>
+							<span class="text-[10px] text-slate-400 mt-0.5 italic">Inasistencia registrada</span>
+						</div>
 					</td>
-					<td class="text-gray-500">{{ multa.fecha | date: 'dd/MM/yyyy' }}</td>
-					<td class="font-semibold text-red-600">${{ multa.monto | number: '1.2-2' }}</td>
-					<td>
-						<p-tag [value]="multa.estado" [severity]="getSeverity(multa.estado)" [rounded]="true"></p-tag>
+
+					<td class="text-center py-3">
+						<span class="text-xs font-medium text-slate-500">{{ multa.fecha | date: 'dd/MM/yyyy' }}</span>
 					</td>
-					<td class="text-center">
-						<div class="flex justify-center gap-2">
-							<!-- Botón Impugnar/Corregir (Solo para PENDIENTES y Admins) -->
+
+					<td class="text-center py-3">
+						<span class="text-sm font-black text-red-600">${{ multa.monto | number: '1.2-2' }}</span>
+					</td>
+
+					<td class="text-center py-3">
+						<span
+							class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wide border shadow-sm"
+							[ngClass]="{
+								'bg-orange-50 text-orange-600 border-orange-100': multa.estado === 'PENDIENTE',
+								'bg-emerald-50 text-emerald-700 border-emerald-100': multa.estado === 'PAGADA',
+								'bg-slate-100 text-slate-500 border-slate-200': multa.estado === 'ANULADA',
+								'bg-blue-50 text-blue-700 border-blue-100': multa.estado === 'RECTIFICADA',
+							}"
+						>
+							{{ multa.estado }}
+						</span>
+					</td>
+
+					<td class="text-center pr-6 py-3">
+						<div class="flex justify-center items-center gap-1">
 							<p-button
 								*ngIf="puedeImpugnar(multa)"
 								icon="pi pi-pencil"
 								label="Impugnar"
+								[text]="true"
+								[rounded]="true"
 								severity="warn"
-								[outlined]="true"
-								size="small"
-								pTooltip="Anular o Rectificar multa"
+								styleClass="!text-xs !font-bold hover:!bg-amber-50"
+								pTooltip="Rectificar sanción"
 								tooltipPosition="top"
 								(onClick)="abrirDialogImpugnar(multa)"
 							>
 							</p-button>
 
-							<!-- Badge informativo si ya fue procesada -->
-							<span *ngIf="multa.estado === 'ANULADA'" class="text-xs text-gray-400 italic">
-								<i class="pi pi-ban mr-1"></i>Anulada
-							</span>
-							<span *ngIf="multa.estado === 'RECTIFICADA'" class="text-xs text-blue-400 italic">
-								<i class="pi pi-check mr-1"></i>Rectificada
-							</span>
-							<span *ngIf="multa.estado === 'PAGADA'" class="text-xs text-green-500 italic">
-								<i class="pi pi-dollar mr-1"></i>Cobrada
-							</span>
+							<div class="flex items-center gap-2 opacity-50" *ngIf="!puedeImpugnar(multa)">
+								<i *ngIf="multa.estado === 'ANULADA'" class="pi pi-ban text-xs" pTooltip="Sanción Cancelada"></i>
+								<i
+									*ngIf="multa.estado === 'RECTIFICADA'"
+									class="pi pi-check-circle text-xs text-blue-500"
+									pTooltip="Monto Corregido"
+								></i>
+								<i
+									*ngIf="multa.estado === 'PAGADA'"
+									class="pi pi-dollar text-xs text-emerald-600"
+									pTooltip="Valor Recaudado"
+								></i>
+								<span class="text-[9px] font-bold uppercase tracking-tighter">Procesada</span>
+							</div>
 						</div>
 					</td>
 				</tr>
@@ -78,9 +126,16 @@
 
 			<ng-template pTemplate="emptymessage">
 				<tr>
-					<td colspan="6" class="text-center p-6 text-gray-500">
-						<i class="pi pi-check-circle text-4xl text-green-300 mb-2"></i>
-						<p>No hay multas registradas. ¡Todos asistieron! 🎉</p>
+					<td colspan="6" class="py-20">
+						<div class="flex flex-col items-center justify-center text-slate-300">
+							<div
+								class="w-16 h-16 bg-emerald-50 rounded-full flex items-center justify-center mb-4 border border-emerald-100"
+							>
+								<i class="pi pi-verified text-3xl text-emerald-500"></i>
+							</div>
+							<span class="text-slate-500 font-bold text-sm uppercase tracking-widest">Sin Multas Pendientes</span>
+							<p class="text-slate-400 text-xs mt-1">¡Excelente! El padrón se encuentra al día.</p>
+						</div>
 					</td>
 				</tr>
 			</ng-template>
@@ -88,87 +143,111 @@
 	</div>
 </div>
 
-<!-- DIALOG: Impugnar/Rectificar Multa -->
 <p-dialog
 	[(visible)]="dialogVisible"
-	header="Impugnar Multa"
 	[modal]="true"
-	[breakpoints]="{ '960px': '75vw', '640px': '95vw' }"
-	[style]="{ width: '450px' }"
-	styleClass="p-fluid"
 	[draggable]="false"
 	[resizable]="false"
+	[style]="{ width: '480px' }"
+	styleClass="p-dialog-modern"
+	header=" "
 >
-	<ng-template pTemplate="content">
-		<div class="mb-4 p-3 bg-orange-50 border border-orange-200 rounded-lg" *ngIf="multaSeleccionada">
-			<div class="text-sm text-gray-600"><strong>Socio:</strong> {{ multaSeleccionada.socio_nombre }}</div>
-			<div class="text-sm text-gray-600"><strong>Minga:</strong> {{ multaSeleccionada.minga_titulo }}</div>
-			<div class="text-sm text-gray-600">
-				<strong>Monto Actual:</strong>
-				<span class="text-red-600 font-bold">${{ multaSeleccionada.monto | number: '1.2-2' }}</span>
+	<ng-template pTemplate="header">
+		<div class="flex items-center gap-3 w-full border-b border-slate-100 pb-3 mb-1">
+			<div
+				class="w-10 h-10 rounded-full bg-amber-50 flex items-center justify-center text-amber-600 shadow-sm border border-amber-100"
+			>
+				<i class="pi pi-shield"></i>
+			</div>
+			<div>
+				<h3 class="font-bold text-lg text-slate-800 m-0 leading-none">Revisión de Multa</h3>
+				<p class="text-[10px] text-slate-400 m-0 uppercase font-black tracking-widest mt-1">
+					Auditoría de sanción administrativa
+				</p>
 			</div>
 		</div>
+	</ng-template>
 
-		<form [formGroup]="impugnarForm" class="flex flex-col gap-4">
-			<!-- Acción -->
-			<div class="flex flex-col gap-2">
-				<span class="font-bold text-sm text-gray-700">Acción a Realizar</span>
+	<div class="mt-4 px-1" *ngIf="multaSeleccionada">
+		<div class="bg-slate-900 rounded-xl p-4 text-white shadow-lg mb-6 relative overflow-hidden">
+			<div class="relative z-10">
+				<span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Socio Identificado</span>
+				<h4 class="text-base font-bold mb-3">{{ multaSeleccionada.socio_nombre }}</h4>
+
+				<div class="flex justify-between items-end border-t border-white/10 pt-3">
+					<div>
+						<span class="text-[9px] font-bold text-slate-400 uppercase">Concepto</span>
+						<p class="text-xs font-medium">{{ multaSeleccionada.minga_titulo }}</p>
+					</div>
+					<div class="text-right">
+						<span class="text-[9px] font-bold text-slate-400 uppercase">Monto Base</span>
+						<p class="text-2xl font-black text-amber-400 leading-none">
+							${{ multaSeleccionada.monto | number: '1.2-2' }}
+						</p>
+					</div>
+				</div>
+			</div>
+			<div class="absolute -right-4 -bottom-4 pi pi-exclamation-triangle text-6xl opacity-10 rotate-12"></div>
+		</div>
+
+		<form [formGroup]="impugnarForm" class="flex flex-col gap-5">
+			<div class="flex flex-col gap-1.5">
+				<span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Resolución a Aplicar</span>
 				<p-select
-					formControlName="accion"
 					[options]="accionesOptions"
+					formControlName="accion"
 					optionLabel="label"
 					optionValue="value"
-					placeholder="Seleccione acción"
-					styleClass="w-full"
+					styleClass="!rounded-xl"
 				></p-select>
 			</div>
 
-			<!-- Nuevo Monto (Solo si es RECTIFICAR) -->
-			<div class="flex flex-col gap-2" *ngIf="impugnarForm.get('accion')?.value === 'RECTIFICAR'">
-				<span class="font-bold text-sm text-gray-700">Nuevo Monto ($)</span>
+			<div class="flex flex-col gap-1.5 animate-fade-in" *ngIf="impugnarForm.get('accion')?.value === 'RECTIFICAR'">
+				<span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Nuevo Valor Corregido ($)</span>
 				<p-inputNumber
 					formControlName="nuevo_monto"
 					mode="currency"
 					currency="USD"
 					locale="en-US"
-					placeholder="Ej: 5.00"
-					styleClass="w-full"
+					styleClass="!rounded-xl"
+					placeholder="0.00"
 				></p-inputNumber>
-				<small class="text-gray-400">Ingrese el monto corregido</small>
 			</div>
 
-			<!-- Motivo -->
-			<div class="flex flex-col gap-2">
-				<span class="font-bold text-sm text-gray-700">Motivo / Justificación</span>
+			<div class="flex flex-col gap-1.5">
+				<span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest"
+					>Justificación de Auditoría <span class="text-red-500">*</span></span
+				>
 				<textarea
 					pInputTextarea
 					formControlName="motivo"
 					rows="3"
-					placeholder="Ej: Error humano al tomar asistencia, el socio sí asistió..."
-					class="w-full"
+					placeholder="Indique el motivo técnico o error humano que justifica este cambio..."
+					class="!rounded-xl resize-none text-sm"
 				></textarea>
-				<small class="text-gray-400">Este motivo quedará registrado para auditoría</small>
 			</div>
 		</form>
-	</ng-template>
+	</div>
 
 	<ng-template pTemplate="footer">
-		<div class="flex justify-end gap-2 mt-2">
+		<div class="flex justify-between items-center w-full pt-4 border-t border-slate-100">
 			<p-button
-				label="Cancelar"
-				icon="pi pi-times"
+				label="Descartar"
 				[text]="true"
 				severity="secondary"
 				(onClick)="dialogVisible = false"
+				styleClass="text-sm font-bold"
 			></p-button>
 			<p-button
-				label="Confirmar"
-				icon="pi pi-check"
+				label="Confirmar Resolución"
+				icon="pi pi-check-shield"
 				severity="warn"
 				[loading]="procesando"
 				[disabled]="impugnarForm.invalid"
+				styleClass="!bg-amber-600 !border-amber-600 hover:!bg-amber-700 !rounded-xl !px-6 text-sm"
 				(onClick)="confirmarImpugnacion()"
-			></p-button>
+			>
+			</p-button>
 		</div>
 	</ng-template>
 </p-dialog>

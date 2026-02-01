@@ -1,21 +1,22 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { finalize } from 'rxjs/operators'; // ✅ Importante para manejo de estado
+import { finalize } from 'rxjs/operators';
+import { forkJoin } from 'rxjs'; // ✅ Necesario para cargar todo junto
 
 // PrimeNG Imports
 import { CardModule } from 'primeng/card';
 import { SkeletonModule } from 'primeng/skeleton';
 import { ChartModule } from 'primeng/chart';
 import { ButtonModule } from 'primeng/button';
-import { MessageService } from 'primeng/api'; // ✅ Para notificaciones de error
+import { MessageService } from 'primeng/api';
 
-// Servicios y Modelos
+// Servicios
 import { AuthService } from '../../../core/services/auth.service';
 import { SocioService } from '../../../core/services/socio.service';
+import { ReporteService } from '../../../core/services/reporte.service'; // ✅ Importante
 import { RolUsuario } from '../../../core/models/role.enum';
 
-// Interfaz local para los datos del reporte (Mejor que usar 'any')
 interface DashboardStats {
 	sociosActivos: number;
 	sociosEnMora: number;
@@ -27,121 +28,126 @@ interface DashboardStats {
 	selector: 'amc-home',
 	standalone: true,
 	imports: [CommonModule, RouterModule, CardModule, SkeletonModule, ChartModule, ButtonModule],
-	providers: [MessageService], // Proveedor local para mensajes
+	providers: [MessageService],
 	templateUrl: './home.component.html',
 	styleUrls: ['./home.component.css'],
 })
 export class HomeComponent implements OnInit {
-	// Inyecciones
 	private authService = inject(AuthService);
 	private socioService = inject(SocioService);
+	private reporteService = inject(ReporteService); // ✅ Inyectamos el servicio
 	private messageService = inject(MessageService);
 
-	// Estado del Usuario
 	userRole: RolUsuario | null = null;
-	Role = RolUsuario; // Para usar en el HTML
+	Role = RolUsuario;
 
-	// Control de estado visual
 	isLoading = true;
 	isEmpty = false;
 
-	// Datos del reporte inicializados en 0
 	reporteData: DashboardStats = {
 		sociosActivos: 0,
-		sociosEnMora: 0, // Placeholder
-		totalRecaudadoMes: 0, // Placeholder
-		totalDeuda: 0, // Placeholder
+		sociosEnMora: 0,
+		totalRecaudadoMes: 0,
+		totalDeuda: 0,
 	};
 
-	// Configuración del Gráfico
 	barChartData: any;
 	barChartOptions: any;
 
 	ngOnInit(): void {
-		// Normalizar el rol del backend al enum
-		const roleString = this.authService.getRole();
-		if (roleString) {
-			const roleUpper = roleString.toUpperCase();
-			if (roleUpper === 'ADMINISTRADOR' || roleUpper === 'ADMIN') {
-				this.userRole = RolUsuario.ADMIN;
-			} else if (roleUpper === 'TESORERO') {
-				this.userRole = RolUsuario.TESORERO;
-			} else if (roleUpper === 'OPERADOR') {
-				this.userRole = RolUsuario.OPERADOR;
-			} else if (roleUpper === 'SOCIO') {
-				this.userRole = RolUsuario.SOCIO;
-			} else {
-				this.userRole = null;
-			}
-		}
-
-		// Iniciamos configuración visual
+		this.checkRole();
 		this.initChart();
-
-		// Carga de datos
 		this.loadDashboardData();
 	}
 
-	loadDashboardData() {
-		this.isLoading = true;
+	checkRole() {
+		const roleString = this.authService.getRole();
+		if (roleString) {
+			const roleUpper = roleString.toUpperCase();
+			if (roleUpper.includes('ADMIN')) this.userRole = RolUsuario.ADMIN;
+			else if (roleUpper === 'TESORERO') this.userRole = RolUsuario.TESORERO;
+			else if (roleUpper === 'OPERADOR') this.userRole = RolUsuario.OPERADOR;
+			else this.userRole = RolUsuario.SOCIO;
+		}
+	}
 
-		// 🔒 SEGURIDAD: Prevenimos el error 403 Forbidden.
-		// Si es Operador, NO llamamos a getSocios().
+	loadDashboardData() {
 		if (this.userRole === RolUsuario.OPERADOR) {
 			this.isLoading = false;
-			return; // Salimos de la función aquí
+			return;
 		}
 
-		// Si es Admin o Tesorero, procedemos con la carga
-		this.socioService
-			.getSocios()
+		this.isLoading = true;
+
+		// Calculamos el rango de fechas de ESTE MES para la caja
+		const hoy = new Date();
+		const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+		const finMes = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0);
+
+		// ✅ PEDIMOS TODO A LA VEZ: Socios, Cartera (Deudas) y Caja (Ingresos)
+		forkJoin({
+			socios: this.socioService.getSocios(),
+			cartera: this.reporteService.getReporteCartera(),
+			caja: this.reporteService.getCierreCaja(inicioMes, finMes),
+		})
 			.pipe(
-				// ✅ finalize se ejecuta SIEMPRE (éxito o error)
 				finalize(() => {
 					this.isLoading = false;
 				}),
 			)
 			.subscribe({
-				next: (socios) => {
-					const totalSocios = socios.length;
+				next: (res) => {
+					// 1. Total Socios
+					this.reporteData.sociosActivos = res.socios.length;
 
-					if (totalSocios === 0) {
-						this.isEmpty = true;
-					} else {
-						this.isEmpty = false;
-						// Actualizamos solo los datos reales
-						this.reporteData.sociosActivos = totalSocios;
+					// 2. Socios en Mora y Deuda Total (Calculado desde la lista de cartera)
+					this.reporteData.sociosEnMora = res.cartera.length;
+					this.reporteData.totalDeuda = res.cartera.reduce((acc, item) => acc + item.total_deuda, 0);
 
-						// Aquí irán las futuras llamadas a CobrosService para llenar el resto
-					}
+					// 3. Recaudado del Mes (Viene del cierre de caja)
+					this.reporteData.totalRecaudadoMes = res.caja.total_general;
+
+					this.isEmpty = this.reporteData.sociosActivos === 0;
+
+					// 4. Actualizar Gráfico
+					this.updateChartData(this.reporteData.totalRecaudadoMes);
 				},
 				error: (err) => {
 					console.error('Error dashboard:', err);
-
-					// Opcional: Mostrar mensaje al usuario si la API falla
-					// this.messageService.add({severity:'error', summary:'Error', detail:'No se pudieron cargar los datos'});
+					// Si falla uno, intentamos mostrar al menos los datos vacíos sin romper la app
+					this.isLoading = false;
 				},
 			});
 	}
 
-	// Configuración del gráfico (Estética)
-	private initChart() {
-		const documentStyle = getComputedStyle(document.documentElement);
-		const textColor = documentStyle.getPropertyValue('--text-color');
-		const textColorSecondary = documentStyle.getPropertyValue('--text-color-secondary');
-		const surfaceBorder = documentStyle.getPropertyValue('--surface-border');
+	// Pone el valor recaudado en la barra del mes actual
+	private updateChartData(montoMes: number) {
+		const mesActual = new Date().getMonth(); // 0 = Enero, 1 = Feb...
+
+		// Array de 12 ceros
+		const datosAnuales = Array(12).fill(0);
+		// Ponemos el monto en el mes correcto
+		datosAnuales[mesActual] = montoMes;
 
 		this.barChartData = {
-			labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'],
+			labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
 			datasets: [
 				{
-					label: 'Recaudación ($)',
-					data: [0, 0, 0, 0, 0, 0], // Datos simulados
-					backgroundColor: '#10b981', // Tailwind Emerald-500
+					label: 'Recaudación 2026 ($)',
+					data: datosAnuales,
+					backgroundColor: '#10b981',
 					borderRadius: 6,
 				},
 			],
 		};
+	}
+
+	private initChart() {
+		const documentStyle = getComputedStyle(document.documentElement);
+		const textColor = documentStyle.getPropertyValue('--text-color');
+		const surfaceBorder = documentStyle.getPropertyValue('--surface-border');
+
+		this.barChartData = { labels: [], datasets: [] }; // Inicial vacío
 
 		this.barChartOptions = {
 			responsive: true,
@@ -153,11 +159,11 @@ export class HomeComponent implements OnInit {
 				y: {
 					beginAtZero: true,
 					grid: { color: surfaceBorder, drawBorder: false },
-					ticks: { color: textColorSecondary },
+					ticks: { color: textColor },
 				},
 				x: {
 					grid: { color: surfaceBorder, drawBorder: false },
-					ticks: { color: textColorSecondary },
+					ticks: { color: textColor },
 				},
 			},
 		};

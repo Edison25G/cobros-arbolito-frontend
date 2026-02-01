@@ -1,23 +1,36 @@
-<div class="card p-4 bg-white rounded-xl shadow-sm border border-gray-100 animate-fade-in">
-	<!-- Encabezado -->
-	<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-		<div>
-			<h2 class="text-2xl font-bold text-gray-800">Historial de Lecturas</h2>
-			<p class="text-sm text-gray-500">Registro de consumos mensuales de agua</p>
-		</div>
+<div class="animate-fade-in space-y-6">
+	<div
+		class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-emerald-900 via-emerald-800 to-teal-800 p-8 shadow-2xl"
+	>
+		<div
+			class="absolute top-0 right-0 w-96 h-96 bg-white opacity-5 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none"
+		></div>
+		<div
+			class="absolute bottom-0 left-0 w-64 h-64 bg-teal-400 opacity-10 rounded-full blur-3xl -ml-10 -mb-10 pointer-events-none"
+		></div>
 
-		<!-- ✅ CAMBIO: Usamos <p-button> en lugar de <button pButton> -->
-		<!-- routerLink="registro" navega a /dashboard/lecturas/registro -->
-		<p-button
-			label="Registrar Nueva Lectura"
-			icon="pi pi-camera"
-			styleClass="bg-[#23A455] border-none hover:bg-[#1b8744]"
-			routerLink="registro"
-		>
-		</p-button>
+		<div class="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+			<div>
+				<h2 class="text-3xl font-extrabold text-white tracking-tight flex items-center gap-3">
+					<i class="pi pi-compass text-emerald-300"></i>
+					Historial de Lecturas
+				</h2>
+				<p class="text-emerald-100 mt-2 text-sm max-w-lg leading-relaxed opacity-90">
+					Monitoreo en tiempo real del consumo hídrico. Gestiona y audita los registros mensuales de cada socio.
+				</p>
+			</div>
+
+			<p-button
+				label="Registrar Nueva Lectura"
+				icon="pi pi-plus"
+				styleClass="bg-white text-emerald-900 border-none font-bold px-6 py-3 rounded-xl shadow-lg hover:shadow-xl hover:bg-emerald-50 transition-all active:scale-95"
+				routerLink="registro"
+			>
+			</p-button>
+		</div>
 	</div>
 
-	<div class="card">
+	<div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
 		<p-table
 			#dt
 			[value]="lecturas"
@@ -27,90 +40,124 @@
 			[globalFilterFields]="['medidor_codigo', 'socio_nombre', 'fecha']"
 			dataKey="id"
 			[rowHover]="true"
-			styleClass="p-datatable-sm"
-			currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} lecturas"
+			styleClass="p-datatable-modern"
+			currentPageReportTemplate="Mostrando {first} - {last} de {totalRecords}"
 			[showCurrentPageReport]="true"
 		>
-			<!-- Buscador -->
 			<ng-template pTemplate="caption">
-				<div class="flex justify-end">
-					<p-iconfield iconPosition="left" class="w-full sm:w-auto">
-						<p-inputicon styleClass="pi pi-search" />
+				<div
+					class="flex flex-col sm:flex-row justify-between items-center gap-4 py-4 px-6 bg-slate-50/50 border-b border-slate-100"
+				>
+					<div class="relative w-full sm:w-96 group">
+						<i
+							class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-emerald-500 transition-colors"
+						></i>
 						<input
 							pInputText
 							type="text"
 							(input)="dt.filterGlobal($any($event.target).value, 'contains')"
-							placeholder="Buscar por código, socio..."
-							class="w-full sm:w-64"
+							placeholder="Buscar por código, socio o fecha..."
+							class="pl-11 w-full bg-white border-slate-200 rounded-xl py-2.5 text-sm focus:ring-2 focus:ring-emerald-100 focus:border-emerald-500 transition-all shadow-sm"
 						/>
-					</p-iconfield>
+					</div>
 				</div>
 			</ng-template>
 
-			<!-- HEADER -->
-			<ng-template #header>
-				<tr>
-					<th pSortableColumn="fecha">
-						<div class="flex items-center gap-2">
-							Fecha
-							<p-sortIcon field="fecha" />
-						</div>
+			<ng-template pTemplate="header">
+				<tr class="bg-white text-xs uppercase tracking-wider text-slate-500 border-b border-slate-100">
+					<th pSortableColumn="fecha" class="py-4 pl-6 font-semibold">Fecha <p-sortIcon field="fecha"></p-sortIcon></th>
+					<th pSortableColumn="medidor_codigo" class="py-4 font-semibold text-center">
+						Medidor <p-sortIcon field="medidor_codigo"></p-sortIcon>
 					</th>
-
-					<th pSortableColumn="medidor_codigo">
-						<div class="flex items-center gap-2">
-							Medidor
-							<p-sortIcon field="medidor_codigo" />
-						</div>
+					<th pSortableColumn="socio_nombre" class="py-4 font-semibold">
+						Socio / Propietario <p-sortIcon field="socio_nombre"></p-sortIcon>
 					</th>
-
-					<th pSortableColumn="socio_nombre">
-						<div class="flex items-center gap-2">
-							Socio
-							<p-sortIcon field="socio_nombre" />
-						</div>
-					</th>
-
-					<th class="text-right">Lect. Anterior</th>
-					<th class="text-right">Lect. Actual</th>
-					<th class="text-center">Consumo</th>
-					<th class="text-center">Estado</th>
+					<th class="py-4 text-center font-semibold text-slate-400">Lect. Ant.</th>
+					<th class="py-4 text-center font-semibold text-slate-800">Lect. Actual</th>
+					<th class="py-4 text-center font-semibold text-blue-600">Consumo</th>
+					<th class="py-4 text-center font-semibold pr-6">Estado</th>
 				</tr>
 			</ng-template>
 
-			<!-- BODY -->
-			<ng-template #body let-lectura>
-				<tr>
-					<td>{{ lectura.fecha | date: 'dd/MM/yyyy' }}</td>
-
-					<td class="font-bold text-gray-700">
-						{{ lectura.medidor_codigo }}
+			<ng-template pTemplate="body" let-lectura>
+				<tr class="hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-0 group">
+					<td class="pl-6 py-4">
+						<div class="flex flex-col">
+							<span class="font-bold text-slate-700 text-sm">{{ lectura.fecha | date: 'dd MMM yyyy' }}</span>
+							<span class="text-[10px] text-slate-400 font-medium uppercase">{{ lectura.fecha | date: 'EEEE' }}</span>
+						</div>
 					</td>
 
-					<td>{{ lectura.socio_nombre }}</td>
-
-					<td class="text-right text-gray-500">{{ lectura.lectura_anterior }} m³</td>
-
-					<td class="text-right font-semibold">{{ lectura.lectura_actual }} m³</td>
-
-					<td class="text-center">
-						<span class="font-bold text-lg text-blue-600"> {{ lectura.consumo }} m³ </span>
+					<td class="text-center py-4">
+						<span
+							class="inline-block bg-slate-100 text-slate-600 border border-slate-200 px-2 py-1 rounded font-mono text-xs font-bold tracking-wide"
+						>
+							{{ lectura.medidor_codigo }}
+						</span>
 					</td>
 
-					<td class="text-center">
-						<p-tag
-							[value]="lectura.estado"
-							[severity]="lectura.estado === 'Facturada' ? 'success' : 'info'"
-							[rounded]="true"
-						/>
+					<td class="py-4">
+						<div class="flex items-center gap-3">
+							<div
+								class="w-8 h-8 rounded-full bg-teal-50 text-teal-700 flex items-center justify-center font-bold text-xs border border-teal-100"
+							>
+								{{ lectura.socio_nombre.charAt(0) }}
+							</div>
+							<span class="text-sm font-semibold text-slate-700 group-hover:text-teal-700 transition-colors">
+								{{ lectura.socio_nombre }}
+							</span>
+						</div>
+					</td>
+
+					<td class="text-center py-4 text-slate-400 text-sm font-medium">
+						{{ lectura.lectura_anterior }}
+					</td>
+
+					<td class="text-center py-4">
+						<span class="font-bold text-slate-800 text-sm">{{ lectura.lectura_actual }}</span>
+					</td>
+
+					<td class="text-center py-4">
+						<div
+							class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-100 shadow-sm"
+						>
+							<i class="pi pi-tint text-xs"></i>
+							<span class="font-extrabold text-sm">{{ lectura.consumo }} m³</span>
+						</div>
+					</td>
+
+					<td class="text-center pr-6 py-4">
+						<span
+							*ngIf="lectura.estado === 'Facturada'"
+							class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-100"
+						>
+							<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Facturada
+						</span>
+						<span
+							*ngIf="lectura.estado !== 'Facturada'"
+							class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold bg-amber-50 text-amber-700 border border-amber-100"
+						>
+							<span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span> Pendiente
+						</span>
 					</td>
 				</tr>
 			</ng-template>
 
-			<!-- EMPTY MESSAGE -->
-			<ng-template pTemplate="emptymessage" let-columns>
-				<tr *ngIf="!loading">
-					<td colspan="7" class="text-center p-6 text-gray-500">No se encontraron lecturas registradas.</td>
+			<ng-template pTemplate="emptymessage">
+				<tr>
+					<td colspan="7">
+						<div class="flex flex-col items-center justify-center py-16 text-center">
+							<div
+								class="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mb-4 border border-slate-100 shadow-sm"
+							>
+								<i class="pi pi-folder-open text-3xl text-slate-300"></i>
+							</div>
+							<h3 class="text-slate-800 font-bold text-lg">Sin registros encontrados</h3>
+							<p class="text-slate-500 text-sm mt-1 max-w-xs">
+								No hay lecturas registradas con los criterios actuales.
+							</p>
+						</div>
+					</td>
 				</tr>
 			</ng-template>
 		</p-table>

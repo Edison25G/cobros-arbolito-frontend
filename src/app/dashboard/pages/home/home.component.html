@@ -1,131 +1,127 @@
 <div
 	*ngIf="userRole === Role.ADMIN || userRole === Role.TESORERO || userRole === Role.OPERADOR; else socioView"
-	class="animate-fade-in"
+	class="animate-fade-in max-w-[1600px] mx-auto p-4"
 >
-	<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-3">
+	<div class="flex flex-col sm:flex-row justify-between items-center mb-6 border-b border-gray-100 pb-4">
 		<div>
-			<h2 class="text-2xl font-bold text-gray-800 tracking-tight">Resumen del Sistema</h2>
-			<p class="text-sm text-gray-500">Estadísticas generales de la Junta de Riego</p>
+			<h2 class="text-xl font-bold text-slate-800 tracking-tight flex items-center gap-2">
+				<i class="pi pi-chart-bar text-emerald-600"></i> Resumen Ejecutivo
+			</h2>
+			<p class="text-xs text-slate-500 mt-1">Visión general del estado financiero y operativo.</p>
 		</div>
 
 		<button
 			*ngIf="userRole !== Role.OPERADOR"
 			type="button"
 			(click)="loadDashboardData()"
-			class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-emerald-600 rounded-md hover:bg-emerald-50 transition-colors"
+			class="flex items-center gap-2 px-4 py-2 text-xs font-semibold text-white bg-slate-800 rounded-lg hover:bg-slate-700 transition-all shadow-sm active:scale-95"
 		>
 			<i class="pi pi-refresh" [ngClass]="{ 'animate-spin': isLoading }"></i>
-			<span>Actualizar</span>
+			<span>Actualizar Datos</span>
 		</button>
 	</div>
 
-	<div *ngIf="userRole === Role.OPERADOR" class="animate-fade-in-up">
-		<div class="bg-blue-50 p-8 rounded-xl border border-blue-100 text-center shadow-sm">
-			<div class="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-				<i class="pi pi-id-card text-4xl text-blue-600"></i>
+	<div *ngIf="userRole === Role.OPERADOR" class="animate-fade-in-up mb-6">
+		<div
+			class="bg-gradient-to-r from-blue-50 to-white p-6 rounded-lg border border-blue-100 shadow-sm flex items-center justify-between"
+		>
+			<div class="flex items-center gap-4">
+				<div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+					<i class="pi pi-id-card text-xl text-blue-600"></i>
+				</div>
+				<div>
+					<h3 class="text-lg font-bold text-slate-800">Panel de Operador</h3>
+					<p class="text-sm text-slate-500">Gestión de lecturas y medidores.</p>
+				</div>
 			</div>
-			<h3 class="text-xl font-bold text-blue-800">Panel de Operador</h3>
-			<p class="text-blue-600 mt-2 max-w-md mx-auto">
-				Bienvenido. Utiliza el menú lateral para registrar lecturas o gestionar medidores.
-			</p>
-
-			<div class="flex justify-center gap-4 mt-6">
-				<a
-					routerLink="/dashboard/lecturas"
-					class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow-sm cursor-pointer no-underline flex items-center gap-2"
-				>
-					<i class="pi pi-pencil"></i> Registrar Lecturas
-				</a>
-			</div>
+			<a
+				routerLink="/dashboard/lecturas"
+				class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition shadow-sm no-underline flex items-center gap-2"
+			>
+				<i class="pi pi-pencil"></i> Registrar Lecturas
+			</a>
 		</div>
 	</div>
 
 	<ng-container *ngIf="userRole !== Role.OPERADOR">
 		<ng-container *ngIf="isLoading">
-			<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-6">
-				<div class="w-full h-32 bg-gray-200 rounded-xl shadow-sm animate-pulse"></div>
-				<div class="w-full h-32 bg-gray-200 rounded-xl shadow-sm animate-pulse"></div>
-				<div class="w-full h-32 bg-gray-200 rounded-xl shadow-sm animate-pulse"></div>
-				<div class="w-full h-32 bg-gray-200 rounded-xl shadow-sm animate-pulse"></div>
+			<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+				<div class="h-24 bg-gray-100 rounded-lg animate-pulse" *ngFor="let i of [1, 2, 3, 4]"></div>
 			</div>
-			<div class="w-full h-96 bg-gray-200 rounded-xl shadow-sm animate-pulse"></div>
+			<div class="h-80 bg-gray-100 rounded-lg animate-pulse"></div>
 		</ng-container>
 
 		<ng-container *ngIf="!isLoading">
 			<div *ngIf="!isEmpty && reporteData; else emptyState">
-				<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-6">
+				<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
 					<div
-						class="bg-white p-5 rounded-xl shadow-sm border border-slate-100 hover:shadow-md transition-all duration-300 group"
+						class="bg-white p-4 rounded-lg shadow-sm border border-slate-200 flex flex-col justify-between h-full hover:border-emerald-400 transition-colors cursor-default"
 					>
-						<div class="flex justify-between items-start">
-							<div>
-								<span class="text-slate-500 text-sm font-medium mb-1 block">Total Socios</span>
-								<span class="text-3xl font-bold text-slate-800">{{ reporteData.sociosActivos }}</span>
-							</div>
-							<div
-								class="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors duration-300"
-							>
-								<i class="pi pi-users text-xl"></i>
-							</div>
+						<div class="flex justify-between items-start mb-2">
+							<span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Socios Activos</span>
+							<i class="pi pi-users text-slate-400 bg-slate-50 p-1.5 rounded-md"></i>
+						</div>
+						<div class="flex items-baseline gap-2">
+							<span class="text-2xl font-bold text-slate-800">{{ reporteData.sociosActivos }}</span>
+							<span class="text-xs text-emerald-600 font-medium flex items-center">
+								<i class="pi pi-check-circle text-[10px] mr-1"></i> Registrados
+							</span>
 						</div>
 					</div>
 
 					<div
-						class="bg-white p-5 rounded-xl shadow-sm border border-slate-100 hover:shadow-md transition-all duration-300 group"
+						class="bg-white p-4 rounded-lg shadow-sm border border-slate-200 flex flex-col justify-between h-full hover:border-red-400 transition-colors cursor-default"
 					>
-						<div class="flex justify-between items-start">
-							<div>
-								<span class="text-slate-500 text-sm font-medium mb-1 block">Socios en Mora</span>
-								<span class="text-3xl font-bold text-red-600">{{ reporteData.sociosEnMora }}</span>
-							</div>
-							<div
-								class="w-12 h-12 rounded-xl bg-red-50 flex items-center justify-center text-red-600 group-hover:bg-red-600 group-hover:text-white transition-colors duration-300"
-							>
-								<i class="pi pi-exclamation-circle text-xl"></i>
-							</div>
+						<div class="flex justify-between items-start mb-2">
+							<span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">En Mora</span>
+							<i class="pi pi-exclamation-triangle text-red-400 bg-red-50 p-1.5 rounded-md"></i>
+						</div>
+						<div class="flex items-baseline gap-2">
+							<span class="text-2xl font-bold text-slate-800">{{ reporteData.sociosEnMora }}</span>
+							<span class="text-xs text-red-600 font-medium bg-red-50 px-1.5 py-0.5 rounded">Acción requerida</span>
 						</div>
 					</div>
 
 					<div
-						class="bg-white p-5 rounded-xl shadow-sm border border-slate-100 hover:shadow-md transition-all duration-300 group"
+						class="bg-white p-4 rounded-lg shadow-sm border border-slate-200 flex flex-col justify-between h-full hover:border-emerald-400 transition-colors cursor-default"
 					>
-						<div class="flex justify-between items-start">
-							<div>
-								<span class="text-slate-500 text-sm font-medium mb-1 block">Recaudado (Mes)</span>
-								<span class="text-3xl font-bold text-emerald-600">{{
-									reporteData.totalRecaudadoMes | currency: 'USD'
-								}}</span>
-							</div>
-							<div
-								class="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white transition-colors duration-300"
-							>
-								<i class="pi pi-dollar text-xl"></i>
-							</div>
+						<div class="flex justify-between items-start mb-2">
+							<span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Ingresos (Mes)</span>
+							<i class="pi pi-dollar text-emerald-500 bg-emerald-50 p-1.5 rounded-md"></i>
+						</div>
+						<div class="flex items-baseline gap-2">
+							<span class="text-2xl font-bold text-emerald-600">{{
+								reporteData.totalRecaudadoMes | currency: 'USD'
+							}}</span>
+						</div>
+						<div class="w-full bg-gray-100 rounded-full h-1.5 mt-2">
+							<div class="bg-emerald-500 h-1.5 rounded-full" style="width: 45%"></div>
 						</div>
 					</div>
 
 					<div
-						class="bg-white p-5 rounded-xl shadow-sm border border-slate-100 hover:shadow-md transition-all duration-300 group"
+						class="bg-white p-4 rounded-lg shadow-sm border border-slate-200 flex flex-col justify-between h-full hover:border-orange-400 transition-colors cursor-default"
 					>
-						<div class="flex justify-between items-start">
-							<div>
-								<span class="text-slate-500 text-sm font-medium mb-1 block">Deuda Total</span>
-								<span class="text-3xl font-bold text-orange-600">{{ reporteData.totalDeuda | currency: 'USD' }}</span>
-							</div>
-							<div
-								class="w-12 h-12 rounded-xl bg-orange-50 flex items-center justify-center text-orange-600 group-hover:bg-orange-600 group-hover:text-white transition-colors duration-300"
-							>
-								<i class="pi pi-wallet text-xl"></i>
-							</div>
+						<div class="flex justify-between items-start mb-2">
+							<span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Cartera Vencida</span>
+							<i class="pi pi-wallet text-orange-400 bg-orange-50 p-1.5 rounded-md"></i>
+						</div>
+						<div class="flex items-baseline gap-2">
+							<span class="text-2xl font-bold text-slate-800">{{ reporteData.totalDeuda | currency: 'USD' }}</span>
+							<span class="text-xs text-orange-600 font-medium">Pendiente</span>
+						</div>
+						<div class="w-full bg-gray-100 rounded-full h-1.5 mt-2">
+							<div class="bg-orange-400 h-1.5 rounded-full" style="width: 60%"></div>
 						</div>
 					</div>
 				</div>
 
-				<div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
-					<div class="flex justify-between items-center mb-4">
-						<h3 class="text-lg font-bold text-slate-800">Historial de Recaudación</h3>
+				<div class="bg-white p-5 rounded-lg shadow-sm border border-slate-200">
+					<div class="flex justify-between items-center mb-4 border-b border-gray-100 pb-2">
+						<h3 class="text-sm font-bold text-slate-700 uppercase tracking-wide">Comportamiento de Recaudación</h3>
+						<span class="text-xs text-slate-400">Año Fiscal 2026</span>
 					</div>
-					<div class="relative w-full h-[24rem]">
+					<div class="relative w-full h-[18rem]">
 						<p-chart type="bar" [data]="barChartData" [options]="barChartOptions" height="100%"></p-chart>
 					</div>
 				</div>
@@ -133,23 +129,19 @@
 
 			<ng-template #emptyState>
 				<div
-					class="flex flex-col items-center justify-center py-20 px-4 bg-white rounded-xl border-2 border-dashed border-slate-200 text-center animate-fade-in-up"
+					class="flex flex-col items-center justify-center py-16 px-4 bg-white rounded-lg border border-dashed border-slate-300 text-center"
 				>
-					<div class="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center mb-6">
-						<i class="pi pi-chart-bar text-4xl text-slate-300"></i>
+					<div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4">
+						<i class="pi pi-database text-2xl text-slate-400"></i>
 					</div>
-					<h3 class="text-2xl font-bold text-slate-800 mb-2">Sin datos para mostrar</h3>
-					<p class="text-slate-500 max-w-md mb-8 text-lg">El sistema está listo, pero aún no hay registros.</p>
-
-					<div class="flex flex-wrap gap-4 justify-center">
-						<a
-							routerLink="/dashboard/socios"
-							class="inline-flex items-center gap-2 px-5 py-3 text-sm font-semibold text-white bg-emerald-600 rounded-lg shadow-md hover:bg-emerald-700 transition-colors no-underline"
-						>
-							<i class="pi pi-user-plus"></i>
-							<span>Registrar Nuevo Socio</span>
-						</a>
-					</div>
+					<h3 class="text-lg font-bold text-slate-700">Sin datos registrados</h3>
+					<p class="text-sm text-slate-500 mb-6">El sistema está operativo esperando información.</p>
+					<a
+						routerLink="/dashboard/socios"
+						class="px-4 py-2 text-sm font-medium text-white bg-slate-800 rounded-lg hover:bg-slate-700 transition no-underline shadow-sm"
+					>
+						Registrar Primer Socio
+					</a>
 				</div>
 			</ng-template>
 		</ng-container>
@@ -157,57 +149,58 @@
 </div>
 
 <ng-template #socioView>
-	<div
-		class="relative p-8 rounded-2xl overflow-hidden shadow-xl bg-gradient-to-br from-emerald-600 to-teal-800 text-white animate-fade-in"
-	>
-		<div
-			class="absolute top-0 right-0 w-64 h-64 bg-white opacity-5 rounded-full -mr-16 -mt-16 blur-3xl pointer-events-none"
-		></div>
-		<div
-			class="absolute bottom-0 left-0 w-40 h-40 bg-emerald-300 opacity-10 rounded-full -ml-10 -mb-10 blur-2xl pointer-events-none"
-		></div>
-
-		<div class="relative z-10">
-			<div class="mb-8">
-				<h2 class="text-4xl font-bold mb-2">¡Bienvenido Socio!</h2>
-				<p class="text-emerald-100 text-lg">Sistema de Agua Potable "El Arbolito"</p>
+	<div class="max-w-5xl mx-auto mt-6 animate-fade-in px-4">
+		<div class="relative rounded-xl overflow-hidden shadow-lg bg-slate-900 text-white p-8 mb-6">
+			<div class="relative z-10 flex flex-col md:flex-row justify-between items-center gap-4">
+				<div>
+					<h2 class="text-2xl font-bold">¡Hola, Socio!</h2>
+					<p class="text-slate-300 text-sm mt-1">Junta de Agua Potable "El Arbolito"</p>
+				</div>
+				<div class="bg-white/10 backdrop-blur-sm px-4 py-2 rounded-lg border border-white/10">
+					<span class="text-xs text-emerald-300 font-mono">ESTADO: ACTIVO</span>
+				</div>
 			</div>
+			<div
+				class="absolute top-0 right-0 w-64 h-64 bg-emerald-500/20 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"
+			></div>
+		</div>
 
-			<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-				<a
-					routerLink="/dashboard/pagos"
-					class="group block bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-6 hover:bg-white/20 transition-all duration-300 cursor-pointer no-underline"
-				>
-					<div class="flex items-center gap-5">
-						<div
-							class="w-14 h-14 rounded-full bg-white/20 flex items-center justify-center group-hover:scale-110 transition-transform duration-300"
-						>
-							<i class="pi pi-receipt text-2xl text-white"></i>
-						</div>
-						<div>
-							<h3 class="text-xl font-bold mb-1 text-white">Mis Pagos</h3>
-							<p class="text-emerald-100 text-sm group-hover:text-white">Consulta tus facturas pendientes</p>
-						</div>
+		<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+			<a
+				routerLink="/dashboard/pagos"
+				class="group bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:shadow-md hover:border-emerald-500 transition-all duration-300 no-underline cursor-pointer"
+			>
+				<div class="flex items-center gap-4">
+					<div
+						class="w-12 h-12 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white transition-colors"
+					>
+						<i class="pi pi-receipt text-xl"></i>
 					</div>
-				</a>
+					<div>
+						<h3 class="text-lg font-bold text-slate-800 group-hover:text-emerald-700">Mis Pagos</h3>
+						<p class="text-sm text-slate-500">Revisar deudas y facturas.</p>
+					</div>
+					<i class="pi pi-arrow-right ml-auto text-slate-300 group-hover:text-emerald-500"></i>
+				</div>
+			</a>
 
-				<a
-					routerLink="/dashboard/medidor"
-					class="group block bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-6 hover:bg-white/20 transition-all duration-300 cursor-pointer no-underline"
-				>
-					<div class="flex items-center gap-5">
-						<div
-							class="w-14 h-14 rounded-full bg-white/20 flex items-center justify-center group-hover:scale-110 transition-transform duration-300"
-						>
-							<i class="pi pi-chart-line text-2xl text-white"></i>
-						</div>
-						<div>
-							<h3 class="text-xl font-bold mb-1 text-white">Mi Medidor</h3>
-							<p class="text-emerald-100 text-sm group-hover:text-white">Historial de consumo de agua</p>
-						</div>
+			<a
+				routerLink="/dashboard/medidor"
+				class="group bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:shadow-md hover:border-blue-500 transition-all duration-300 no-underline cursor-pointer"
+			>
+				<div class="flex items-center gap-4">
+					<div
+						class="w-12 h-12 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors"
+					>
+						<i class="pi pi-chart-line text-xl"></i>
 					</div>
-				</a>
-			</div>
+					<div>
+						<h3 class="text-lg font-bold text-slate-800 group-hover:text-blue-700">Mi Consumo</h3>
+						<p class="text-sm text-slate-500">Historial de lecturas.</p>
+					</div>
+					<i class="pi pi-arrow-right ml-auto text-slate-300 group-hover:text-blue-500"></i>
+				</div>
+			</a>
 		</div>
 	</div>
 </ng-template>

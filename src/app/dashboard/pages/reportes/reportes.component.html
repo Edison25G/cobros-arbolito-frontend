@@ -2,82 +2,127 @@
 
 <div class="p-2 sm:p-6 animate-fade-in">
 	<div class="mb-6">
-		<h2 class="text-2xl font-bold text-gray-800 mb-2">Reportes y Análisis</h2>
-		<p class="text-gray-500">Consulta histórica y exportación de datos.</p>
+		<h2 class="text-2xl font-bold text-gray-800 mb-2">Reporte de Pendientes</h2>
+		<p class="text-gray-500">Socios con valores por pagar (Cartera Vencida).</p>
 	</div>
 
 	<p-toolbar styleClass="bg-white border-gray-200 rounded-xl shadow-sm mb-6">
 		<div class="p-toolbar-group-start gap-4">
-			<span class="p-float-label">
-				<p-datepicker
-					[(ngModel)]="rangeDates"
-					selectionMode="range"
-					[readonlyInput]="true"
-					placeholder="Seleccionar rango..."
-					[showIcon]="true"
-					(onClose)="filtrarPorFechas()"
-				>
-				</p-datepicker>
-			</span>
-			<small class="text-gray-400 self-center hidden sm:block">Selecciona fechas para filtrar</small>
+			<span class="text-gray-500 font-medium">Periodo: Histórico Completo</span>
 		</div>
-
 		<div class="p-toolbar-group-end">
-			<p-button label="Descargar PDF" icon="pi pi-file-pdf" styleClass="p-button-danger" (onClick)="descargarPDF()">
+			<p-button
+				label="Exportar Lista PDF"
+				icon="pi pi-file-pdf"
+				styleClass="p-button-danger"
+				(onClick)="descargarPDF()"
+			>
 			</p-button>
 		</div>
 	</p-toolbar>
 
 	<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 		<div class="lg:col-span-1">
-			<div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 h-full">
-				<h3 class="font-bold text-gray-700 mb-4">Tendencia Semestral</h3>
-				<p-chart type="bar" [data]="chartData" [options]="chartOptions"></p-chart>
+			<div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 h-full flex flex-col">
+				<h3 class="font-bold text-gray-700 mb-4 text-center">Estado de la Deuda</h3>
+				<p-chart type="doughnut" [data]="chartData" [options]="chartOptions" class="flex-1"></p-chart>
+
+				<div class="mt-6 space-y-3">
+					<div class="flex justify-between p-3 bg-red-50 rounded-lg border border-red-100">
+						<span class="text-red-600 font-medium">Total por Cobrar</span>
+						<span class="font-bold text-red-800 text-lg">{{ totalDeuda | currency }}</span>
+					</div>
+					<div class="flex justify-between p-3 bg-gray-50 rounded-lg">
+						<span class="text-gray-600">Socios en Mora</span>
+						<span class="font-bold text-gray-800">{{ totalSocios }}</span>
+					</div>
+				</div>
 			</div>
 		</div>
 
-		<div class="lg:col-span-2">
-			<div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-				<div class="p-4 border-b border-gray-100 bg-gray-50">
-					<h3 class="font-bold text-gray-700">Detalle de Transacciones</h3>
+		<div class="lg:col-span-2 flex flex-col gap-4">
+			<div class="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex flex-col sm:flex-row gap-4">
+				<div class="flex-1 relative">
+					<i class="pi pi-search absolute left-3 top-3 text-gray-400"></i>
+					<input
+						type="text"
+						placeholder="Buscar por nombre o cédula..."
+						[(ngModel)]="filtroTexto"
+						(input)="aplicarFiltros()"
+						class="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
+					/>
 				</div>
 
+				<div class="w-full sm:w-48">
+					<p-select
+						[options]="opcionesBarrios"
+						[(ngModel)]="filtroBarrio"
+						(onChange)="aplicarFiltros()"
+						styleClass="w-full"
+						placeholder="Filtrar Barrio"
+					>
+					</p-select>
+				</div>
+			</div>
+
+			<div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex-1">
 				<p-table
-					[value]="transacciones"
+					[value]="datosVisibles"
 					[loading]="isLoading"
-					[rows]="5"
+					[rows]="8"
 					[paginator]="true"
 					styleClass="p-datatable-sm"
+					[rowsPerPageOptions]="[8, 20, 50]"
 				>
 					<ng-template pTemplate="header">
 						<tr>
-							<th>Fecha</th>
 							<th>Socio</th>
-							<th>Concepto</th>
-							<th>Estado</th>
-							<th class="text-right">Monto</th>
+							<th>Barrio</th>
+							<th class="text-center">Facturas</th>
+							<th class="text-right">Corriente</th>
+							<th class="text-right">Mora</th>
+							<th class="text-right font-bold">Total</th>
 						</tr>
 					</ng-template>
-					<ng-template pTemplate="body" let-t>
-						<tr>
-							<td>{{ t.fecha }}</td>
-							<td class="font-bold">{{ t.socio }}</td>
-							<td>{{ t.concepto }}</td>
+
+					<ng-template pTemplate="body" let-item>
+						<tr class="hover:bg-gray-50 border-b border-gray-50 last:border-0">
 							<td>
-								<span
-									[class]="
-										'px-2 py-1 rounded text-xs font-bold ' +
-										(t.estado === 'Pagado'
-											? 'bg-green-100 text-green-700'
-											: t.estado === 'Pendiente'
-												? 'bg-orange-100 text-orange-700'
-												: 'bg-red-100 text-red-700')
-									"
-								>
-									{{ t.estado }}
+								<div class="font-bold text-gray-800">{{ item.nombre }}</div>
+								<span class="text-xs text-gray-400">{{ item.identificacion }}</span>
+							</td>
+							<td>
+								<span class="px-2 py-1 bg-blue-50 text-blue-700 rounded text-xs font-semibold border border-blue-100">
+									{{ item.barrio }}
 								</span>
 							</td>
-							<td class="text-right font-mono">{{ t.monto | currency }}</td>
+							<td class="text-center">
+								<span
+									class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gray-100 text-xs font-bold text-gray-600"
+								>
+									{{ item.facturas_pendientes }}
+								</span>
+							</td>
+							<td class="text-right text-gray-500">
+								{{ item.corriente > 0 ? (item.corriente | currency) : '-' }}
+							</td>
+							<td class="text-right text-orange-500 font-medium">
+								{{ item.vencido_1_3 + item.incobrable > 0 ? (item.vencido_1_3 + item.incobrable | currency) : '-' }}
+							</td>
+							<td class="text-right font-bold text-red-600">
+								{{ item.total_deuda | currency }}
+							</td>
+						</tr>
+					</ng-template>
+
+					<ng-template pTemplate="emptymessage">
+						<tr>
+							<td colspan="6" class="text-center p-8 text-gray-400">
+								<div class="flex flex-col items-center">
+									<i class="pi pi-search text-3xl mb-2"></i>
+									<p>No se encontraron socios con esos filtros.</p>
+								</div>
+							</td>
 						</tr>
 					</ng-template>
 				</p-table>

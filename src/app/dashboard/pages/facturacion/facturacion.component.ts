@@ -46,7 +46,6 @@ export class FacturacionComponent implements OnInit {
 
 		this.facturacionService.getPreEmision().subscribe({
 			next: (data) => {
-				console.log('Datos cargados:', data); // Mira la consola del navegador
 				this.lecturasPendientes = data;
 				this.calcularResumen();
 				this.isLoading = false;

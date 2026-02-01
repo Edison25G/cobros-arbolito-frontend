@@ -1,7 +1,7 @@
-<section class="min-h-screen flex flex-col lg:flex-row relative bg-gray-50">
+<section class="min-h-screen flex flex-col lg:flex-row relative bg-slate-50 font-sans">
 	<div
 		*ngIf="menuOpen && isMobile"
-		class="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 transition-opacity cursor-pointer"
+		class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 transition-all duration-300 cursor-pointer"
 		(click)="menuOpen = false"
 		(keydown.escape)="menuOpen = false"
 		tabindex="0"
@@ -10,39 +10,54 @@
 	></div>
 
 	<aside
-		class="w-64 bg-gradient-to-b from-gray-900 to-gray-800 text-gray-200 flex flex-col z-50 overflow-y-auto transform transition-transform duration-300 shadow-xl fixed inset-y-0 h-screen lg:sticky lg:top-0 lg:h-screen"
+		class="w-72 bg-slate-900 text-slate-300 flex flex-col z-50 overflow-y-auto transform transition-transform duration-300 shadow-2xl fixed inset-y-0 h-screen lg:sticky lg:top-0 lg:h-screen border-r border-slate-800"
 		[ngClass]="{ '-translate-x-full': !menuOpen && isMobile }"
 	>
-		<header class="flex items-center justify-between px-4 py-5 border-b border-gray-700 shrink-0">
-			<div class="flex items-center gap-2">
-				<img src="assets/img/arbolito.png" class="w-10 h-10" alt="Logo El Arbolito" />
-				<span class="text-xl font-semibold text-white">El Arbolito</span>
+		<header class="flex items-center justify-between px-6 py-6 border-b border-slate-800/50 shrink-0 bg-slate-900">
+			<div class="flex items-center gap-3">
+				<div
+					class="w-10 h-10 bg-emerald-500/10 rounded-xl flex items-center justify-center border border-emerald-500/20 shadow-inner"
+				>
+					<img src="assets/img/arbolito.png" class="w-7 h-7 object-contain" alt="Logo" />
+				</div>
+				<div>
+					<h1 class="text-lg font-bold text-white tracking-tight leading-none">El Arbolito</h1>
+					<span class="text-[10px] text-emerald-500 font-semibold uppercase tracking-widest">Gestión 2026</span>
+				</div>
 			</div>
-			<button class="lg:hidden text-gray-400 text-xl" (click)="menuOpen = false">
-				<i class="pi pi-times"></i>
+			<button class="lg:hidden text-slate-400 hover:text-white transition-colors" (click)="menuOpen = false">
+				<i class="pi pi-times text-xl"></i>
 			</button>
 		</header>
 
-		<nav class="flex-1 overflow-y-auto p-2 custom-scrollbar">
+		<nav class="flex-1 overflow-y-auto px-4 py-6 custom-scrollbar">
 			<ul class="space-y-1">
 				<ng-container *ngFor="let item of menuItems">
 					<ng-container *ngIf="hasAccess(item.roles)">
-						<li *ngIf="item.header" class="mt-6 mb-2 px-4 text-xs font-bold text-gray-500 uppercase tracking-widest">
+						<li
+							*ngIf="item.header"
+							class="mt-8 mb-3 px-3 text-[11px] font-bold text-slate-500 uppercase tracking-widest"
+						>
 							{{ item.header }}
 						</li>
 
 						<li>
 							<a
 								[routerLink]="item.link"
-								routerLinkActive="bg-emerald-600 text-white font-semibold shadow-md"
+								routerLinkActive="bg-emerald-500/10 text-emerald-400 border-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.1)]"
+								[routerLinkActiveOptions]="{ exact: false }"
 								(click)="onMenuClick()"
-								class="group flex items-center gap-3 px-4 py-2.5 rounded-md transition-all duration-200 hover:bg-gray-700 text-gray-300 hover:text-white"
+								class="group flex items-center gap-3 px-3 py-3 rounded-lg border border-transparent hover:bg-slate-800 hover:text-white transition-all duration-200 text-sm font-medium"
 							>
 								<i
 									[class]="item.icon + ' text-lg transition-colors duration-200 group-hover:text-emerald-400'"
-									[ngClass]="{ 'text-white': false }"
+									class="text-slate-400"
 								></i>
 								<span>{{ item.label }}</span>
+
+								<i
+									class="pi pi-chevron-right ml-auto text-xs opacity-0 group-[.bg-emerald-500\/10]:opacity-100 transition-opacity"
+								></i>
 							</a>
 						</li>
 					</ng-container>
@@ -50,87 +65,88 @@
 			</ul>
 		</nav>
 
-		<div class="p-4 border-t border-gray-700 text-xs text-center text-gray-500">v1.0.0</div>
+		<div class="p-6 border-t border-slate-800 bg-slate-900/50">
+			<div class="flex items-center gap-3 p-3 bg-slate-800/50 rounded-xl border border-slate-700/50">
+				<div class="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center text-white text-xs font-bold">
+					v1
+				</div>
+				<div class="flex flex-col">
+					<span class="text-xs text-slate-200 font-semibold">Sistema v1.0.0</span>
+					<span class="text-[10px] text-slate-500">Actualizado Feb 2026</span>
+				</div>
+			</div>
+		</div>
 	</aside>
 
-	<section class="flex-1 flex flex-col min-h-screen">
+	<section class="flex-1 flex flex-col min-h-screen relative overflow-hidden">
 		<header
-			class="bg-white/80 backdrop-blur-lg text-black px-4 sm:px-6 py-3 sm:py-4 flex justify-between items-center shadow-sm sticky top-0 z-30 border-b border-gray-200 gap-2"
+			class="bg-white/90 backdrop-blur-xl text-slate-800 px-6 py-4 flex justify-between items-center shadow-sm sticky top-0 z-30 border-b border-slate-200/60"
 		>
-			<div class="flex items-center gap-2 md:gap-4 flex-1 min-w-0">
+			<div class="flex items-center gap-4 flex-1 min-w-0">
 				<button
-					class="lg:hidden bg-gray-200 p-2 rounded-md hover:bg-gray-300 transition shrink-0"
+					class="lg:hidden p-2 text-slate-500 hover:bg-slate-100 rounded-lg transition-colors"
 					(click)="menuOpen = !menuOpen"
 				>
-					<i class="pi pi-bars text-gray-800 text-lg"></i>
+					<i class="pi pi-bars text-xl"></i>
 				</button>
 
-				<h2 class="text-sm sm:text-lg md:text-xl font-bold text-gray-800 truncate">Gestión de Cobros "El Arbolito"</h2>
+				<div>
+					<h2 class="text-lg font-bold text-slate-800 tracking-tight">Gestión de Cobros</h2>
+					<p class="text-xs text-slate-500 hidden sm:block">Panel de Control Administrativo</p>
+				</div>
 			</div>
 
-			<div class="flex items-center gap-2 relative shrink-0">
+			<div class="flex items-center gap-4 relative shrink-0">
 				<button
 					type="button"
 					(click)="op.toggle($event)"
-					class="focus:outline-none focus:ring-2 focus:ring-emerald-500 rounded-full"
+					class="flex items-center gap-3 pl-1 pr-2 py-1 rounded-full hover:bg-slate-50 border border-transparent hover:border-slate-200 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
 				>
 					<p-avatar
 						[label]="currentUser.charAt(0).toUpperCase()"
-						styleClass="bg-emerald-500 text-white shadow-lg"
-						size="large"
+						styleClass="bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-md border-2 border-white"
+						size="normal"
 						shape="circle"
 					>
 					</p-avatar>
+					<div class="hidden md:flex flex-col items-start">
+						<span class="text-sm font-bold text-slate-700 leading-none">{{ currentUser.split(' ')[0] }}</span>
+						<span class="text-[10px] text-slate-500 font-medium">{{ currentRole }}</span>
+					</div>
+					<i class="pi pi-angle-down text-slate-400 text-xs hidden md:block"></i>
 				</button>
 
-				<p-popover #op styleClass="rounded-2xl shadow-xl overflow-hidden">
-					<div class="w-72 font-sans">
-						<div class="relative">
-							<button
-								(click)="op.hide()"
-								class="absolute top-2 right-2 p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
-								title="Cerrar"
-							>
-								<i class="pi pi-times text-xs"></i>
-							</button>
-						</div>
+				<p-popover #op styleClass="rounded-2xl shadow-2xl overflow-hidden border border-slate-100 mt-2">
+					<div class="w-80 font-sans p-0">
+						<div class="bg-slate-50 border-b border-slate-100 p-6 flex flex-col items-center relative overflow-hidden">
+							<div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-400 to-blue-500"></div>
 
-						<div class="flex flex-col items-center pt-6 pb-5 px-4">
 							<div class="relative mb-3">
 								<div
-									class="w-20 h-20 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 text-3xl font-bold shadow-sm border-2 border-white ring-2 ring-emerald-50"
+									class="w-20 h-20 rounded-full bg-white flex items-center justify-center text-emerald-600 text-3xl font-bold shadow-md border-4 border-slate-50"
 								>
 									{{ currentUser.charAt(0).toUpperCase() }}
 								</div>
-								<div
-									class="absolute bottom-0 right-0 bg-gray-800 text-white text-[10px] font-bold px-2 py-0.5 rounded-full border-2 border-white shadow-sm uppercase tracking-wide"
-								>
-									{{ currentRole | slice: 0 : 10 }}
-								</div>
+								<div class="absolute bottom-0 right-1 w-6 h-6 bg-green-500 border-4 border-slate-50 rounded-full"></div>
 							</div>
 
-							<h3 class="text-lg font-semibold text-gray-800 text-center leading-tight">
-								¡Hola, {{ currentUser.split(' ')[0] }}!
-							</h3>
-							<p class="text-sm text-gray-500 mb-4 text-center">
+							<h3 class="text-lg font-bold text-slate-800 text-center">
 								{{ currentUser }}
-							</p>
-
-							<button
-								class="px-5 py-2 rounded-full border border-gray-300 text-sm font-medium text-emerald-700 hover:bg-emerald-50 hover:border-emerald-200 transition-all duration-200 flex items-center gap-2"
+							</h3>
+							<span
+								class="px-3 py-1 bg-slate-200 text-slate-600 rounded-full text-[10px] font-bold uppercase tracking-wider mt-2"
 							>
-								<i class="pi pi-user text-xs"></i>
-								Gestionar mi perfil
-							</button>
+								{{ currentRole }}
+							</span>
 						</div>
 
-						<div class="border-t border-gray-100 bg-gray-50/50 p-2 flex justify-center">
+						<div class="p-2 border-t border-slate-100">
 							<button
 								(click)="logout()"
-								class="flex items-center gap-2 px-6 py-3 text-sm text-gray-600 hover:text-red-600 hover:bg-white rounded-lg transition-all duration-200 w-full justify-center group"
+								class="w-full flex items-center justify-center gap-2 px-4 py-3 text-sm text-red-600 bg-red-50 hover:bg-red-100 hover:text-red-700 rounded-xl transition-all duration-200 font-medium"
 							>
-								<i class="pi pi-sign-out group-hover:text-red-500 transition-colors"></i>
-								<span>Cerrar sesión</span>
+								<i class="pi pi-sign-out"></i>
+								<span>Cerrar Sesión</span>
 							</button>
 						</div>
 					</div>
@@ -138,8 +154,10 @@
 			</div>
 		</header>
 
-		<main class="flex-1 p-4 md:p-6 overflow-y-auto bg-gray-50 scroll-smooth">
-			<router-outlet></router-outlet>
+		<main class="flex-1 p-4 md:p-8 overflow-y-auto bg-slate-50/50 scroll-smooth">
+			<div class="mx-auto max-w-[1920px]">
+				<router-outlet></router-outlet>
+			</div>
 		</main>
 
 		<amc-footer></amc-footer>

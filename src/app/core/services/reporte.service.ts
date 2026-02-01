@@ -1,50 +1,27 @@
-import { Injectable } from '@angular/core';
-import { Observable, of } from 'rxjs';
-import { delay } from 'rxjs/operators';
+import { Injectable, inject } from '@angular/core';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment.development';
-import { ReporteGeneral, FacturaReporte } from '../interfaces/reporte.interfaces';
+import { ReporteCarteraItem, ReporteCierreCaja } from '../interfaces/reporte.interfaces';
 
 @Injectable({
 	providedIn: 'root',
 })
 export class ReporteService {
+	private http = inject(HttpClient);
 	private apiUrl = environment.apiUrl;
 
-	constructor() {}
-
-	/**
-	 * Datos para el HOME (KPIs)
-	 */
-	getReporteGeneral(): Observable<ReporteGeneral> {
-		return of({
-			sociosActivos: 124,
-			sociosEnMora: 15,
-			totalRecaudadoMes: 4250.5,
-			totalDeuda: 850.0,
-			recaudacionUltimos6Meses: [3000, 3500, 3200, 4100, 3900, 4250],
-		}).pipe(delay(800));
+	// 1. Obtener Deudas (Para la tarjeta roja y naranja)
+	getReporteCartera(): Observable<ReporteCarteraItem[]> {
+		return this.http.get<ReporteCarteraItem[]>(`${this.apiUrl}/analytics/cartera-vencida/`);
 	}
 
-	/**
-	 * Datos para la pantalla REPORTES (Tabla detallada para PDF)
-	 * Simula una búsqueda por fechas.
-	 */
-	getDetalleTransacciones(_inicio: Date, _fin: Date): Observable<FacturaReporte[]> {
-		// Aquí el backend filtraría por fecha. Simulamos datos:
-		const mockData: FacturaReporte[] = [
-			{ id: 101, fecha: '2025-06-01', socio: 'Juan Pérez', concepto: 'Consumo Mayo', monto: 15.5, estado: 'Pagado' },
-			{ id: 102, fecha: '2025-06-02', socio: 'María López', concepto: 'Consumo Mayo', monto: 12.0, estado: 'Pagado' },
-			{
-				id: 103,
-				fecha: '2025-06-05',
-				socio: 'Carlos Vives',
-				concepto: 'Multa Minga',
-				monto: 10.0,
-				estado: 'Pendiente',
-			},
-			{ id: 104, fecha: '2025-06-10', socio: 'Ana Gump', concepto: 'Instalación', monto: 50.0, estado: 'Pagado' },
-			{ id: 105, fecha: '2025-06-15', socio: 'Pedro Pascal', concepto: 'Consumo Mayo', monto: 20.0, estado: 'Anulado' },
-		];
-		return of(mockData).pipe(delay(1000));
+	// 2. Obtener Recaudación (Para la tarjeta verde y el gráfico)
+	getCierreCaja(inicio: Date, fin: Date): Observable<ReporteCierreCaja> {
+		const params = new HttpParams()
+			.set('fecha_inicio', inicio.toISOString().split('T')[0])
+			.set('fecha_fin', fin.toISOString().split('T')[0]);
+
+		return this.http.get<ReporteCierreCaja>(`${this.apiUrl}/analytics/cierre-caja/`, { params });
 	}
 }

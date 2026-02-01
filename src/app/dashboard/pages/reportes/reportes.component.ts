@@ -1,22 +1,18 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-
-// PrimeNG
 import { CardModule } from 'primeng/card';
 import { ChartModule } from 'primeng/chart';
 import { ButtonModule } from 'primeng/button';
 import { DatePickerModule } from 'primeng/datepicker';
 import { ToolbarModule } from 'primeng/toolbar';
 import { ToastModule } from 'primeng/toast';
-import { TableModule } from 'primeng/table'; // Agregamos tabla para ver detalles
+import { TableModule } from 'primeng/table';
+import { SelectModule } from 'primeng/select'; // <--- IMPORTANTE
 import { MessageService } from 'primeng/api';
 
-// Servicios
 import { ReporteService } from '../../../core/services/reporte.service';
-import { FacturaReporte } from '../../../core/interfaces/reporte.interfaces';
-
-// PDF
+import { ReporteCarteraItem } from '../../../core/interfaces/reporte.interfaces';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
@@ -33,6 +29,7 @@ import autoTable from 'jspdf-autotable';
 		ToolbarModule,
 		ToastModule,
 		TableModule,
+		SelectModule,
 	],
 	providers: [MessageService],
 	templateUrl: './reportes.component.html',
@@ -41,97 +38,132 @@ export class ReportesComponent implements OnInit {
 	private reporteService = inject(ReporteService);
 	private messageService = inject(MessageService);
 
-	// Filtros
-	rangeDates: Date[] | undefined;
+	// Variables UI
 	isLoading = false;
+	rangeDates: Date[] | undefined;
 
 	// Datos
-	transacciones: FacturaReporte[] = [];
+	datosOriginales: ReporteCarteraItem[] = []; // Copia pura de la API
+	datosVisibles: ReporteCarteraItem[] = []; // Lo que se ve en la tabla (Filtrado)
+
+	// Filtros
+	filtroTexto = '';
+	filtroBarrio = 'TODOS';
+
+	// Opciones para el Dropdown de Barrios (Se llenan solas)
+	opcionesBarrios: any[] = [{ label: 'Todos los Barrios', value: 'TODOS' }];
+
+	// Gráficos y KPIs
 	chartData: any;
 	chartOptions: any;
+	totalDeuda = 0;
+	totalSocios = 0;
 
 	ngOnInit() {
-		this.initChart();
-		// Cargamos datos iniciales (ej: mes actual)
-		const hoy = new Date();
-		this.buscarDatos(hoy, hoy);
+		this.initChartOptions();
+		this.cargarDatos();
 	}
 
-	buscarDatos(inicio: Date, fin: Date) {
+	cargarDatos() {
 		this.isLoading = true;
-		this.reporteService.getDetalleTransacciones(inicio, fin).subscribe({
+		// Llamamos a tu servicio real (que ya corregimos)
+		this.reporteService.getReporteCartera().subscribe({
 			next: (data) => {
-				this.transacciones = data;
+				this.datosOriginales = data;
+				this.datosVisibles = data;
+
+				// 1. Extraer Barrios únicos para el filtro
+				this.generarFiltroBarrios(data);
+
+				// 2. Calcular Totales
+				this.recalcularKPIs();
+
+				// 3. Actualizar Gráfico
+				this.actualizarGrafico();
+
 				this.isLoading = false;
 			},
 			error: () => {
 				this.isLoading = false;
-				this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se cargaron los datos' });
+				this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se cargaron los datos.' });
 			},
 		});
 	}
 
-	filtrarPorFechas() {
-		if (this.rangeDates && this.rangeDates[1]) {
-			this.buscarDatos(this.rangeDates[0], this.rangeDates[1]);
-			this.messageService.add({ severity: 'info', summary: 'Filtrado', detail: 'Datos actualizados por fecha.' });
-		}
+	// --- LÓGICA DE FILTROS ---
+
+	// Extrae los barrios (Ej: "Centro", "San Felipe") de los datos reales
+	generarFiltroBarrios(data: ReporteCarteraItem[]) {
+		const barriosUnicos = [...new Set(data.map((item) => item.barrio))];
+		this.opcionesBarrios = [
+			{ label: 'Todos los Barrios', value: 'TODOS' },
+			...barriosUnicos.map((b) => ({ label: b, value: b })),
+		];
 	}
 
-	// --- LÓGICA DE PDF ---
-	descargarPDF() {
-		const doc = new jsPDF();
+	// Aplica Búsqueda + Filtro de Barrio al mismo tiempo
+	aplicarFiltros() {
+		const texto = this.filtroTexto.toLowerCase();
 
-		// Título
-		doc.setFontSize(18);
-		doc.text('Reporte Financiero - El Arbolito', 14, 20);
-		doc.setFontSize(10);
-		doc.text(`Generado el: ${new Date().toLocaleDateString()}`, 14, 28);
+		this.datosVisibles = this.datosOriginales.filter((item) => {
+			// 1. Coincide con Texto (Nombre o CI)
+			const coincideTexto = item.nombre.toLowerCase().includes(texto) || item.identificacion.includes(texto);
 
-		// Tabla
-		const columnas = [['Fecha', 'Socio', 'Concepto', 'Estado', 'Monto']];
-		const data = this.transacciones.map((t) => [t.fecha, t.socio, t.concepto, t.estado, `$${t.monto.toFixed(2)}`]);
+			// 2. Coincide con Barrio
+			const coincideBarrio = this.filtroBarrio === 'TODOS' || item.barrio === this.filtroBarrio;
 
-		autoTable(doc, {
-			head: columnas,
-			body: data,
-			startY: 35,
-			theme: 'grid',
+			return coincideTexto && coincideBarrio;
 		});
 
-		// Total
-		const total = this.transacciones.reduce((acc, curr) => acc + curr.monto, 0);
-		const finalY = (doc as any).lastAutoTable.finalY + 10;
-		doc.setFontSize(12);
-		doc.text(`TOTAL RECAUDADO: $${total.toFixed(2)}`, 14, finalY);
-
-		doc.save('reporte_arbolito.pdf');
-		this.messageService.add({
-			severity: 'success',
-			summary: 'PDF Generado',
-			detail: 'El reporte se descargó correctamente.',
-		});
+		this.recalcularKPIs(); // Recalcular totales con lo filtrado
 	}
 
-	// Configuración visual del gráfico
-	initChart() {
+	recalcularKPIs() {
+		this.totalDeuda = this.datosVisibles.reduce((acc, i) => acc + i.total_deuda, 0);
+		this.totalSocios = this.datosVisibles.length;
+	}
+
+	actualizarGrafico() {
+		const corriente = this.datosVisibles.reduce((acc, i) => acc + i.corriente, 0);
+		const vencido = this.datosVisibles.reduce((acc, i) => acc + i.vencido_1_3, 0);
+		const incobrable = this.datosVisibles.reduce((acc, i) => acc + i.incobrable, 0);
+
 		this.chartData = {
-			labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'],
+			labels: ['Corriente', 'Mora 1-3 Meses', 'Mora Crítica'],
 			datasets: [
 				{
-					label: 'Ingresos ($)',
-					backgroundColor: '#23A455',
-					data: [3000, 3500, 3200, 4100, 3900, 4250],
+					data: [corriente, vencido, incobrable],
+					backgroundColor: ['#22C55E', '#F59E0B', '#EF4444'],
+					hoverBackgroundColor: ['#16A34A', '#D97706', '#DC2626'],
 				},
 			],
 		};
+	}
 
-		this.chartOptions = {
-			plugins: { legend: { labels: { color: '#495057' } } },
-			scales: {
-				x: { ticks: { color: '#495057' }, grid: { color: '#ebedef' } },
-				y: { ticks: { color: '#495057' }, grid: { color: '#ebedef' } },
-			},
-		};
+	// --- PDF ---
+	descargarPDF() {
+		const doc = new jsPDF();
+		doc.text('Reporte de Pendientes (Cartera Vencida)', 14, 20);
+		doc.setFontSize(10);
+		doc.text(`Generado: ${new Date().toLocaleDateString()}`, 14, 28);
+
+		// Tabla PDF usando los datos visibles (filtrados)
+		const data = this.datosVisibles.map((i) => [
+			i.nombre,
+			i.barrio,
+			`$${i.total_deuda.toFixed(2)}`,
+			i.facturas_pendientes,
+		]);
+
+		autoTable(doc, {
+			head: [['Socio', 'Barrio', 'Deuda Total', 'Facturas']],
+			body: data,
+			startY: 35,
+		});
+		doc.save('reporte_pendientes.pdf');
+	}
+
+	initChartOptions() {
+		this.chartOptions = { plugins: { legend: { position: 'bottom' } } };
 	}
 }
