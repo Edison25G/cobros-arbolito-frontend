@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, map, of, catchError } from 'rxjs';
 
-import { environment } from '../../environments/environment.development';
+import { environment } from '../../environments/environment';
 import { MedidorBackend, HistorialConsumo } from '../..//core/interfaces/mi-medidor';
 import { LecturaView } from '../models/lectura.interface';
 

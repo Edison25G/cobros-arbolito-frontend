@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { environment } from '../../environments/environment.development';
+import { environment } from '../../environments/environment';
 import { Observable, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { LecturaPendiente, GenerarEmisionDTO } from '../interfaces/factura.interface';

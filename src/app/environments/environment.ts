@@ -1,5 +1,4 @@
 export const environment = {
 	production: true,
-	//apiUrl: 'https://webapi-gestiondocumentos.onrender.com',
-	//apiUrl: 'https://app.jlb-elitegroup.com',
+	apiUrl: 'https://ideal-radiance-production.up.railway.app/api/v1',
 };

@@ -2,7 +2,7 @@ import { inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { HttpInterceptorFn, HttpRequest, HttpHandlerFn, HttpErrorResponse } from '@angular/common/http';
 import { catchError, throwError } from 'rxjs';
-import { environment } from '../environments/environment.development';
+import { environment } from '../environments/environment';
 import { ErrorService } from '../auth/core/services/error.service';
 
 export const tokenInterceptor: HttpInterceptorFn = (req: HttpRequest<any>, next: HttpHandlerFn) => {

@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { environment } from '../../environments/environment.development';
+import { environment } from '../../environments/environment';
 // Importamos las interfaces actualizadas
 import { Minga, ItemAsistencia } from '../interfaces/minga.interface';
 // Importamos el modelo de Socio para leer la respuesta del backend

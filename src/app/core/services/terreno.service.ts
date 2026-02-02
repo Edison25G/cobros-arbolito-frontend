@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { environment } from '../../environments/environment.development';
+import { environment } from '../../environments/environment';
 import { Observable } from 'rxjs';
 
 // ✅ Importamos la interfaz para que el código sea inteligente

@@ -4,7 +4,7 @@ import { Observable, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { Socio } from '../models/socio.interface';
 
-import { environment } from '../../environments/environment.development';
+import { environment } from '../../environments/environment';
 
 @Injectable({
 	providedIn: 'root',
