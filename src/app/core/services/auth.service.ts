@@ -14,9 +14,27 @@ export class AuthService {
 	private errorService = inject(ErrorService);
 
 	constructor() {
-		const userJson = localStorage.getItem('user');
-		if (userJson) {
-			this.currentUser = JSON.parse(userJson);
+		// 🛡️ SEGURIDAD MEJORADA:
+		// Ya no confiamos en 'user' del localStorage porque el usuario puede editarlo.
+		// Ahora reconstruimos el usuario decodificando el Token real.
+		const token = localStorage.getItem('token');
+		if (token) {
+			const payload = this.decodeToken(token);
+			// Verificamos si el token tiene contenido útil (ej. expiración)
+			if (payload && payload.exp && Date.now() >= payload.exp * 1000) {
+				console.warn('Token expirado al iniciar app. Cerrando sesión.');
+				this.logout();
+			} else if (payload && payload.user_id) {
+				// Reconstruimos el usuario desde el Token
+				this.currentUser = {
+					id: payload.user_id,
+					username: payload.username || '',
+					first_name: payload.first_name || '',
+					last_name: payload.last_name || '',
+					email: payload.email || '',
+					rol: payload.rol || payload.role || payload.tipo_usuario || 'SOCIO',
+				};
+			}
 		}
 	}
 
