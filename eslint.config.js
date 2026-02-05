@@ -28,7 +28,7 @@ module.exports = tseslint.config(
 					ignoreRestSiblings: true,
 				},
 			],
-      '@typescript-eslint/no-explicit-any': 'off',
+			'@typescript-eslint/no-explicit-any': 'off',
 		},
 	},
 	{
