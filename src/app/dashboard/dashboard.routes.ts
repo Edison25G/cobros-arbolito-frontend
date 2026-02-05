@@ -149,6 +149,12 @@ export default [
 				data: { roles: [RolUsuario.ADMIN, RolUsuario.TESORERO] },
 			},
 			{
+				path: 'perfil',
+				loadComponent: () => import('./pages/perfil/perfil.component').then((m) => m.PerfilComponent),
+				canActivate: [RoleGuard],
+				data: { roles: [RolUsuario.ADMIN, RolUsuario.TESORERO, RolUsuario.OPERADOR, RolUsuario.SOCIO] },
+			},
+			{
 				path: 'configuracion',
 				loadComponent: () =>
 					import('./pages/configuracion/configuracion.component').then((m) => m.ConfiguracionComponent),

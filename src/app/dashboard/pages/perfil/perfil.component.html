@@ -1,0 +1,205 @@
+<p-toast position="bottom-right"></p-toast>
+
+<div class="h-full flex flex-col p-4 md:p-8 bg-slate-50/50 animate-fade-in font-sans overflow-hidden">
+	<div class="flex-none mb-6">
+		<h2 class="text-3xl font-extrabold text-slate-800 tracking-tight flex items-center gap-3">
+			<i class="pi pi-user-edit text-emerald-500"></i> Mi Perfil
+		</h2>
+		<p class="text-slate-500 text-sm mt-1">Gestiona tu información personal y seguridad.</p>
+	</div>
+
+	<div class="flex-1 overflow-y-auto min-h-0 space-y-6 pb-8 custom-scrollbar">
+		<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+			<div class="lg:col-span-1 space-y-6">
+				<div class="bg-white rounded-3xl shadow-xl border border-slate-100 overflow-hidden relative group">
+					<div class="h-32 bg-gradient-to-r from-slate-800 to-slate-900 relative">
+						<div class="absolute inset-0 bg-emerald-500/10 pattern-dots"></div>
+					</div>
+
+					<div class="absolute top-16 left-1/2 -translate-x-1/2">
+						<div class="relative">
+							<div
+								class="w-32 h-32 rounded-full border-4 border-white bg-white shadow-lg overflow-hidden flex items-center justify-center"
+							>
+								<img *ngIf="photoUrl" [src]="photoUrl" class="w-full h-full object-cover" alt="Perfil" />
+								<span *ngIf="!photoUrl" class="text-4xl font-black text-emerald-600">{{
+									currentUser.charAt(0).toUpperCase()
+								}}</span>
+							</div>
+
+							<div
+								class="absolute bottom-0 right-0 w-10 h-10 bg-emerald-500 rounded-full flex items-center justify-center shadow-md cursor-pointer hover:bg-emerald-600 transition-colors"
+							>
+								<p-fileUpload
+									mode="basic"
+									name="foto"
+									accept="image/*"
+									maxFileSize="1000000"
+									(onSelect)="onPhotoSelect($event)"
+									[auto]="true"
+									chooseIcon="pi pi-camera"
+									styleClass="p-button-rounded p-button-text !text-white !p-0 opacity-0 absolute inset-0 w-full h-full"
+								></p-fileUpload>
+								<i class="pi pi-camera text-white text-sm pointer-events-none"></i>
+							</div>
+						</div>
+					</div>
+
+					<div class="pt-20 pb-6 px-6 text-center">
+						<h3 class="text-xl font-bold text-slate-800">{{ currentUser }}</h3>
+						<p class="text-xs text-slate-400 font-bold tracking-widest uppercase mt-1 mb-4">{{ currentRole }}</p>
+
+						<div class="flex flex-col gap-3 text-left bg-slate-50 p-4 rounded-xl border border-slate-100">
+							<div class="flex justify-between items-center">
+								<span class="text-xs text-slate-400 font-bold uppercase">Cédula</span>
+								<span class="text-sm font-semibold text-slate-700">{{ socioData.identificacion }}</span>
+							</div>
+							<div class="flex justify-between items-center">
+								<span class="text-xs text-slate-400 font-bold uppercase">Barrio</span>
+								<span class="text-sm font-semibold text-slate-700">{{ socioData.barrio || 'No asignado' }}</span>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<div class="bg-white rounded-3xl shadow-sm border border-slate-200 p-6">
+					<h4 class="text-sm font-bold text-slate-700 mb-4 flex items-center gap-2">
+						<i class="pi pi-address-book text-emerald-500"></i> Información de Contacto
+					</h4>
+					<form [formGroup]="contactForm" (ngSubmit)="onUpdateContact()" class="space-y-4">
+						<div class="flex flex-col gap-1.5">
+							<span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest pl-1"
+								>Correo Electrónico</span
+							>
+							<input
+								pInputText
+								formControlName="email"
+								placeholder="ejemplo@correo.com"
+								class="w-full !rounded-xl !py-2 text-sm !border-slate-200 focus:!border-emerald-500"
+							/>
+						</div>
+						<div class="flex flex-col gap-1.5">
+							<span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest pl-1"
+								>Teléfono / Celular</span
+							>
+							<input
+								pInputText
+								formControlName="telefono"
+								placeholder="099..."
+								class="w-full !rounded-xl !py-2 text-sm !border-slate-200 focus:!border-emerald-500"
+							/>
+						</div>
+						<div class="flex flex-col gap-1.5">
+							<span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest pl-1"
+								>Dirección Domiciliaria</span
+							>
+							<textarea
+								pInputTextarea
+								formControlName="direccion"
+								rows="2"
+								placeholder="Calle principal, referencia, color de casa..."
+								class="w-full !rounded-xl text-sm !border-slate-200 focus:!border-emerald-500 resize-none"
+							></textarea>
+						</div>
+
+						<div class="flex justify-end pt-2">
+							<p-button
+								type="submit"
+								label="Guardar Datos"
+								icon="pi pi-save"
+								[loading]="isSavingContact"
+								[disabled]="contactForm.invalid"
+								styleClass="!bg-white !text-emerald-600 !border-emerald-200 hover:!bg-emerald-50 !rounded-lg !text-xs !font-bold !px-4 !py-2 shadow-sm"
+							>
+							</p-button>
+						</div>
+					</form>
+				</div>
+			</div>
+
+			<div class="lg:col-span-2">
+				<div class="bg-white rounded-3xl shadow-sm border border-slate-200 p-6 md:p-8 h-full">
+					<div class="mb-8 border-b border-slate-50 pb-4">
+						<h4 class="text-xl font-extrabold text-slate-800 flex items-center gap-2 mb-1">
+							<i class="pi pi-shield text-emerald-500"></i> Seguridad de la Cuenta
+						</h4>
+						<p class="text-sm text-slate-500">Actualiza tu contraseña periódicamente para mantener tu cuenta segura.</p>
+					</div>
+
+					<form
+						[formGroup]="passwordForm"
+						(ngSubmit)="onUpdatePassword()"
+						class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6"
+					>
+						<div class="md:col-span-1 space-y-4">
+							<div class="flex flex-col gap-2">
+								<span class="text-xs font-bold text-slate-500 uppercase tracking-widest pl-1">Contraseña Actual</span>
+								<p-password
+									formControlName="current"
+									[toggleMask]="true"
+									[feedback]="false"
+									placeholder="••••••••"
+									styleClass="w-full"
+									inputStyleClass="w-full !rounded-xl !border-slate-200 !py-3 focus:!border-emerald-500 focus:!ring-emerald-100 transition-all"
+								>
+								</p-password>
+							</div>
+						</div>
+
+						<div class="hidden md:block"></div>
+
+						<div class="md:col-span-1 space-y-4">
+							<div class="flex flex-col gap-2">
+								<span class="text-xs font-bold text-slate-500 uppercase tracking-widest pl-1">Nueva Contraseña</span>
+								<p-password
+									formControlName="password"
+									[toggleMask]="true"
+									placeholder="••••••••"
+									styleClass="w-full"
+									inputStyleClass="w-full !rounded-xl !border-slate-200 !py-3 focus:!border-emerald-500 focus:!ring-emerald-100 transition-all"
+								>
+									<ng-template pTemplate="footer">
+										<p class="mt-2 text-xs text-slate-400">Mínimo 6 caracteres</p>
+									</ng-template>
+								</p-password>
+							</div>
+						</div>
+
+						<div class="md:col-span-1 space-y-4">
+							<div class="flex flex-col gap-2">
+								<span class="text-xs font-bold text-slate-500 uppercase tracking-widest pl-1">Confirmar Nueva</span>
+								<p-password
+									formControlName="confirm"
+									[toggleMask]="true"
+									[feedback]="false"
+									placeholder="••••••••"
+									styleClass="w-full"
+									inputStyleClass="w-full !rounded-xl !border-slate-200 !py-3 focus:!border-emerald-500 focus:!ring-emerald-100 transition-all"
+								>
+								</p-password>
+								<small
+									*ngIf="passwordForm.hasError('mismatch') && passwordForm.get('confirm')?.touched"
+									class="text-red-500 text-xs font-bold flex items-center gap-1"
+								>
+									<i class="pi pi-times-circle"></i> Las contraseñas no coinciden
+								</small>
+							</div>
+						</div>
+
+						<div class="md:col-span-2 pt-6 border-t border-slate-50 flex justify-end">
+							<p-button
+								type="submit"
+								label="Actualizar Contraseña"
+								icon="pi pi-check-circle"
+								[loading]="isSavingPassword"
+								[disabled]="passwordForm.invalid"
+								styleClass="!bg-slate-800 !border-slate-800 hover:!bg-slate-700 !rounded-xl !px-8 !py-3 !text-sm !font-bold shadow-xl shadow-slate-200 active:scale-95 transition-all"
+							>
+							</p-button>
+						</div>
+					</form>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>

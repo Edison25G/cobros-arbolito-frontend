@@ -11,11 +11,6 @@ export default [
 				loadComponent: () => import('./pages/login/login.component'),
 			},
 			{
-				path: 'register',
-				title: 'Registro de usuario',
-				loadComponent: () => import('./pages/register/register.component'),
-			},
-			{
 				path: 'forgot-password',
 				title: 'Recuperar contraseña',
 				loadComponent: () => import('./pages/forgot-password/forgot-password.component'),

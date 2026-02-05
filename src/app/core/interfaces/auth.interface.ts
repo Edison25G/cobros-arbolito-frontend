@@ -31,6 +31,13 @@ export interface UserData {
 	last_name: string;
 	email: string;
 	rol?: string;
+	// Campos extendidos para perfil
+	foto?: string;
+	telefono?: string;
+	direccion?: string;
+	identificacion?: string;
+	barrio?: string;
+	barrio_id?: number;
 }
 
 // ⬅️ ¡AÑADE ESTA INTERFAZ!

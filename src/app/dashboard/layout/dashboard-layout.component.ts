@@ -1,6 +1,6 @@
-import { Component, OnInit, HostListener, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener, inject } from '@angular/core';
 import { Router, RouterModule, RouterOutlet } from '@angular/router';
-import { CommonModule } from '@angular/common';
+import { CommonModule, DatePipe } from '@angular/common';
 
 // PrimeNG
 import { PopoverModule } from 'primeng/popover';
@@ -22,17 +22,18 @@ interface SideNavItem {
 @Component({
 	selector: 'ca-dashboard-layout',
 	standalone: true,
-	imports: [RouterOutlet, CommonModule, RouterModule, PopoverModule, FooterComponent, AvatarModule],
+	imports: [RouterOutlet, CommonModule, RouterModule, PopoverModule, FooterComponent, AvatarModule, DatePipe],
 	templateUrl: './dashboard-layout.component.html',
 	styleUrls: ['./dashboard-layout.component.css'],
 })
-export class DashboardLayoutComponent implements OnInit {
+export class DashboardLayoutComponent implements OnInit, OnDestroy {
 	private router = inject(Router);
 	private authService = inject(AuthService);
 
 	menuOpen = false;
 	isMobile = false;
-
+	ecTime: Date = new Date();
+	private timerId: any;
 	currentUser!: string;
 	currentRole: RolUsuario | null = null;
 
@@ -173,8 +174,16 @@ export class DashboardLayoutComponent implements OnInit {
 
 		// Si nombreReal no está vacío (""), lo usamos. Si está vacío, usamos el Rol como respaldo.
 		this.currentUser = nombreReal ? nombreReal : roleString || 'Usuario';
+		this.timerId = setInterval(() => {
+			this.ecTime = new Date();
+		}, 1000);
 	}
-
+	ngOnDestroy(): void {
+		// Limpiar el reloj cuando se cierre el componente para no gastar memoria
+		if (this.timerId) {
+			clearInterval(this.timerId);
+		}
+	}
 	onMenuClick(): void {
 		if (this.isMobile) {
 			this.menuOpen = false;
@@ -184,6 +193,10 @@ export class DashboardLayoutComponent implements OnInit {
 	logout(): void {
 		this.authService.logout();
 		this.router.navigate(['/auth/login']);
+	}
+
+	irAPerfil(): void {
+		this.router.navigate(['/dashboard/perfil']);
 	}
 
 	hasAccess(itemRoles: RolUsuario[]): boolean {
