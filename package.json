@@ -1,6 +1,8 @@
 {
   "name": "cobros-arbolito",
-  "version": "0.0.0",
+  "version": "1.0.0",
+  "description": "Sistema de Gestión de Cobros - Junta de Riego El Arbolito",
+  "author": "Equipo de Desarrollo El Arbolito",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
