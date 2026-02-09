@@ -41,7 +41,7 @@
 		[loading]="loading"
 		[paginator]="true"
 		[rows]="10"
-		[globalFilterFields]="['nombres', 'apellidos', 'cedula']"
+		[globalFilterFields]="['nombres', 'apellidos', 'identificacion']"
 		styleClass="p-datatable-sm"
 		[rowHover]="true"
 		[tableStyle]="{ 'min-width': '50rem' }"
@@ -72,7 +72,7 @@
 
 		<ng-template pTemplate="body" let-socio>
 			<tr>
-				<td class="font-medium text-gray-600">{{ socio.cedula }}</td>
+				<td class="font-medium text-gray-600">{{ socio.identificacion }}</td>
 
 				<td class="font-bold text-gray-800">
 					{{ socio.nombres }} {{ socio.apellidos }}
