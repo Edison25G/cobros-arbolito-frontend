@@ -5,6 +5,7 @@ import { catchError, map } from 'rxjs/operators';
 import { Socio } from '../models/socio.interface';
 
 import { environment } from '../../environments/environment';
+import { joinApiUrl } from '../utils/url';
 
 @Injectable({
 	providedIn: 'root',
@@ -12,7 +13,7 @@ import { environment } from '../../environments/environment';
 export class SocioService {
 	private http = inject(HttpClient);
 
-	private baseUrl = environment.apiUrl + '/socios/';
+	private baseUrl = joinApiUrl(environment.apiUrl, 'socios');
 
 	getSocios(): Observable<Socio[]> {
 		return this.http.get<any>(this.baseUrl).pipe(

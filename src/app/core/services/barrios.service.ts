@@ -3,6 +3,7 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
+import { joinApiUrl } from '../utils/url';
 import { Barrio, CrearBarrioDTO } from '../interfaces/barrio.interface'; // Ajusta la ruta de importación si es necesario
 
 @Injectable({
@@ -12,9 +13,9 @@ export class BarriosService {
 	private http = inject(HttpClient);
 
 	// URL base: http://localhost:8000/api/v1/barrios/
-	private baseUrl = `${environment.apiUrl}/barrios/`;
+	private baseUrl = joinApiUrl(environment.apiUrl, 'barrios');
 
-	constructor() {}
+	constructor() { }
 
 	/**
 	 * 1. LISTAR TODOS (GET /barrios/)

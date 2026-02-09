@@ -11,6 +11,7 @@ import {
 	CobroResponse,
 	FacturaPendiente,
 } from '../interfaces/caja.interface';
+import { joinApiUrl } from '../utils/url';
 
 @Injectable({
 	providedIn: 'root',
@@ -21,13 +22,13 @@ export class CajaService {
 
 	getTransferenciasPendientes(): Observable<TransferenciaPendiente[]> {
 		return this.http
-			.get<TransferenciaPendiente[]>(`${this.apiUrl}/cobros/pendientes-validacion/`)
+			.get<TransferenciaPendiente[]>(joinApiUrl(this.apiUrl, 'cobros/pendientes-validacion'))
 			.pipe(catchError(this.handleError));
 	}
 
 	validarTransferencia(pagoId: number, accion: 'APROBAR' | 'RECHAZAR'): Observable<any> {
 		return this.http
-			.post(`${this.apiUrl}/cobros/validar-transferencia/`, {
+			.post(joinApiUrl(this.apiUrl, 'cobros/validar-transferencia'), {
 				pago_id: pagoId,
 				accion: accion,
 			})
@@ -35,11 +36,11 @@ export class CajaService {
 	}
 
 	registrarCobro(datos: RegistrarCobroDTO): Observable<CobroResponse> {
-		return this.http.post<CobroResponse>(`${this.apiUrl}/cobros/registrar/`, datos).pipe(catchError(this.handleError));
+		return this.http.post<CobroResponse>(joinApiUrl(this.apiUrl, 'cobros/registrar'), datos).pipe(catchError(this.handleError));
 	}
 
 	getFacturasPendientes(q?: string, dia?: number, mes?: number, anio?: number): Observable<FacturaPendiente[]> {
-		let url = `${this.apiUrl}/facturas-gestion/pendientes/`;
+		let url = joinApiUrl(this.apiUrl, 'facturas-gestion/pendientes');
 		const params: string[] = [];
 
 		if (q) params.push(`identificacion=${encodeURIComponent(q)}`);
@@ -60,7 +61,7 @@ export class CajaService {
 			metodo_pago: metodo,
 			usuario_id: 1,
 		};
-		return this.http.post<PagoResponse>(`${this.apiUrl}/caja/pagar/`, payload).pipe(catchError(this.handleError));
+		return this.http.post<PagoResponse>(joinApiUrl(this.apiUrl, 'caja/pagar'), payload).pipe(catchError(this.handleError));
 	}
 
 	private handleError(error: HttpErrorResponse) {
@@ -79,6 +80,6 @@ export class CajaService {
 	}
 
 	getPagosFactura(facturaId: number): Observable<any[]> {
-		return this.http.get<any[]>(`${this.apiUrl}/cobros/${facturaId}/pagos/`);
+		return this.http.get<any[]>(joinApiUrl(this.apiUrl, `cobros/${facturaId}/pagos`));
 	}
 }

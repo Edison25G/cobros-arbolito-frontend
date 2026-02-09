@@ -12,7 +12,7 @@ import { DialogService } from 'primeng/dynamicdialog';
 import Aura from '@primeuix/themes/aura';
 
 import { routes } from './app.routes';
-import { tokenInterceptor } from './interceptors/token-interceptor';
+import { authInterceptor } from './core/interceptors/auth.interceptor';
 import { loadingInterceptor } from './interceptors/loading.interceptor';
 
 registerLocaleData(localeEs, 'es');
@@ -24,7 +24,7 @@ export const appConfig: ApplicationConfig = {
 		provideRouter(routes, withViewTransitions()),
 
 		provideAnimationsAsync(),
-		provideHttpClient(withInterceptors([tokenInterceptor, loadingInterceptor])),
+		provideHttpClient(withInterceptors([authInterceptor, loadingInterceptor])),
 
 		{ provide: LOCALE_ID, useValue: 'es' },
 
