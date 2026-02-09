@@ -1,3 +1,4 @@
+// src/app/dashboard/pages/perfil/perfil.component.ts
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -11,7 +12,7 @@ import { FileUploadModule } from 'primeng/fileupload'; // Nuevo para la foto
 import { MessageService } from 'primeng/api';
 
 // Servicios
-import { AuthService } from '../../../core/services/auth.service';
+import { AuthService, UserProfile } from '../../../core/services/auth.service';
 import { SocioService } from '../../../core/services/socio.service'; // Asegúrate de tener este import
 
 @Component({
@@ -40,7 +41,7 @@ export class PerfilComponent implements OnInit {
 
 	currentUser = '';
 	currentRole = '';
-	socioData: any = {};
+	socioData: UserProfile | null = null;
 	photoUrl: string | null = null; // Para previsualizar la foto
 
 	isSavingPassword = false;
@@ -73,7 +74,7 @@ export class PerfilComponent implements OnInit {
 		this.currentRole = this.authService.getRole() || 'SOCIO';
 
 		this.authService.getProfile().subscribe({
-			next: (data) => {
+			next: (data: UserProfile) => {
 				this.socioData = data;
 				// Si vienen datos nulos, evitar "undefined undefined"
 				const fName = data.first_name || '';
@@ -88,7 +89,7 @@ export class PerfilComponent implements OnInit {
 					direccion: data.direccion,
 				});
 			},
-			error: (err) => {
+			error: (err: any) => {
 				console.error('Error cargando perfil', err);
 				this.messageService.add({
 					severity: 'error',
@@ -101,6 +102,11 @@ export class PerfilComponent implements OnInit {
 
 	onUpdateContact() {
 		if (this.contactForm.invalid) return;
+
+		if (!this.socioData || !this.socioData.id) {
+			this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No hay datos de socio cargados.' });
+			return;
+		}
 
 		this.isSavingContact = true;
 		// Aquí llamamos al método de actualizar socio.
@@ -119,8 +125,10 @@ export class PerfilComponent implements OnInit {
 				});
 				this.isSavingContact = false;
 				// Actualizar vista local
-				this.socioData.email = updateData.email;
-				this.socioData.telefono = updateData.telefono;
+				if (this.socioData) {
+					this.socioData.email = updateData.email;
+					this.socioData.telefono = updateData.telefono;
+				}
 			},
 			error: (_err) => {
 				this.messageService.add({
@@ -150,7 +158,7 @@ export class PerfilComponent implements OnInit {
 				this.passwordForm.reset();
 				this.isSavingPassword = false;
 			},
-			error: (err) => {
+			error: (err: any) => {
 				this.messageService.add({
 					severity: 'error',
 					summary: 'Error',
@@ -173,6 +181,11 @@ export class PerfilComponent implements OnInit {
 			// 2. Subida al backend (Form Data)
 			const formData = new FormData();
 			formData.append('foto', file);
+
+			if (!this.socioData || !this.socioData.id) {
+				this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No hay datos de socio.' });
+				return;
+			}
 
 			this.socioService.updateSocio(this.socioData.id, formData).subscribe({
 				next: (_res: any) => {

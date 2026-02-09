@@ -3,6 +3,7 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
+import { joinApiUrl } from '../utils/url';
 
 // Interfaces Actualizadas
 import { Medidor } from '../models/medidor.interface';
@@ -17,9 +18,9 @@ export class MedidorService {
 	private socioService = inject(SocioService);
 
 	// URL del Backend
-	private baseUrl = `${environment.apiUrl}/medidores/`;
+	private baseUrl = joinApiUrl(environment.apiUrl, 'medidores');
 
-	constructor() {}
+	constructor() { }
 
 	/**
 	 * 1. LISTAR MEDIDORES

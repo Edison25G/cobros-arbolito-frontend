@@ -3,6 +3,7 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
+import { joinApiUrl } from '../utils/url';
 import { RegistrarLecturaDTO, LecturaResponse, LecturaView } from '../models/lectura.interface';
 
 @Injectable({
@@ -16,7 +17,7 @@ export class LecturaService {
 	 * Registrar una nueva lectura (POST)
 	 */
 	registrarLectura(data: RegistrarLecturaDTO): Observable<LecturaResponse> {
-		const url = `${this.apiUrl}/lecturas/`;
+		const url = joinApiUrl(this.apiUrl, 'lecturas');
 		return this.http.post<LecturaResponse>(url, data).pipe(catchError(this.handleError));
 	}
 
@@ -26,7 +27,7 @@ export class LecturaService {
 	 */
 	getAll(): Observable<LecturaView[]> {
 		// ⚠️ Confirma con tu equipo si la ruta será 'lecturas' o 'lecturas/historial'
-		const url = `${this.apiUrl}/lecturas/`;
+		const url = joinApiUrl(this.apiUrl, 'lecturas');
 		return this.http.get<LecturaView[]>(url).pipe(catchError(this.handleError));
 	}
 
