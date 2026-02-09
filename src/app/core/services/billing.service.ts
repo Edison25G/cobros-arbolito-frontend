@@ -22,7 +22,6 @@ export interface TransferenciaPendiente {
 export interface ValidarTransferenciaRequest {
     pago_id: number;
     accion: 'APROBAR' | 'RECHAZAR';
-    motivo_rechazo?: string;
 }
 
 export interface ValidarTransferenciaResponse {
@@ -70,7 +69,7 @@ export class BillingService {
      */
     validarTransferencia(payload: ValidarTransferenciaRequest): Observable<ValidarTransferenciaResponse> {
         return this.http
-            .post<ValidarTransferenciaResponse>(joinApiUrl(this.apiUrl, 'cobros/validar-transferencia/'), payload)
+            .post<ValidarTransferenciaResponse>(joinApiUrl(this.apiUrl, 'cobros/validar-transferencia'), payload)
             .pipe(catchError(this.handleError));
     }
 

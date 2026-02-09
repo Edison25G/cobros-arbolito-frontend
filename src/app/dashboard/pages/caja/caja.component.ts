@@ -103,27 +103,21 @@ export class CajaComponent implements OnInit {
 		this.mostrarDialogoTransferencia = true;
 	}
 
+	// Validation Process
+	procesandoValidacionTransferencia: boolean = false;
+
 	procesarTransferencia(accion: 'APROBAR' | 'RECHAZAR') {
 		if (!this.transferenciaSeleccionada) return;
 
-		// Validar motivo si es rechazo (opcional segun backend pero buena UX)
-		if (accion === 'RECHAZAR' && !this.motivoRechazo.trim()) {
-			this.messageService.add({ severity: 'warn', summary: 'Atención', detail: 'Indique el motivo del rechazo.' });
-			return;
-		}
+		// El backend v5.1.1 NO recibe motivo, es un booleano lógico interno.
+		// El usuario pidió permitir rechazar aunque esté vacío (sin bloqueo).
 
-		const request = {
+		const request: ValidarTransferenciaRequest = {
 			pago_id: this.transferenciaSeleccionada.pago_id,
-			accion: accion,
-			motivo_rechazo: this.motivoRechazo
+			accion: accion
 		};
 
-		this.loadingTransferencias = true; // Reusamos loading o creamos uno nuevo si queremos bloquear solo dialogo
-		// Para UX simple, bloqueamos todo un poco o usamos un flag especifico. 
-		// El usuario pidio "procesandoTransferencia".
-		// Como no declare esa variable en la clase, usare loadingTransferencias para bloquear la tabla al menos, 
-		// pero idealmente deberia bloquear el dialogo.
-		// Voy a asumir que puedo usar un flag local o simplemente cerrar el dialogo al finalizar.
+		this.procesandoValidacionTransferencia = true;
 
 		this.billingService.validarTransferencia(request).subscribe({
 			next: (resp) => {
@@ -131,10 +125,22 @@ export class CajaComponent implements OnInit {
 				this.mostrarDialogoTransferencia = false;
 				this.transferenciaSeleccionada = null;
 				this.motivoRechazo = '';
-				this.cargarTransferencias(); // Refrescar lista
+				this.cargarTransferencias(); // Refrescar lista principal
+
+				// Si estamos viendo un socio, refrescar su estado de cuenta tambien
+				if (this.estadoCuenta && this.estadoCuenta.socio_id) {
+					this.billingService.getEstadoCuenta(this.estadoCuenta.socio_id).subscribe({
+						next: (data) => {
+							this.estadoCuenta = data;
+							this.montoPagar = parseFloat(data.deuda_total);
+						},
+						error: (err) => console.error("Error refrescando estado cuenta", err)
+					});
+				}
+				this.procesandoValidacionTransferencia = false;
 			},
 			error: (err) => {
-				this.loadingTransferencias = false;
+				this.procesandoValidacionTransferencia = false;
 				this.messageService.add({ severity: 'error', summary: 'Error', detail: err.message });
 			}
 		});
@@ -236,7 +242,11 @@ export class CajaComponent implements OnInit {
 		}
 	}
 
-	descargarFactura(facturaId: number) {
+	descargarFactura(facturaId: number | undefined) {
+		if (!facturaId) {
+			this.messageService.add({ severity: 'warn', summary: 'No disponible', detail: 'El ID de la factura no está disponible.' });
+			return;
+		}
 		this.billingService.downloadFacturaPdf(facturaId).subscribe({
 			next: (blob) => {
 				const url = window.URL.createObjectURL(blob);

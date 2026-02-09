@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { Observable, throwError } from 'rxjs';
+import { Observable, throwError, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { Socio } from '../models/socio.interface';
 
@@ -26,6 +26,30 @@ export class SocioService {
 				return Array.isArray(response) ? response : [response];
 			}),
 			catchError(this.handleError),
+		);
+	}
+
+	/**
+	 * Obtiene el total de socios registrados (KPI).
+	 * Usa page_size=1 para optimizar y leer solo el campo 'count'.
+	 */
+	getSociosCount(): Observable<number> {
+		return this.http.get<any>(`${this.baseUrl}?page_size=1`).pipe(
+			map(response => {
+				// DRF Paginación: { count: 20, results: [...] }
+				if (response.count !== undefined) {
+					return response.count;
+				}
+				// Si devuelve array directo (sin paginación)
+				if (Array.isArray(response)) {
+					return response.length;
+				}
+				return 0;
+			}),
+			catchError(error => {
+				console.error('Error fetching socios count', error);
+				return of(0); // Fallback silencioso (requiere import 'rxjs/add/observable/of' o similar en versiones viejas, mejor usar 'of' de rxjs)
+			})
 		);
 	}
 	getSocioById(id: number): Observable<Socio> {

@@ -103,7 +103,8 @@
 						<td class="text-center">
 							<p-button icon="pi pi-file-pdf"
 								styleClass="p-button-rounded p-button-text p-button-secondary p-button-sm"
-								pTooltip="Descargar RIDE" tooltipPosition="top" (onClick)="descargarFactura(item.id)">
+								pTooltip="Descargar RIDE" tooltipPosition="top"
+								(onClick)="descargarFactura(item.factura_id)">
 							</p-button>
 						</td>
 					</tr>
@@ -193,10 +194,10 @@
 
 		<div class="flex justify-end gap-2 pt-4">
 			<p-button label="Rechazar" icon="pi pi-times" styleClass="p-button-danger p-button-text"
-				(onClick)="procesarTransferencia('RECHAZAR')">
+				(onClick)="procesarTransferencia('RECHAZAR')" [loading]="procesandoValidacionTransferencia">
 			</p-button>
 			<p-button label="Aprobar" icon="pi pi-check-circle" styleClass="p-button-success"
-				(onClick)="procesarTransferencia('APROBAR')">
+				(onClick)="procesarTransferencia('APROBAR')" [loading]="procesandoValidacionTransferencia">
 			</p-button>
 		</div>
 	</div>
