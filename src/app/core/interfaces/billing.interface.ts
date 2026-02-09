@@ -2,6 +2,7 @@
 
 export interface ItemPendienteDTO {
     id: number;
+    factura_id: number; // Required by v5.1.1 contract
     fecha_emision: string; // "YYYY-MM-DD"
     concepto: string;
     saldo_pendiente: string; // Decimal as string from backend

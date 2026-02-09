@@ -86,7 +86,7 @@ export class HomeComponent implements OnInit {
 
 		// ✅ PEDIMOS TODO A LA VEZ: Socios, Cartera (Deudas) y Caja (Ingresos)
 		forkJoin({
-			socios: this.socioService.getSocios(),
+			sociosCount: this.socioService.getSociosCount(),
 			cartera: this.reporteService.getReporteCartera(),
 			caja: this.reporteService.getCierreCaja(inicioMes, finMes),
 		})
@@ -97,8 +97,8 @@ export class HomeComponent implements OnInit {
 			)
 			.subscribe({
 				next: (res) => {
-					// 1. Total Socios
-					this.reporteData.sociosActivos = res.socios.length;
+					// 1. Total Socios (KPI Fixed)
+					this.reporteData.sociosActivos = res.sociosCount;
 
 					// 2. Socios en Mora y Deuda Total (Calculado desde la lista de cartera)
 					this.reporteData.sociosEnMora = res.cartera.length;
