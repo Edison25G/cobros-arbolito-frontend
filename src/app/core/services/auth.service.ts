@@ -2,7 +2,7 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable, inject, NgZone } from '@angular/core';
 import { Observable, throwError, BehaviorSubject, merge, fromEvent, timer, Subscription } from 'rxjs';
-import { map, catchError, tap, switchMap, filter, startWith } from 'rxjs/operators';
+import { map, catchError, tap, switchMap, startWith } from 'rxjs/operators';
 import { environment } from './../../environments/environment';
 import { joinApiUrl } from '../utils/url';
 import { ErrorService } from '../../auth/core/services/error.service';
@@ -76,9 +76,6 @@ export class AuthService {
 	 * Login: Autentica, guarda tokens, actualiza estado e inicia el listener de inactividad.
 	 */
 	login(credentials: LoginRequest): Observable<UserData> {
-		const url = joinApiUrl(this.apiUrl, 'token', false); // 'token' endpoint doesn't need trailing slash usually, but verify with backend. explicit false.
-		// Wait, 'token/' in python usually needs slash. Check config/urls.py: yes path('api/v1/token/', ...)
-		// So joinApiUrl(this.apiUrl, 'token') is correct (defaults to true).
 		return this.http.post<any>(joinApiUrl(this.apiUrl, 'token'), credentials).pipe(
 			map((response) => {
 				if (response.access) {
@@ -98,10 +95,10 @@ export class AuthService {
 			}),
 			tap(() => this.errorService.loginSuccess()),
 			catchError((error: HttpErrorResponse) => {
-				let msg = error.status === 401 ? 'Credenciales inválidas.' : 'Error de conexión.';
+				const msg = error.status === 401 ? 'Credenciales inválidas.' : 'Error de conexión.';
 				this.errorService.loginError(msg);
 				return throwError(() => new Error(msg));
-			})
+			}),
 		);
 	}
 
@@ -146,7 +143,7 @@ export class AuthService {
 				console.error('❌ Error renovando token, forzando logout.');
 				this.logout();
 				return throwError(() => err);
-			})
+			}),
 		);
 	}
 
@@ -167,18 +164,20 @@ export class AuthService {
 				fromEvent(document, 'click'),
 				fromEvent(document, 'mousemove'),
 				fromEvent(document, 'keydown'),
-				fromEvent(document, 'scroll')
+				fromEvent(document, 'scroll'),
 			);
 
-			this.idleSubscription = events$.pipe(
-				startWith(null), // Empezar timer inmediatamente
-				switchMap(() => timer(this.IDLE_TIMEOUT_MS)) // Reiniciar timer con cada evento
-			).subscribe(() => {
-				this.ngZone.run(() => {
-					console.warn('💤 Inactividad detectada. Cerrando sesión.');
-					this.logout();
+			this.idleSubscription = events$
+				.pipe(
+					startWith(null), // Empezar timer inmediatamente
+					switchMap(() => timer(this.IDLE_TIMEOUT_MS)), // Reiniciar timer con cada evento
+				)
+				.subscribe(() => {
+					this.ngZone.run(() => {
+						console.warn('💤 Inactividad detectada. Cerrando sesión.');
+						this.logout();
+					});
 				});
-			});
 		});
 	}
 
@@ -200,7 +199,8 @@ export class AuthService {
 	 * Útil si se editó el perfil en otro dispositivo.
 	 */
 	getProfile(): Observable<UserProfile> {
-		return this.http.get<UserProfile>(joinApiUrl(this.apiUrl, '../users/profile'));
+		// ✅ CAMBIO: Quitamos el '/' del inicio y lo ponemos al final
+		return this.http.get<UserProfile>(joinApiUrl(this.apiUrl, 'users/profile/'));
 	}
 
 	/**
@@ -213,7 +213,7 @@ export class AuthService {
 				let msg = 'No se pudo cambiar la contraseña.';
 				if (error.status === 400) msg = 'La contraseña actual es incorrecta o la nueva no cumple los requisitos.';
 				return throwError(() => new Error(msg));
-			})
+			}),
 		);
 	}
 
@@ -222,10 +222,14 @@ export class AuthService {
 			const base64Url = token.split('.')[1];
 			const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
 			const jsonPayload = decodeURIComponent(
-				window.atob(base64).split('').map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')
+				window
+					.atob(base64)
+					.split('')
+					.map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+					.join(''),
 			);
 			return JSON.parse(jsonPayload);
-		} catch (e) {
+		} catch (_e) {
 			return {};
 		}
 	}
@@ -241,5 +245,3 @@ export class AuthService {
 		};
 	}
 }
-
-
