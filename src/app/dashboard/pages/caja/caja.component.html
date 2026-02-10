@@ -10,8 +10,7 @@
 				<i class="pi pi-clock"></i> Transferencias Pendientes de Validación
 			</h3>
 
-			<p-table [value]="transferencias" [loading]="loadingTransferencias" styleClass="p-datatable-sm"
-				[rowHover]="true">
+			<p-table [value]="transferencias" [loading]="loadingTransferencias" styleClass="p-datatable-sm" [rowHover]="true">
 				<ng-template pTemplate="header">
 					<tr class="text-xs">
 						<th>Socio</th>
@@ -32,9 +31,12 @@
 						</td>
 						<td class="text-right font-bold text-slate-800">${{ trx.monto }}</td>
 						<td class="text-center">
-							<p-button label="Validar" icon="pi pi-check-square"
+							<p-button
+								label="Validar"
+								icon="pi pi-check-square"
 								styleClass="p-button-rounded p-button-sm p-button-outlined p-button-warning !text-xs"
-								(onClick)="abrirValidarTransferencia(trx)">
+								(onClick)="abrirValidarTransferencia(trx)"
+							>
 							</p-button>
 						</td>
 					</tr>
@@ -46,10 +48,16 @@
 	<div class="flex gap-2 mb-6">
 		<span class="p-input-icon-left flex-grow">
 			<i class="pi pi-search"></i>
-			<input type="text" pInputText [(ngModel)]="socioIdBusqueda" placeholder="Buscar por ID de Socio (Ej: 101)"
-				class="w-full" (keydown.enter)="buscarSocio()" />
+			<input
+				type="text"
+				pInputText
+				[(ngModel)]="socioIdBusqueda"
+				placeholder="Buscar por ID de Socio (Ej: 101)"
+				class="w-full"
+				(keydown.enter)="buscarSocio()"
+			/>
 		</span>
-		<button pButton label="Buscar" icon="pi pi-search" (click)="buscarSocio()" [loading]="loading"></button>
+		<p-button label="Buscar" icon="pi pi-search" (click)="buscarSocio()" [loading]="loading"></p-button>
 	</div>
 
 	<!-- Dashboard Socio -->
@@ -61,15 +69,18 @@
 
 		<p-card header="Estado del Servicio" styleClass="h-full">
 			<div class="flex items-center justify-center h-full">
-				<p-tag [value]="estadoCuenta.estado_servicio" [severity]="getSeverity(estadoCuenta.estado_servicio)"
-					class="text-xl px-4 py-2">
+				<p-tag
+					[value]="estadoCuenta.estado_servicio"
+					[severity]="getSeverity(estadoCuenta.estado_servicio)"
+					class="text-xl px-4 py-2"
+				>
 				</p-tag>
 			</div>
 		</p-card>
 
 		<p-card header="Deuda Total" styleClass="h-full">
 			<div class="text-3xl font-bold text-red-600 text-center">
-				{{ estadoCuenta.deuda_total | currency:'USD' }}
+				{{ estadoCuenta.deuda_total | currency: 'USD' }}
 			</div>
 			<!-- Mora no disponible en v5.1 -->
 		</p-card>
@@ -77,34 +88,41 @@
 
 	<!-- Panel de Gestión: Tabla y Pago -->
 	<div *ngIf="estadoCuenta" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
 		<!-- Tabla de Deudas -->
 		<div class="lg:col-span-2">
-			<p-table [value]="estadoCuenta.items_pendientes" [scrollable]="true" scrollHeight="400px"
-				styleClass="p-datatable-sm">
+			<p-table
+				[value]="estadoCuenta.items_pendientes"
+				[scrollable]="true"
+				scrollHeight="400px"
+				styleClass="p-datatable-sm"
+			>
 				<ng-template pTemplate="header">
 					<tr>
 						<th>Emisión</th>
 						<th>Concepto</th>
 						<th class="text-right">Original</th>
 						<th class="text-right">Saldo</th>
-						<th class="text-center w-12"></th> <!-- Columna Acciones -->
+						<th class="text-center w-12"></th>
+						<!-- Columna Acciones -->
 					</tr>
 				</ng-template>
 				<ng-template pTemplate="body" let-item>
 					<tr>
-						<td>{{ item.fecha_emision | date:'shortDate' }}</td>
+						<td>{{ item.fecha_emision | date: 'shortDate' }}</td>
 						<td>
 							<div class="font-semibold">{{ item.concepto }}</div>
 							<small class="text-gray-500">ID: {{ item.id }}</small>
 						</td>
-						<td class="text-right">{{ item.total_original | currency:'USD' }}</td>
-						<td class="text-right font-mono">{{ item.saldo_pendiente | currency:'USD' }}</td>
+						<td class="text-right">{{ item.total_original | currency: 'USD' }}</td>
+						<td class="text-right font-mono">{{ item.saldo_pendiente | currency: 'USD' }}</td>
 						<td class="text-center">
-							<p-button icon="pi pi-file-pdf"
+							<p-button
+								icon="pi pi-file-pdf"
 								styleClass="p-button-rounded p-button-text p-button-secondary p-button-sm"
-								pTooltip="Descargar RIDE" tooltipPosition="top"
-								(onClick)="descargarFactura(item.factura_id)">
+								pTooltip="Descargar RIDE"
+								tooltipPosition="top"
+								(onClick)="descargarFactura(item.factura_id)"
+							>
 							</p-button>
 						</td>
 					</tr>
@@ -123,23 +141,40 @@
 				<div class="flex flex-col gap-4">
 					<div class="flex flex-col gap-2">
 						<label for="monto" class="font-semibold">Monto a Pagar ($)</label>
-						<p-inputNumber id="monto" [(ngModel)]="montoPagar" mode="currency" currency="USD" locale="en-US"
-							[min]="0" class="w-full">
+						<p-inputNumber
+							id="monto"
+							[(ngModel)]="montoPagar"
+							mode="currency"
+							currency="USD"
+							locale="en-US"
+							[min]="0"
+							class="w-full"
+						>
 						</p-inputNumber>
 					</div>
 
 					<div class="flex flex-col gap-2">
 						<label for="metodo" class="font-semibold">Método de Pago</label>
-						<p-select [options]="metodosPagoOptions" [(ngModel)]="metodoPago" optionLabel="label"
-							optionValue="value" styleClass="w-full">
+						<p-select
+							[options]="metodosPagoOptions"
+							[(ngModel)]="metodoPago"
+							optionLabel="label"
+							optionValue="value"
+							styleClass="w-full"
+						>
 						</p-select>
 					</div>
 
 					<p-divider></p-divider>
 
-					<button pButton label="Cobrar" icon="pi pi-wallet" class="p-button-success p-button-lg w-full"
-						(click)="confirmarPago()" [loading]="procesandoPago">
-					</button>
+					<p-button
+						pButton
+						label="Cobrar"
+						icon="pi pi-wallet"
+						class="p-button-success p-button-lg w-full"
+						(click)="confirmarPago()"
+						[loading]="procesandoPago"
+					></p-button>
 				</div>
 			</p-card>
 		</div>
@@ -147,28 +182,41 @@
 </div>
 
 <!-- Dialogo de Reconexión -->
-<p-dialog header="🚨 Orden de Reconexión Generada" [(visible)]="mostrarDialogoReconexion" [modal]="true"
-	[style]="{ width: '450px' }">
+<p-dialog
+	header="🚨 Orden de Reconexión Generada"
+	[(visible)]="mostrarDialogoReconexion"
+	[modal]="true"
+	[style]="{ width: '450px' }"
+>
 	<div class="flex flex-col items-center text-center p-4">
 		<i class="pi pi-check-circle text-6xl text-green-500 mb-4"></i>
 		<h3 class="text-xl font-bold mb-2">¡Servicio Regularizado!</h3>
 		<p>El socio ha cubierto sus deudas pendientes.</p>
 		<p class="font-semibold mt-2">Estado actual: <span class="text-orange-500">PENDIENTE DE RECONEXIÓN</span></p>
-		<p class="text-sm text-gray-500 mt-4">Por favor, notifique al equipo técnico para proceder con la reconexión del
-			medidor.</p>
+		<p class="text-sm text-gray-500 mt-4">
+			Por favor, notifique al equipo técnico para proceder con la reconexión del medidor.
+		</p>
 	</div>
 	<ng-template pTemplate="footer">
-		<button pButton icon="pi pi-check" (click)="mostrarDialogoReconexion = false" label="Entendido"
-			class="p-button-text"></button>
+		<p-button
+			icon="pi pi-check"
+			(click)="mostrarDialogoReconexion = false"
+			label="Entendido"
+			class="p-button-text"
+		></p-button>
 	</ng-template>
 </p-dialog>
 
 <!-- DIALOGO VALIDAR TRANSFERENCIA -->
-<p-dialog header="Validar Transferencia" [(visible)]="mostrarDialogoTransferencia" [modal]="true"
-	[style]="{width: '400px'}" [draggable]="false" [resizable]="false">
-
+<p-dialog
+	header="Validar Transferencia"
+	[(visible)]="mostrarDialogoTransferencia"
+	[modal]="true"
+	[style]="{ width: '400px' }"
+	[draggable]="false"
+	[resizable]="false"
+>
 	<div *ngIf="transferenciaSeleccionada" class="flex flex-col gap-4 pt-2">
-
 		<div class="bg-slate-50 p-3 rounded-lg border border-slate-100">
 			<div class="flex justify-between items-center mb-1">
 				<span class="text-xs text-slate-500 font-bold uppercase">Monto a Validar</span>
@@ -179,25 +227,39 @@
 			</div>
 		</div>
 
-		<div *ngIf="transferenciaSeleccionada.comprobante_url"
-			class="rounded-lg overflow-hidden border border-slate-200">
-			<img [src]="transferenciaSeleccionada.comprobante_url"
+		<div *ngIf="transferenciaSeleccionada.comprobante_url" class="rounded-lg overflow-hidden border border-slate-200">
+			<img
+				[src]="transferenciaSeleccionada.comprobante_url"
 				class="w-full h-32 object-cover cursor-pointer hover:opacity-90"
-				(click)="openInNewTab(transferenciaSeleccionada.comprobante_url)" alt="Comprobante">
+				(click)="openInNewTab(transferenciaSeleccionada.comprobante_url)"
+				(keydown.enter)="openInNewTab(transferenciaSeleccionada.comprobante_url)"
+				tabindex="0"
+				role="button"
+				alt="Comprobante"
+			/>
 		</div>
 
 		<div class="flex flex-col gap-2">
-			<label class="text-sm font-bold text-slate-700">Observación (Opcional)</label>
-			<textarea pInputTextarea [(ngModel)]="motivoRechazo" rows="2" class="w-full text-sm">
-            </textarea>
+			<span class="text-sm font-bold text-slate-700">Observación (Opcional)</span>
+			<textarea pInputTextarea [(ngModel)]="motivoRechazo" rows="2" class="w-full text-sm"> </textarea>
 		</div>
 
 		<div class="flex justify-end gap-2 pt-4">
-			<p-button label="Rechazar" icon="pi pi-times" styleClass="p-button-danger p-button-text"
-				(onClick)="procesarTransferencia('RECHAZAR')" [loading]="procesandoValidacionTransferencia">
+			<p-button
+				label="Rechazar"
+				icon="pi pi-times"
+				styleClass="p-button-danger p-button-text"
+				(onClick)="procesarTransferencia('RECHAZAR')"
+				[loading]="procesandoValidacionTransferencia"
+			>
 			</p-button>
-			<p-button label="Aprobar" icon="pi pi-check-circle" styleClass="p-button-success"
-				(onClick)="procesarTransferencia('APROBAR')" [loading]="procesandoValidacionTransferencia">
+			<p-button
+				label="Aprobar"
+				icon="pi pi-check-circle"
+				styleClass="p-button-success"
+				(onClick)="procesarTransferencia('APROBAR')"
+				[loading]="procesandoValidacionTransferencia"
+			>
 			</p-button>
 		</div>
 	</div>

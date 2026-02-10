@@ -9,6 +9,7 @@ export interface Socio {
 	email: string | null;
 	telefono?: string;
 	barrio_id: number;
+	barrio_nombre: string; // Nuevo campo del backend para visualizar
 	barrio?: number | any; // Backend a veces envía 'barrio' en lugar de 'barrio_id'
 	direccion: string;
 	rol: RolUsuario | string; // Puede venir como Enum o como texto del backend

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
@@ -16,8 +16,12 @@ import { CardModule } from 'primeng/card'; // Added CardModule
 import { MessageService, ConfirmationService } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 
-import { BillingService, TransferenciaPendiente, ValidarTransferenciaRequest } from '../../../core/services/billing.service';
-import { EstadoCuentaDTO, AbonoInput, AbonoOutput } from '../../../core/interfaces/billing.interface';
+import {
+	BillingService,
+	TransferenciaPendiente,
+	ValidarTransferenciaRequest,
+} from '../../../core/services/billing.service';
+import { EstadoCuentaDTO, AbonoInput } from '../../../core/interfaces/billing.interface';
 
 @Component({
 	selector: 'app-caja',
@@ -35,48 +39,45 @@ import { EstadoCuentaDTO, AbonoInput, AbonoOutput } from '../../../core/interfac
 		SelectModule,
 		InputNumberModule,
 		CardModule,
-		ConfirmDialogModule
+		ConfirmDialogModule,
 	],
 	templateUrl: './caja.component.html',
 	styleUrls: ['./caja.component.css'],
-	providers: [MessageService, ConfirmationService]
+	providers: [MessageService, ConfirmationService],
 })
 export class CajaComponent implements OnInit {
-
 	// Search
-	socioIdBusqueda: string = ''; // Changed to string for input compatibility
-	loading: boolean = false;
+	socioIdBusqueda = ''; // Changed to string for input compatibility
+	loading = false;
 
 	// Data
 	estadoCuenta: EstadoCuentaDTO | null = null;
 
 	// Transferencias Pendientes
 	transferencias: TransferenciaPendiente[] = [];
-	loadingTransferencias: boolean = false;
-	mostrarDialogoTransferencia: boolean = false;
+	loadingTransferencias = false;
+	mostrarDialogoTransferencia = false;
 	transferenciaSeleccionada: TransferenciaPendiente | null = null;
-	motivoRechazo: string = '';
+	motivoRechazo = '';
 
 	// Payment
 	montoPagar: number | null = null;
 	metodoPago: 'EFECTIVO' | 'TRANSFERENCIA' | 'CHEQUE' = 'EFECTIVO';
-	referenciaPago: string = '';
-	procesandoPago: boolean = false;
+	referenciaPago = '';
+	procesandoPago = false;
 
 	metodosPagoOptions = [
 		{ label: 'Efectivo', value: 'EFECTIVO' },
 		{ label: 'Transferencia', value: 'TRANSFERENCIA' },
-		{ label: 'Cheque', value: 'CHEQUE' }
+		{ label: 'Cheque', value: 'CHEQUE' },
 	];
 
 	// Dialogs
-	mostrarDialogoReconexion: boolean = false;
+	mostrarDialogoReconexion = false;
 
-	constructor(
-		private billingService: BillingService,
-		private messageService: MessageService,
-		private confirmationService: ConfirmationService
-	) { }
+	private billingService = inject(BillingService);
+	private messageService = inject(MessageService);
+	private confirmationService = inject(ConfirmationService);
 
 	ngOnInit(): void {
 		this.cargarTransferencias();
@@ -91,9 +92,9 @@ export class CajaComponent implements OnInit {
 			},
 			error: (err) => {
 				this.loadingTransferencias = false;
-				console.error("Error cargando transferencias", err);
+				console.error('Error cargando transferencias', err);
 				// No mostrar toast para no saturar si es solo init
-			}
+			},
 		});
 	}
 
@@ -104,7 +105,7 @@ export class CajaComponent implements OnInit {
 	}
 
 	// Validation Process
-	procesandoValidacionTransferencia: boolean = false;
+	procesandoValidacionTransferencia = false;
 
 	procesarTransferencia(accion: 'APROBAR' | 'RECHAZAR') {
 		if (!this.transferenciaSeleccionada) return;
@@ -114,7 +115,7 @@ export class CajaComponent implements OnInit {
 
 		const request: ValidarTransferenciaRequest = {
 			pago_id: this.transferenciaSeleccionada.pago_id,
-			accion: accion
+			accion: accion,
 		};
 
 		this.procesandoValidacionTransferencia = true;
@@ -134,7 +135,7 @@ export class CajaComponent implements OnInit {
 							this.estadoCuenta = data;
 							this.montoPagar = parseFloat(data.deuda_total);
 						},
-						error: (err) => console.error("Error refrescando estado cuenta", err)
+						error: (err) => console.error('Error refrescando estado cuenta', err),
 					});
 				}
 				this.procesandoValidacionTransferencia = false;
@@ -142,14 +143,13 @@ export class CajaComponent implements OnInit {
 			error: (err) => {
 				this.procesandoValidacionTransferencia = false;
 				this.messageService.add({ severity: 'error', summary: 'Error', detail: err.message });
-			}
+			},
 		});
 	}
 
 	openInNewTab(url: string) {
 		window.open(url, '_blank');
 	}
-
 
 	buscarSocio() {
 		if (!this.socioIdBusqueda) {
@@ -176,7 +176,7 @@ export class CajaComponent implements OnInit {
 			error: (err) => {
 				this.loading = false;
 				this.messageService.add({ severity: 'error', summary: 'Error', detail: err.message });
-			}
+			},
 		});
 	}
 
@@ -192,7 +192,7 @@ export class CajaComponent implements OnInit {
 			icon: 'pi pi-exclamation-triangle',
 			accept: () => {
 				this.ejecutarPago();
-			}
+			},
 		});
 	}
 
@@ -204,7 +204,7 @@ export class CajaComponent implements OnInit {
 			socio_id: this.estadoCuenta.socio_id,
 			monto: this.montoPagar,
 			metodo_pago: this.metodoPago,
-			referencia: this.referenciaPago
+			referencia: this.referenciaPago,
 		};
 
 		this.billingService.procesarPago(request).subscribe({
@@ -225,7 +225,7 @@ export class CajaComponent implements OnInit {
 			error: (err) => {
 				this.procesandoPago = false;
 				this.messageService.add({ severity: 'error', summary: 'Error en Pago', detail: err.message });
-			}
+			},
 		});
 	}
 
@@ -244,7 +244,11 @@ export class CajaComponent implements OnInit {
 
 	descargarFactura(facturaId: number | undefined) {
 		if (!facturaId) {
-			this.messageService.add({ severity: 'warn', summary: 'No disponible', detail: 'El ID de la factura no está disponible.' });
+			this.messageService.add({
+				severity: 'warn',
+				summary: 'No disponible',
+				detail: 'El ID de la factura no está disponible.',
+			});
 			return;
 		}
 		this.billingService.downloadFacturaPdf(facturaId).subscribe({
@@ -257,9 +261,9 @@ export class CajaComponent implements OnInit {
 				window.URL.revokeObjectURL(url);
 			},
 			error: (err) => {
-				console.error("Error descargando PDF", err);
+				console.error('Error descargando PDF', err);
 				this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo descargar la factura.' });
-			}
+			},
 		});
 	}
 }
