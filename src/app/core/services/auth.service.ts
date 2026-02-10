@@ -106,7 +106,6 @@ export class AuthService {
 	 * Logout: Limpia TODO (State, LocalStorage, Timers) y redirige.
 	 */
 	logout(): void {
-		console.log('🚪 Cerrando sesión...');
 		this.currentUserSubject.next(null);
 		localStorage.removeItem('user');
 		localStorage.removeItem('token');
@@ -131,7 +130,6 @@ export class AuthService {
 		return this.http.post<any>(joinApiUrl(this.apiUrl, 'token/refresh'), { refresh: refreshToken }).pipe(
 			tap((response) => {
 				if (response.access) {
-					console.log('🔄 Token renovado exitosamente');
 					localStorage.setItem('token', response.access);
 					// Si el backend devuelve un nuevo refresh token (rotación), guárdalo tambien
 					if (response.refresh) {
@@ -140,7 +138,6 @@ export class AuthService {
 				}
 			}),
 			catchError((err) => {
-				console.error('❌ Error renovando token, forzando logout.');
 				this.logout();
 				return throwError(() => err);
 			}),

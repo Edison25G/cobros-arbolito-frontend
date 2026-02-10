@@ -128,7 +128,6 @@ export class SociosComponent implements OnInit {
 			.getSocios()
 			.pipe(
 				tap((data) => {
-					console.log('📌 Socios Data:', data); // Debugging
 					this.socios = data;
 				}),
 				catchError((err) => {

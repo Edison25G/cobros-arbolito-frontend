@@ -175,8 +175,6 @@ export class GestionMingasComponent implements OnInit {
 			return;
 		}
 
-		console.log('Form Value Raw:', this.mingaForm.value);
-
 		const formValue = this.mingaForm.value;
 
 		// 1. Transformación de Fecha (Ignorando zona horaria)
@@ -208,8 +206,6 @@ export class GestionMingasComponent implements OnInit {
 			barrio_id: formValue.barrio_id ? Number(formValue.barrio_id) : null,
 			lista_socios_ids: formValue.lista_socios_ids || [], // Enviamos la lista manual si existe
 		};
-
-		console.log('DTO Generado (Payload):', payload);
 
 		const request$ =
 			this.isEditing && this.currentEventoId
