@@ -4,12 +4,13 @@ export interface Evento {
 	descripcion?: string;
 	fecha: string; // YYYY-MM-DD
 	multa: number;
-	estado: 'Programada' | 'Realizada' | 'Cancelada';
 
-	// Nuevos campos para Gobernanza
+	// 👇 ESTO ES LO QUE CAMBIAMOS
+	estado: 'PROGRAMADO' | 'REALIZADO' | 'CANCELADO' | 'BORRADOR';
+
 	tipo: 'MINGA' | 'SESION' | 'APORTE';
 	seleccion_socios: 'TODOS' | 'BARRIO' | 'MANUAL';
-	barrio_id?: number; // Solo si seleccion_socios === 'BARRIO'
+	barrio_id?: number;
 }
 
 // Alias para compatibilidad temporal si es necesario, o refactorizar todo a Evento

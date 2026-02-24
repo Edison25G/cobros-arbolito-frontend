@@ -106,9 +106,9 @@
 			<ng-template pTemplate="body" let-item>
 				<tr>
 					<td>
-						<div class="font-bold text-gray-800">{{ item.socio_nombre }}</div>
+						<div class="font-bold text-gray-800">{{ item.nombres }}</div>
 						<div class="text-xs text-gray-400 flex items-center gap-2">
-							<span>{{ item.cedula }}</span>
+							<span>{{ item.identificacion }}</span>
 							<span class="bg-blue-50 text-blue-700 border border-blue-100 px-1 rounded text-[10px] font-mono">
 								{{ item.medidor_codigo }}
 							</span>
@@ -117,14 +117,14 @@
 
 					<td>
 						<div class="text-xs text-gray-500">
-							{{ item.lectura_anterior }} ➔ <span class="font-bold text-gray-800">{{ item.lectura_actual }}</span>
+							{{ item.lectura_id }} ➔ <span class="font-bold text-gray-800">{{ item.lectura_actual }}</span>
 						</div>
 					</td>
 
 					<td class="text-right font-bold text-blue-600">{{ item.consumo }} m³</td>
 
 					<td class="text-right text-gray-600">
-						{{ item.monto_agua | currency }}
+						{{ item.valor_agua | currency }}
 					</td>
 
 					<td class="text-right text-orange-600">
@@ -132,7 +132,7 @@
 					</td>
 
 					<td class="text-right font-bold text-green-700 bg-green-50/30">
-						{{ item.total_pagar | currency }}
+						{{ item.subtotal | currency }}
 					</td>
 				</tr>
 			</ng-template>

@@ -35,7 +35,7 @@ export class SocioService {
 	 */
 	getSociosCount(): Observable<number> {
 		return this.http.get<any>(`${this.baseUrl}?page_size=1`).pipe(
-			map(response => {
+			map((response) => {
 				// DRF Paginación: { count: 20, results: [...] }
 				if (response.count !== undefined) {
 					return response.count;
@@ -46,10 +46,10 @@ export class SocioService {
 				}
 				return 0;
 			}),
-			catchError(error => {
+			catchError((error) => {
 				console.error('Error fetching socios count', error);
 				return of(0); // Fallback silencioso (requiere import 'rxjs/add/observable/of' o similar en versiones viejas, mejor usar 'of' de rxjs)
-			})
+			}),
 		);
 	}
 	getSocioById(id: number): Observable<Socio> {

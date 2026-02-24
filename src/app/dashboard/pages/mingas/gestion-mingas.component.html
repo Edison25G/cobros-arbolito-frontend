@@ -91,21 +91,19 @@
 						<span
 							class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase border shadow-sm"
 							[ngClass]="{
-								'bg-emerald-50 text-emerald-700 border-emerald-100':
-									minga.estado === 'Realizada' || minga.estado === 'FINALIZADO',
-								'bg-blue-50 text-blue-700 border-blue-100': minga.estado === 'Programada',
-								'bg-slate-100 text-slate-600 border-slate-200': minga.estado === 'BORRADOR',
-								'bg-red-50 text-red-700 border-red-100': minga.estado === 'Cancelada',
+								'bg-emerald-50 text-emerald-700 border-emerald-100': minga.estado === 'REALIZADO',
+								'bg-blue-50 text-blue-700 border-blue-100': minga.estado === 'PROGRAMADO',
+								'bg-red-50 text-red-700 border-red-100': minga.estado === 'CANCELADO',
 							}"
 						>
 							<span
 								class="w-1.5 h-1.5 rounded-full"
 								[ngClass]="
-									minga.estado === 'Realizada' || minga.estado === 'FINALIZADO'
+									minga.estado === 'REALIZADO'
 										? 'bg-emerald-500'
-										: minga.estado === 'Programada'
+										: minga.estado === 'PROGRAMADO'
 											? 'bg-blue-500'
-											: 'bg-slate-400'
+											: 'bg-red-500'
 								"
 							>
 							</span>
@@ -117,48 +115,57 @@
 						<div
 							class="flex justify-center items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
 						>
+							<!-- TOMAR LISTA -->
 							<p-button
-								*ngIf="(minga.estado === 'Programada' || minga.estado === 'BORRADOR') && minga.tipo !== 'APORTE'"
+								*ngIf="minga.estado === 'PROGRAMADO' && minga.tipo !== 'APORTE'"
 								icon="pi pi-users"
 								[text]="true"
 								[rounded]="true"
 								severity="secondary"
 								styleClass="!w-8 !h-8 hover:!bg-indigo-50"
-								pTooltip="Asistencia"
+								pTooltip="Tomar Lista"
 								tooltipPosition="top"
 								(onClick)="irAAsistencia(minga.id)"
 							>
 							</p-button>
 
+							<!-- FINALIZAR -->
 							<p-button
-								*ngIf="minga.estado === 'Programada' || minga.estado === 'BORRADOR'"
+								*ngIf="minga.estado === 'PROGRAMADO'"
 								icon="pi pi-lock"
 								[text]="true"
 								[rounded]="true"
 								severity="success"
 								styleClass="!w-8 !h-8 hover:!bg-emerald-50"
-								[pTooltip]="minga.tipo === 'APORTE' ? 'Generar Cobros' : 'Finalizar'"
+								pTooltip="Finalizar Evento"
+								tooltipPosition="top"
 								(onClick)="cerrarEvento(minga)"
 							>
 							</p-button>
 
+							<!-- EDITAR -->
 							<p-button
-								*ngIf="minga.estado === 'BORRADOR' || minga.estado === 'Programada'"
+								*ngIf="minga.estado === 'PROGRAMADO'"
 								icon="pi pi-pencil"
 								[text]="true"
 								[rounded]="true"
 								severity="info"
 								styleClass="!w-8 !h-8 hover:!bg-blue-50"
+								pTooltip="Editar"
+								tooltipPosition="top"
 								(onClick)="editarEvento(minga)"
 							>
 							</p-button>
 
+							<!-- ELIMINAR (SIEMPRE DISPONIBLE) -->
 							<p-button
 								icon="pi pi-trash"
 								[text]="true"
 								[rounded]="true"
 								severity="danger"
 								styleClass="!w-8 !h-8 hover:!bg-red-50"
+								pTooltip="Eliminar"
+								tooltipPosition="top"
 								(onClick)="eliminarEvento(minga)"
 							>
 							</p-button>

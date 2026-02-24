@@ -8,16 +8,17 @@ export interface GenerarEmisionDTO {
 
 // ESTA ES LA CLAVE: Ajustada para recibir lo que manda el Backend
 export interface LecturaPendiente {
-	id: number; // Backend manda: lectura_id
-	fecha_lectura?: string;
+	socio_id: number;
+	nombres: string;
+	identificacion: string;
+	lectura_id: string; // "0 -> 20"
+	lectura_real_id: number;
 
-	lectura_anterior: number;
-	lectura_actual: number;
-	consumo: number;
-
-	medidor_codigo: string; // Backend manda: codigo_medidor
-	socio_nombre: string; // Backend manda: socio
-	identificacion?: string;
+	medidor_id: number;
+	medidor_codigo: string;
+	consumo: string; // "Consumo de Agua Potable"
+	valor_agua: number; // 3.0
+	subtotal: number;
 
 	monto_agua: number; // Backend manda: valor_estimado
 	multas_mingas: number;

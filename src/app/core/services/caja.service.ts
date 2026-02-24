@@ -11,7 +11,6 @@ import {
 	CobroResponse,
 	FacturaPendiente,
 } from '../interfaces/caja.interface';
-import { joinApiUrl } from '../utils/url';
 
 @Injectable({
 	providedIn: 'root',
@@ -20,27 +19,31 @@ export class CajaService {
 	private http = inject(HttpClient);
 	private apiUrl = environment.apiUrl;
 
+	// 1. Obtener transferencias (CORREGIDO: URL actualizada al nuevo Backend)
 	getTransferenciasPendientes(): Observable<TransferenciaPendiente[]> {
 		return this.http
-			.get<TransferenciaPendiente[]>(joinApiUrl(this.apiUrl, 'cobros/pendientes-validacion'))
+			.get<TransferenciaPendiente[]>(`${this.apiUrl}/cobros/pendientes-validacion/`)
 			.pipe(catchError(this.handleError));
 	}
 
+	// ✅ 2. MÉTODO QUE TE FALTA (Validar Transferencia)
 	validarTransferencia(pagoId: number, accion: 'APROBAR' | 'RECHAZAR'): Observable<any> {
 		return this.http
-			.post(joinApiUrl(this.apiUrl, 'cobros/validar-transferencia'), {
+			.post(`${this.apiUrl}/cobros/validar-transferencia/`, {
 				pago_id: pagoId,
 				accion: accion,
 			})
 			.pipe(catchError(this.handleError));
 	}
 
+	// 3. Registrar cobro (Pago Mixto o Efectivo en Ventanilla)
 	registrarCobro(datos: RegistrarCobroDTO): Observable<CobroResponse> {
-		return this.http.post<CobroResponse>(joinApiUrl(this.apiUrl, 'cobros/registrar'), datos).pipe(catchError(this.handleError));
+		return this.http.post<CobroResponse>(`${this.apiUrl}/cobros/registrar/`, datos).pipe(catchError(this.handleError));
 	}
 
+	// 4. BUSCAR DEUDAS PENDIENTES
 	getFacturasPendientes(q?: string, dia?: number, mes?: number, anio?: number): Observable<FacturaPendiente[]> {
-		let url = joinApiUrl(this.apiUrl, 'facturas-gestion/pendientes');
+		let url = `${this.apiUrl}/facturas-gestion/pendientes/`;
 		const params: string[] = [];
 
 		if (q) params.push(`identificacion=${encodeURIComponent(q)}`);
@@ -55,13 +58,14 @@ export class CajaService {
 		return this.http.get<FacturaPendiente[]>(url).pipe(catchError(this.handleError));
 	}
 
+	// --- MÉTODOS LEGACY (Por si acaso) ---
 	procesarPago(ids: number[], metodo: 'EFECTIVO' | 'TRANSFERENCIA'): Observable<PagoResponse> {
 		const payload: RegistrarPagoDTO = {
 			deudas_ids: ids,
 			metodo_pago: metodo,
 			usuario_id: 1,
 		};
-		return this.http.post<PagoResponse>(joinApiUrl(this.apiUrl, 'caja/pagar'), payload).pipe(catchError(this.handleError));
+		return this.http.post<PagoResponse>(`${this.apiUrl}/caja/pagar/`, payload).pipe(catchError(this.handleError));
 	}
 
 	private handleError(error: HttpErrorResponse) {
@@ -80,6 +84,6 @@ export class CajaService {
 	}
 
 	getPagosFactura(facturaId: number): Observable<any[]> {
-		return this.http.get<any[]>(joinApiUrl(this.apiUrl, `cobros/${facturaId}/pagos`));
+		return this.http.get<any[]>(`${this.apiUrl}/cobros/${facturaId}/pagos/`);
 	}
 }

@@ -3,10 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
-// Importamos las interfaces actualizadas
 import { Minga, ItemAsistencia } from '../interfaces/minga.interface';
-// Importamos el modelo de Socio para leer la respuesta del backend
-//import { Socio } from '../models/socio.interface';
 
 @Injectable({
 	providedIn: 'root',
@@ -15,7 +12,7 @@ export class MingasService {
 	private http = inject(HttpClient);
 	private apiUrl = environment.apiUrl;
 
-	// --- CRUD REAL (CONECTADO AL BACKEND) ---
+	// --- CRUD REAL EVENTOS ---
 
 	getAll(): Observable<Minga[]> {
 		return this.http.get<Minga[]>(`${this.apiUrl}/eventos/`);
@@ -29,23 +26,30 @@ export class MingasService {
 		return this.http.post<Minga>(`${this.apiUrl}/eventos/`, minga);
 	}
 
+	updateEvento(id: number, evento: any): Observable<any> {
+		return this.http.put(`${this.apiUrl}/eventos/${id}/`, evento);
+	}
+
 	delete(id: number): Observable<void> {
 		return this.http.delete<void>(`${this.apiUrl}/eventos/${id}/`);
 	}
 
 	// --- ASISTENCIA ---
 
-	// Obtener lista para tomar asistencia (Socios + Estado actual en esa minga)
-	// Obtener lista para tomar asistencia (Socios + Estado actual en esa minga)
+	// 1. Obtener lista para tomar asistencia
+	// CORRECCIÓN: Usamos el endpoint global de asistencias filtrando por el evento_id
 	getAsistencia(mingaId: number): Observable<ItemAsistencia[]> {
-		return this.http.get<any[]>(`${this.apiUrl}/eventos/${mingaId}/asistencia/`).pipe(
+		return this.http.get<any[]>(`${this.apiUrl}/asistencias/?evento=${mingaId}`).pipe(
 			map((response) => {
-				return response.map((item) => ({
+				// Si la respuesta viene paginada (results), usamos response.results, sino response directo
+				const data = Array.isArray(response) ? response : (response as any).results || [];
+
+				return data.map((item: any) => ({
 					id: item.id,
-					socio_id: item.socio_id,
+					socio_id: item.socio, // Ajuste: En tu AsistenciaInlineSerializer es 'socio', no 'socio_id'
 					nombres: item.socio_nombre,
-					identificacion: item.socio_cedula,
-					estado: item.estado, // Ya viene como 'PENDIENTE' | 'PRESENTE' etc.
+					identificacion: 'N/A', // Nota: Tu InlineSerializer actual no trae la cédula.
+					estado: item.estado,
 					estado_justificacion: item.estado_justificacion || 'SIN_SOLICITUD',
 					observacion: item.observacion || '',
 					multa_factura: item.multa_factura,
@@ -54,43 +58,48 @@ export class MingasService {
 		);
 	}
 
-	// 2. Guardar asistencia (Solo enviar IDs de los presentes - Lógica Positiva)
+	// 2. Guardar asistencia masiva
+	// CORRECCIÓN: Apuntamos al endpoint correcto con POST y con el formato que espera el Backend
 	saveAsistencia(eventoId: number, lista: ItemAsistencia[]): Observable<any> {
-		// Filtramos solo los que están en estado 'PRESENTE'
-		// Nota: El backend se encarga de poner FALTA a los demás.
-		const sociosIds = lista.filter((item) => item.estado === 'PRESENTE').map((item) => item.socio_id);
+		// Armamos el array de objetos {socio_id, estado} que pide el RegistroAsistenciaSerializer
+		const payloadAsistencias = lista.map((item) => ({
+			socio_id: item.socio_id,
+			estado: this.mapFrontendToBackend(item.estado), // Traducimos 'Presente' a 'ASISTIO', etc.
+		}));
 
 		const payload = {
-			socios_ids: sociosIds,
+			asistencias: payloadAsistencias,
 		};
 
-		return this.http.put(`${this.apiUrl}/eventos/${eventoId}/registrar_asistencia/`, payload);
+		// El endpoint usa guion medio, no guion bajo
+		return this.http.post(`${this.apiUrl}/eventos/${eventoId}/registrar-asistencia/`, payload);
 	}
 
 	// --- FUNCIONES AYUDANTES DE TRADUCCIÓN ---
 
-	private mapBackendToFrontend(estadoBackend: string): 'Presente' | 'Falta' | 'Exonerado' | 'Pendiente' {
-		if (estadoBackend === 'ASISTIO') return 'Presente';
-		if (estadoBackend === 'FALTA') return 'Falta';
-		if (estadoBackend === 'JUSTIFICADO') return 'Exonerado';
-		return 'Falta'; // Por defecto (si es PENDIENTE lo mostramos como Falta visualmente o Pendiente)
+	private mapFrontendToBackend(estadoFrontend: string): string {
+		// Imprimimos en consola para que veas qué está traduciendo (puedes borrar el console.log después)
+		console.log('Estado original del botón:', estadoFrontend);
+
+		// AHORA SÍ: Reconoce 'PRESENTE' en mayúsculas exactamente como viene del botón
+		if (estadoFrontend === 'PRESENTE' || estadoFrontend === 'Presente' || estadoFrontend === 'ASISTIO') {
+			return 'ASISTIO';
+		}
+		if (estadoFrontend === 'FALTA' || estadoFrontend === 'Falta') {
+			return 'FALTA';
+		}
+		if (estadoFrontend === 'JUSTIFICADO' || estadoFrontend === 'Exonerado') {
+			return 'JUSTIFICADO';
+		}
+
+		return 'FALTA'; // Por defecto
 	}
 
-	private mapFrontendToBackend(estadoFrontend: string): string {
-		if (estadoFrontend === 'Presente') return 'ASISTIO';
-		if (estadoFrontend === 'Falta') return 'FALTA';
-		if (estadoFrontend === 'Exonerado') return 'JUSTIFICADO';
-		return 'PENDIENTE';
-	}
+	// --- PROCESAR MULTAS ---
 
 	// Cerrar evento (Generar multas)
+	// CORRECCIÓN: El action en Django se llama 'procesar-multas', no 'cerrar'
 	cerrarEvento(id: number): Observable<any> {
-		return this.http.post(`${this.apiUrl}/eventos/${id}/cerrar/`, {});
-	}
-
-	// En minga.service.ts
-
-	updateEvento(id: number, evento: any): Observable<any> {
-		return this.http.put(`${this.apiUrl}/eventos/${id}/`, evento);
+		return this.http.post(`${this.apiUrl}/eventos/${id}/procesar-multas/`, {});
 	}
 }

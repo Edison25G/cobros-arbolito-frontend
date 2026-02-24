@@ -70,19 +70,35 @@ export class FacturacionComponent implements OnInit {
 
 	generarEmisionMasiva() {
 		this.isProcessing = true;
-		const mes = this.fechaEmision.getMonth() + 1;
-		const anio = this.fechaEmision.getFullYear();
-		const usuarioId = 1; // Quemado por ahora
 
-		this.facturacionService.generarEmisionMasiva({ mes, anio, usuario_id: usuarioId }).subscribe({
-			next: (_resp) => {
-				this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Facturas generadas correctamente.' });
-				this.buscarPreEmision(); // Recargamos la tabla (debería vaciarse)
+		if (!this.lecturasPendientes || this.lecturasPendientes.length === 0) {
+			this.messageService.add({
+				severity: 'warn',
+				summary: 'Sin datos',
+				detail: 'No hay lecturas para facturar.',
+			});
+			this.isProcessing = false;
+			return;
+		}
+
+		// 🔥 ENVIAMOS EXACTAMENTE LO QUE DEVUELVE PRE-EMISION
+		this.facturacionService.generarEmisionMasiva(this.lecturasPendientes).subscribe({
+			next: () => {
+				this.messageService.add({
+					severity: 'success',
+					summary: 'Éxito',
+					detail: 'Facturas generadas correctamente.',
+				});
+				this.buscarPreEmision();
 				this.isProcessing = false;
 			},
 			error: (err) => {
 				this.isProcessing = false;
-				this.messageService.add({ severity: 'error', summary: 'Error', detail: err.message });
+				this.messageService.add({
+					severity: 'error',
+					summary: 'Error',
+					detail: err.message,
+				});
 			},
 		});
 	}
