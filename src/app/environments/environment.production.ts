@@ -1,4 +1,4 @@
 export const environment = {
 	production: true,
-	apiUrl: 'https://ideal-radiance-production.up.railway.app/api/v1',
+	apiUrl: 'https://web-production-7b34f.up.railway.app/api/v1',
 };
