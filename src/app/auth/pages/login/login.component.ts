@@ -93,13 +93,15 @@ export default class LoginComponent implements OnInit {
 	private redirectByRole(roleString: string): void {
 		const role = roleString.toUpperCase();
 
-		if (role === 'ADMINISTRADOR' || role === 'ADMIN') {
+		if (role === 'ADMINISTRADOR/A' || role === 'ADMIN') {
 			this.router.navigate(['/dashboard/home']);
-		} else if (role === 'TESORERO') {
+		} else if (role === 'SECRETARIO/A') {
 			this.router.navigate(['/dashboard/socios']);
-		} else if (role === 'OPERADOR') {
+		} else if (role === 'TESORERO/A') {
+			this.router.navigate(['/dashboard/socios']);
+		} else if (role === 'OPERADOR/A') {
 			this.router.navigate(['/dashboard/lecturas']);
-		} else if (role === 'SOCIO') {
+		} else if (role === 'SOCIO/A') {
 			this.router.navigate(['/dashboard/pagos']);
 		} else {
 			this.router.navigate(['/dashboard/home']);

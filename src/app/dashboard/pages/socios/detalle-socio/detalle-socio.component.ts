@@ -77,7 +77,7 @@ export class DetalleSocioComponent implements OnInit {
 	socio: Socio | null = null;
 	isLoading = true;
 	historialPagos: any[] = []; // Lista real de facturas
-
+	anioActual = new Date().getFullYear();
 	// Variables para Gestión de Terrenos
 	mostrarModalTerreno = false;
 	terrenoForm!: FormGroup;
@@ -193,11 +193,19 @@ export class DetalleSocioComponent implements OnInit {
 		const rawBarrio = terreno.barrio_id || (terreno.barrio && terreno.barrio.id) || terreno.barrio;
 		const idBarrioReal = rawBarrio ? Number(rawBarrio) : null;
 
+		// 🔥 LÓGICA DE EXTRACCIÓN: Quitar el prefijo para mostrar solo el número en el formulario
+		let soloNumeroSecuencial = terreno.codigo_medidor;
+		if (terreno.codigo_medidor && terreno.codigo_medidor.includes('DIREMED-')) {
+			// Dividimos por los guiones y nos quedamos con la última parte
+			const partes = terreno.codigo_medidor.split('-');
+			soloNumeroSecuencial = partes[partes.length - 1]; // ej: "001"
+		}
+
 		this.terrenoForm.patchValue({
 			barrio: idBarrioReal,
 			direccion: terreno.direccion,
 			tiene_medidor: terreno.tiene_medidor || !!terreno.codigo_medidor,
-			codigo_medidor: terreno.codigo_medidor,
+			codigo_medidor: soloNumeroSecuencial, // Ponemos solo "001" en el input
 		});
 
 		this.mostrarModalTerreno = true;
@@ -210,12 +218,32 @@ export class DetalleSocioComponent implements OnInit {
 		}
 
 		const formValue = this.terrenoForm.value;
+		let codigoFinal = null;
+
+		// 🔥 LÓGICA DE FORMATEO: Unir el prefijo con el secuencial
+		if (formValue.tiene_medidor && formValue.codigo_medidor) {
+			let secuencial = String(formValue.codigo_medidor).trim();
+
+			// Por seguridad, si el usuario pegó el texto completo, extraemos solo el número
+			if (secuencial.startsWith('DIREMED-')) {
+				const partes = secuencial.split('-');
+				secuencial = partes[partes.length - 1];
+			}
+
+			// Rellenar con ceros a la izquierda (ej: "1" se convierte en "001")
+			const secuencialFormateado = secuencial.padStart(3, '0');
+
+			// Unir el prefijo estático con el secuencial
+			codigoFinal = `MED-${this.anioActual}-${secuencialFormateado}`;
+		}
+
 		const datosParaEnviar = {
 			...formValue,
 			socio_id: this.socioId,
 			barrio_id: formValue.barrio,
 			direccion: formValue.direccion,
-			codigo_medidor: formValue.tiene_medidor ? formValue.codigo_medidor : null,
+			// Enviamos el código final armado al backend, o null si no tiene medidor
+			codigo_medidor: formValue.tiene_medidor ? codigoFinal : null,
 		};
 
 		const operacion$ =

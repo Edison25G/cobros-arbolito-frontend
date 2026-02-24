@@ -60,11 +60,12 @@ export class FacturacionComponent implements OnInit {
 
 	calcularResumen() {
 		this.totalPlanillasMedidor = this.lecturasPendientes.length;
-		this.totalAgua = this.lecturasPendientes.reduce((acc, item) => acc + (item.monto_agua || 0), 0);
+
+		// 🔥 CAMBIAR monto_agua POR valor_agua
+		this.totalAgua = this.lecturasPendientes.reduce((acc, item) => acc + (item.subtotal || 0), 0);
+
 		this.totalMultas = 0;
 
-		// Sumamos visualmente las acometidas fijas ($3.00 c/u) si quisieras,
-		// pero por ahora nos centramos en que aparezca Edison.
 		this.granTotal = this.totalAgua + this.totalMultas;
 	}
 

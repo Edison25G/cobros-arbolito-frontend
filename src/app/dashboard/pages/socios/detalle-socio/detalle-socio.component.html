@@ -192,25 +192,31 @@
 								<td class="text-right font-bold text-gray-800">{{ pago.total | currency }}</td>
 								<td class="text-center">
 									<p-tag
-										[value]="pago.estado_pago"
-										[severity]="pago.estado_pago === 'PAGADA' ? 'success' : 'warn'"
+										[value]="pago.estado || pago.estado_pago"
+										[severity]="
+											(pago.estado || pago.estado_pago) === 'PAGADA'
+												? 'success'
+												: (pago.estado || pago.estado_pago) === 'POR_VALIDAR'
+													? 'info'
+													: 'warn'
+										"
 										[rounded]="true"
-										styleClass="text-[10px] px-2 uppercase"
+										styleClass="text-[10px] px-2 uppercase font-bold"
 									></p-tag>
 								</td>
 								<td class="text-center">
 									<p-button
-										*ngIf="pago.estado_pago === 'PAGADA'"
+										*ngIf="pago.estado === 'PAGADA'"
 										icon="pi pi-file-pdf"
 										[rounded]="true"
 										[text]="true"
 										severity="success"
-										pTooltip="Imprimir Ticket"
+										pTooltip="Imprimir Comprobante"
 										tooltipPosition="left"
 										(onClick)="imprimirFacturaSocio(pago)"
 									></p-button>
 									<span
-										*ngIf="pago.estado_pago === 'PENDIENTE'"
+										*ngIf="pago.estado === 'PENDIENTE'"
 										class="text-orange-400 text-xs font-medium"
 										pTooltip="Pago Requerido"
 										><i class="pi pi-clock"></i
@@ -260,9 +266,25 @@
 			<span class="font-bold text-sm">¿Tiene Medidor?</span>
 			<p-toggleswitch formControlName="tiene_medidor"></p-toggleswitch>
 		</div>
+
 		<div *ngIf="terrenoForm.get('tiene_medidor')?.value" class="field flex flex-col gap-2">
-			<span class="font-bold text-sm text-blue-700">Código *</span>
-			<input pInputText formControlName="codigo_medidor" class="w-full" />
+			<span class="font-bold text-sm text-blue-700">Código Secuencial *</span>
+			<div class="p-inputgroup">
+				<span class="p-inputgroup-addon font-bold text-gray-600 bg-gray-100 text-xs sm:text-sm">
+					MED-{{ anioActual }}-
+				</span>
+				<input
+					type="text"
+					pInputText
+					formControlName="codigo_medidor"
+					placeholder="Ej: 001"
+					maxlength="4"
+					class="w-full"
+				/>
+			</div>
+			<small class="text-gray-500 text-xs"
+				>Ingrese solo el número. El sistema agregará los ceros automáticamente.</small
+			>
 		</div>
 	</form>
 	<ng-template pTemplate="footer">

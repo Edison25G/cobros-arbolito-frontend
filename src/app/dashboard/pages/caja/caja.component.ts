@@ -157,11 +157,8 @@ export class CajaComponent implements OnInit {
 		if (!filtro) {
 			this.facturasFiltradas = [...this.facturasPendientes];
 		} else {
-			this.facturasFiltradas = this.facturasPendientes.filter(
-				(f) =>
-					f.socio.toLowerCase().includes(filtro) ||
-					f.identificacion.includes(filtro) ||
-					(f.medidor && f.medidor.toLowerCase().includes(filtro)),
+			this.facturasFiltradas = this.facturasPendientes.filter((f) =>
+				(f.socio_nombre + ' ' + f.socio_apellido).toLowerCase().includes(filtro),
 			);
 		}
 	}
@@ -196,7 +193,7 @@ export class CajaComponent implements OnInit {
 
 		const pagos: PagoItem[] = [{ metodo: 'EFECTIVO', monto: montoExacto }];
 
-		this.cajaService.registrarCobro({ factura_id: factura.factura_id, pagos }).subscribe({
+		this.cajaService.registrarCobro({ factura_id: factura.id, pagos }).subscribe({
 			next: (resp) => {
 				// --- INICIO CAMBIO: MEJORAR MENSAJE SRI ---
 				const estadoSri = resp.comprobante?.factura?.estado_sri;
@@ -220,8 +217,8 @@ export class CajaComponent implements OnInit {
 				this.mostrarComprobante(resp.comprobante);
 
 				// Remover de la lista visualmente
-				this.facturasPendientes = this.facturasPendientes.filter((f) => f.factura_id !== factura.factura_id);
-				this.facturasFiltradas = this.facturasFiltradas.filter((f) => f.factura_id !== factura.factura_id);
+				this.facturasPendientes = this.facturasPendientes.filter((f) => f.id !== factura.id);
+				this.facturasFiltradas = this.facturasFiltradas.filter((f) => f.id !== factura.id);
 				this.calcularKPIs();
 				this.procesandoPago = false;
 			},
@@ -261,7 +258,7 @@ export class CajaComponent implements OnInit {
 		this.referenciaTransferencia = '';
 
 		// 🔍 Consultamos los pagos aprobados de esta factura
-		this.cajaService.getPagosFactura(factura.factura_id).subscribe({
+		this.cajaService.getPagosFactura(factura.id).subscribe({
 			next: (pagos) => {
 				// Buscamos el pago que el tesorero ya validó
 				const pagoValidado = pagos.find((p) => p.metodo === 'TRANSFERENCIA' && p.validado);
@@ -321,7 +318,7 @@ export class CajaComponent implements OnInit {
 		this.procesandoPago = true;
 		const factura = this.facturaSeleccionada;
 
-		this.cajaService.registrarCobro({ factura_id: factura.factura_id, pagos }).subscribe({
+		this.cajaService.registrarCobro({ factura_id: factura.id, pagos }).subscribe({
 			next: (resp) => {
 				this.messageService.add({
 					severity: 'success',
@@ -334,8 +331,8 @@ export class CajaComponent implements OnInit {
 				this.mostrarComprobante(resp.comprobante);
 
 				// Remover de la lista
-				this.facturasPendientes = this.facturasPendientes.filter((f) => f.factura_id !== factura.factura_id);
-				this.facturasFiltradas = this.facturasFiltradas.filter((f) => f.factura_id !== factura.factura_id);
+				this.facturasPendientes = this.facturasPendientes.filter((f) => f.id !== factura.id);
+				this.facturasFiltradas = this.facturasFiltradas.filter((f) => f.id !== factura.id);
 				this.calcularKPIs();
 
 				this.procesandoPago = false;

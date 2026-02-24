@@ -107,7 +107,7 @@ export class DashboardLayoutComponent implements OnInit, OnDestroy {
 			label: 'Gestión de Eventos',
 			icon: 'pi pi-calendar',
 			link: '/dashboard/mingas',
-			roles: [RolUsuario.ADMIN, RolUsuario.TESORERO],
+			roles: [RolUsuario.ADMIN],
 		},
 		{
 			label: 'Gestión de Multas',

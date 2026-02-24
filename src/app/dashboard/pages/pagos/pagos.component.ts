@@ -80,10 +80,21 @@ export class PagosComponent implements OnInit {
 			next: (data) => {
 				this.misFacturas = data;
 				this.isLoading = false;
+
+				// ✅ VALIDACIÓN PARA EL TOAST
+				if (this.misFacturas.length === 0) {
+					this.messageService.add({
+						severity: 'info',
+						summary: 'Sin pendientes',
+						detail: 'No tienes facturas o pagos registrados por el momento.',
+						life: 5000, // Duración de 5 segundos
+					});
+				}
 			},
 			error: (err) => {
 				this.isLoading = false;
-				this.errorService.showError(err.message || 'No se pudieron cargar tus facturas.');
+				// Solo errores reales de conexión/servidor
+				this.errorService.showError(err.message || 'Error al cargar facturas.');
 			},
 		});
 	}

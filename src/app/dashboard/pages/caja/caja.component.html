@@ -126,9 +126,7 @@
 							<tr>
 								<td class="text-gray-500 text-sm">{{ factura.fecha_emision | date: 'dd/MM/yyyy' }}</td>
 								<td>
-									<span class="font-mono text-xs bg-gray-100 px-2 py-1 rounded">
-										{{ factura.factura_id }}
-									</span>
+									<span class="font-mono text-xs bg-gray-100 px-2 py-1 rounded"> FAC-{{ factura.id }} </span>
 								</td>
 								<td>
 									<div class="font-bold text-gray-800">{{ factura.socio_nombre }} {{ factura.socio_apellido }}</div>
@@ -147,7 +145,9 @@
 									<span *ngIf="factura.consumo_m3" class="font-bold text-blue-600"> {{ factura.consumo_m3 }} m³ </span>
 									<span *ngIf="!factura.consumo_m3" class="text-gray-400">-</span>
 								</td>
-								<td class="text-right text-gray-600">{{ factura.agua | currency }}</td>
+								<td class="text-right text-gray-600">
+									{{ factura.subtotal | currency: 'USD' }}
+								</td>
 								<td class="text-right">
 									<span *ngIf="factura.multas > 0" class="text-orange-600 font-medium">
 										{{ factura.multas | currency }}
@@ -155,7 +155,9 @@
 									<span *ngIf="factura.multas === 0" class="text-gray-300">-</span>
 								</td>
 								<td class="text-right">
-									<span class="font-bold text-lg text-green-700">{{ factura.total | currency }}</span>
+									<span class="font-bold text-lg text-green-700">{{
+										factura.total | currency: 'USD' : 'symbol' : '1.2-2'
+									}}</span>
 								</td>
 								<td class="text-center">
 									<div class="flex justify-center gap-2">

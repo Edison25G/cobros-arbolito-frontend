@@ -127,7 +127,7 @@ export default [
 				loadComponent: () => import('./pages/multas/gestion-multas.component').then((m) => m.GestionMultasComponent),
 				canActivate: [RoleGuard],
 				// Solo Admin puede impugnar/anular multas
-				data: { roles: [RolUsuario.ADMIN] },
+				data: { roles: [RolUsuario.ADMIN, RolUsuario.TESORERO] },
 			},
 			// --- Rutas de Admin ---
 			{

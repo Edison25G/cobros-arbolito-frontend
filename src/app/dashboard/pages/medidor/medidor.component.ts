@@ -63,19 +63,32 @@ export class MedidorComponent implements OnInit {
 	cargarDatos(): void {
 		this.isLoading = true;
 
-		// 1. Cargar Info del Medidor (Real desde el Backend)
 		this.medidorService.getMedidorDelSocioLogueado().subscribe({
 			next: (data) => {
-				// Asignamos los datos reales (codigo, nombre_barrio, etc.)
 				this.medidor = data;
-
-				// 2. Una vez cargado el medidor, cargamos el historial (Gráfico)
 				this.cargarHistorialYGrafico();
-			},
-			error: (_err) => {
 				this.isLoading = false;
-				// Mostramos error pero dejamos que el usuario lo vea en la UI (state vacío)
-				this.errorService.showError('No se pudo cargar la información del medidor.');
+			},
+			error: (err) => {
+				this.isLoading = false;
+				this.medidor = undefined; // Limpiamos para que el HTML muestre "Sin Medidor"
+
+				if (err.status === 404) {
+					// Mensaje amigable para el usuario (Toast)
+					this.messageService.add({
+						severity: 'info',
+						summary: 'Información',
+						detail: 'Usted no tiene un medidor asignado todavía.',
+						life: 5000,
+					});
+				} else {
+					// Error real de servidor
+					this.messageService.add({
+						severity: 'error',
+						summary: 'Error del Sistema',
+						detail: 'No pudimos conectar con el servidor.',
+					});
+				}
 			},
 		});
 	}

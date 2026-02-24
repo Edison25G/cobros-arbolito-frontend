@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, map, of, catchError } from 'rxjs';
-
+import { throwError } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { MedidorBackend, HistorialConsumo } from '../..//core/interfaces/mi-medidor';
 import { LecturaView } from '../models/lectura.interface';
@@ -39,11 +39,11 @@ export class MedidorService {
 		const token = localStorage.getItem('token');
 		const headers = token ? new HttpHeaders().set('Authorization', `Bearer ${token}`) : undefined;
 
-		// Llamamos a la nueva ruta /mi-medidor/ que es segura y directa
 		return this.http.get<MedidorBackend>(`${this.apiUrl}mi-medidor/`, { headers }).pipe(
 			catchError((error) => {
-				console.error('Error obteniendo medidor del socio:', error);
-				return of(undefined);
+				// Ya no imprimimos el error aquí para no ensuciar la consola
+				// Devolvemos el error hacia arriba para que el componente lo maneje
+				return throwError(() => error);
 			}),
 		);
 	}
