@@ -117,14 +117,18 @@
 											factura.estado_sri === 'DEVUELTA' ||
 											factura.estado_sri === 'NO_ENCONTRADO',
 										'text-blue-500 border-blue-200': factura.estado_sri === 'PENDIENTE_FIRMA',
-										'text-red-500 border-red-200': factura.estado_sri === 'ERROR' || factura.estado_sri === 'RECHAZADA',
+										'text-red-500 border-red-200':
+											factura.estado_sri === 'ERROR' ||
+											factura.estado_sri === 'RECHAZADA' ||
+											factura.estado_sri === 'ERROR_FIRMA',
 										'text-slate-500 border-slate-200': factura.estado_sri === 'NO_ENVIADA',
 									}"
 									[pTooltip]="
 										factura.estado_sri === 'DEVUELTA' ||
 										factura.estado_sri === 'RECHAZADA' ||
-										factura.estado_sri === 'ERROR'
-											? factura.sri_mensaje_error || factura.mensaje_error_sri || 'Error de validación SRI'
+										factura.estado_sri === 'ERROR' ||
+										factura.estado_sri === 'ERROR_FIRMA'
+											? factura.sri_mensaje_error || factura.mensaje_error_sri || 'Error de validación/Firma en SRI'
 											: factura.estado_sri === 'NO_ENCONTRADO'
 												? 'SRI procesando internamente (Reintento automático)'
 												: 'Estado SRI'
@@ -139,14 +143,16 @@
 											'pi-exclamation-triangle':
 												factura.estado_sri === 'DEVUELTA' ||
 												factura.estado_sri === 'RECHAZADA' ||
-												factura.estado_sri === 'ERROR',
+												factura.estado_sri === 'ERROR' ||
+												factura.estado_sri === 'ERROR_FIRMA',
 											'pi-info-circle':
 												factura.estado_sri !== 'PENDIENTE_SRI' &&
 												factura.estado_sri !== 'AUTORIZADA' &&
 												factura.estado_sri !== 'DEVUELTA' &&
 												factura.estado_sri !== 'RECHAZADA' &&
 												factura.estado_sri !== 'ERROR' &&
-												factura.estado_sri !== 'NO_ENCONTRADO',
+												factura.estado_sri !== 'NO_ENCONTRADO' &&
+												factura.estado_sri !== 'ERROR_FIRMA',
 										}"
 									></i>
 									{{ factura.estado_sri }}

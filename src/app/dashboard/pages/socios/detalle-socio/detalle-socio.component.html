@@ -229,15 +229,19 @@
 													? 'pi pi-check-circle'
 													: pago.estado_sri === 'DEVUELTA' ||
 														  pago.estado_sri === 'RECHAZADA' ||
-														  pago.estado_sri === 'ERROR'
+														  pago.estado_sri === 'ERROR' ||
+														  pago.estado_sri === 'ERROR_FIRMA'
 														? 'pi pi-exclamation-triangle'
 														: ''
 										"
 										[rounded]="true"
 										styleClass="text-[9px] px-2 font-bold opacity-80"
 										[pTooltip]="
-											pago.estado_sri === 'DEVUELTA' || pago.estado_sri === 'RECHAZADA' || pago.estado_sri === 'ERROR'
-												? pago.sri_mensaje_error || pago.mensaje_error_sri || 'Haz clic en Gestión SRI para sincronizar'
+											pago.estado_sri === 'DEVUELTA' ||
+											pago.estado_sri === 'RECHAZADA' ||
+											pago.estado_sri === 'ERROR' ||
+											pago.estado_sri === 'ERROR_FIRMA'
+												? pago.sri_mensaje_error || pago.mensaje_error_sri || 'Error de validación/Firma en SRI'
 												: pago.estado_sri === 'NO_ENCONTRADO'
 													? 'SRI procesando internamente (Reintento automático)'
 													: 'Estado en el SRI'
