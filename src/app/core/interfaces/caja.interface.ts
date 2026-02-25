@@ -103,10 +103,12 @@ export interface Comprobante {
 	factura: ComprobanteFactura;
 	socio: ComprobanteSocio;
 	pagos: ComprobantePago[];
+	pdf_url?: string; // Enviado ahora por el backend
 }
 
 // 12. Respuesta del endpoint de cobro (POST /api/v1/cobros/registrar/)
 export interface CobroResponse {
+	status: 'OK' | 'SRI_PENDIENTE' | 'SRI_ERROR';
 	mensaje: string;
 	factura_id: number;
 	nuevo_estado: 'PAGADA' | 'PENDIENTE';

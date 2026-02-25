@@ -195,26 +195,30 @@ export class CajaComponent implements OnInit {
 
 		this.cajaService.registrarCobro({ factura_id: factura.id, pagos }).subscribe({
 			next: (resp) => {
-				// --- INICIO CAMBIO: MEJORAR MENSAJE SRI ---
-				const estadoSri = resp.comprobante?.factura?.estado_sri;
+				const status = resp.status;
 
-				if (estadoSri === 'AUTORIZADO') {
+				if (status === 'OK') {
 					this.messageService.add({
 						severity: 'success',
-						summary: 'Cobro y Factura OK',
-						detail: `Factura autorizada por el SRI. Ticket: ${resp.mensaje}`, // O ticket_numero
+						summary: 'Cobro y SRI OK',
+						detail: `El pago se registró y el SRI autorizó la factura.`,
 					});
-				} else {
-					// Caso: Se cobró el dinero, pero el SRI falló o está procesando
+				} else if (status === 'SRI_PENDIENTE') {
 					this.messageService.add({
 						severity: 'warn',
 						summary: 'Cobrado (SRI Pendiente)',
-						detail: `Pago registrado, pero estado SRI es: ${estadoSri}. Se reintentará automáticamente.`,
+						detail: `Pago registrado, SRI en proceso. Se reintentará automáticamente.`,
+					});
+				} else if (status === 'SRI_ERROR') {
+					this.messageService.add({
+						severity: 'error',
+						summary: 'Cobrado con Error en SRI',
+						detail: `Pago registrado, pero SRI falló.`,
 					});
 				}
 
 				// Mostrar comprobante del backend
-				this.mostrarComprobante(resp.comprobante);
+				this.mostrarComprobante(resp.comprobante, resp.status);
 
 				// Remover de la lista visualmente
 				this.facturasPendientes = this.facturasPendientes.filter((f) => f.id !== factura.id);
@@ -231,9 +235,12 @@ export class CajaComponent implements OnInit {
 		});
 	}
 
+	estadoCobroActual: 'OK' | 'SRI_PENDIENTE' | 'SRI_ERROR' = 'OK';
+
 	// --- MOSTRAR COMPROBANTE ---
-	mostrarComprobante(comprobante: Comprobante) {
+	mostrarComprobante(comprobante: Comprobante, status: 'OK' | 'SRI_PENDIENTE' | 'SRI_ERROR' = 'OK') {
 		this.comprobanteActual = comprobante;
+		this.estadoCobroActual = status;
 		this.modalComprobanteVisible = true;
 	}
 

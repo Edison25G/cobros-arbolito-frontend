@@ -419,11 +419,58 @@
 	[resizable]="false"
 >
 	<ng-template pTemplate="content">
+		<!-- === 1. MENSAJES DE ESTADO SEGÚN EL BACKEND === -->
+
+		<!-- Estado PENDIENTE -->
+		<div
+			*ngIf="estadoCobroActual === 'SRI_PENDIENTE'"
+			class="flex flex-col items-center justify-center p-6 text-center bg-yellow-50 rounded-lg mb-4 border border-yellow-200"
+		>
+			<i class="pi pi-spin pi-spinner text-5xl text-yellow-500 mb-4 shadow-sm rounded-full bg-white p-2"></i>
+			<h2 class="text-xl font-bold text-yellow-800 mb-2">Pago Registrado, SRI en proceso</h2>
+			<p class="text-yellow-700 text-sm">
+				El dinero ya ingresó al sistema, pero la factura está esperando autorización del SRI. Se reintentará
+				automáticamente.
+			</p>
+		</div>
+
+		<!-- Estado ERROR -->
+		<div
+			*ngIf="estadoCobroActual === 'SRI_ERROR'"
+			class="flex flex-col items-center justify-center p-6 text-center bg-red-50 rounded-lg mb-4 border border-red-200"
+		>
+			<i class="pi pi-times-circle text-5xl text-red-500 mb-4 shadow-sm rounded-full bg-white p-2"></i>
+			<h2 class="text-xl font-bold text-red-800 mb-2">Pago Registrado, pero SRI falló</h2>
+			<p class="text-red-700 text-sm">
+				El pago fue guardado contablemente, pero ocurrió un error permanente al comunicarse con el SRI. Por favor,
+				comuníquese con soporte.
+			</p>
+		</div>
+
+		<!-- Estado OK sin datos (Fallback) -->
+		<div
+			*ngIf="estadoCobroActual === 'OK' && !comprobanteActual"
+			class="flex flex-col items-center justify-center p-6 text-center bg-gray-50 rounded-lg mb-4 border border-gray-200"
+		>
+			<i class="pi pi-check-circle text-5xl text-green-500 mb-4 shadow-sm rounded-full bg-white p-2"></i>
+			<h2 class="text-xl font-bold text-gray-800 mb-2">¡Pago Registrado Exitosamente!</h2>
+			<p class="text-gray-600 text-sm">
+				El cobro fue procesado y el SRI respondió, pero los datos del comprobante no llegaron a la vista.
+			</p>
+		</div>
+
+		<!-- === 2. DATOS DEL COMPROBANTE MIENTRAS HAYA DATA === -->
 		<div class="comprobante-container" *ngIf="comprobanteActual">
 			<!-- Encabezado -->
 			<div class="text-center mb-4 pb-4 border-b border-gray-200">
-				<div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
-					<i class="pi pi-check-circle text-4xl text-green-600"></i>
+				<div
+					class="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3"
+					[ngClass]="estadoCobroActual === 'OK' ? 'bg-green-100' : 'bg-gray-100'"
+				>
+					<i
+						class="pi text-4xl"
+						[ngClass]="estadoCobroActual === 'OK' ? 'pi-check-circle text-green-600' : 'pi-file text-gray-500'"
+					></i>
 				</div>
 				<h2 class="text-xl font-bold text-gray-800 m-0">COMPROBANTE DE PAGO</h2>
 				<p class="text-gray-500 text-sm m-0">Junta de Agua "El Arbolito"</p>
@@ -527,6 +574,7 @@
 				icon="pi pi-print"
 				[outlined]="true"
 				severity="success"
+				[disabled]="estadoCobroActual !== 'OK' || !comprobanteActual"
 				(onClick)="imprimirComprobante()"
 			></p-button>
 			<p-button
