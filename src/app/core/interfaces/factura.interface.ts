@@ -20,6 +20,8 @@ export interface LecturaPendiente {
 	consumo: string;
 	valor_agua: number;
 	subtotal: number;
+	total_pagar?: number;
+	multas_mingas?: number;
 }
 
 // ... (Puedes dejar ComprobanteSRI y lo demás si lo usas en otros lados)
