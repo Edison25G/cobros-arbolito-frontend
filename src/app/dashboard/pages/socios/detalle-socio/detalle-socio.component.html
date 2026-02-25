@@ -151,19 +151,6 @@
 						<i class="pi pi-history text-green-600"></i> Historial de Facturación
 					</h3>
 					<div class="flex items-center gap-2">
-						<p-button
-							icon="pi pi-sync"
-							label="Sincronizar SRI"
-							[loading]="isSyncingSRI"
-							size="small"
-							severity="info"
-							[outlined]="true"
-							(onClick)="sincronizarFacturasSRI()"
-							pTooltip="Sincroniza en 2do plano facturas pendientes en el SRI"
-							tooltipPosition="bottom"
-						></p-button>
-
-						<div class="px-2">|</div>
 						<i class="pi pi-search text-gray-500 text-sm"></i>
 
 						<input
@@ -182,7 +169,7 @@
 						[value]="historialPagos"
 						[rows]="6"
 						[paginator]="true"
-						[globalFilterFields]="['fecha_emision', 'total', 'estado_pago', 'estado_sri']"
+						[globalFilterFields]="['fecha_emision', 'total', 'estado_pago']"
 						styleClass="p-datatable-sm p-datatable-striped"
 						[tableStyle]="{ 'min-width': '100%' }"
 					>
@@ -204,9 +191,7 @@
 								<td class="text-sm">Consumo Agua Potable</td>
 								<td class="text-right font-bold text-gray-800">{{ pago.total | currency }}</td>
 								<td class="text-center">
-									<!-- Estado del Cobro -->
 									<p-tag
-										*ngIf="pago.estado_sri !== 'PENDIENTE_SRI'"
 										[value]="pago.estado || pago.estado_pago"
 										[severity]="
 											(pago.estado || pago.estado_pago) === 'PAGADA'
@@ -218,21 +203,10 @@
 										[rounded]="true"
 										styleClass="text-[10px] px-2 uppercase font-bold"
 									></p-tag>
-
-									<p-tag
-										*ngIf="pago.estado_sri === 'PENDIENTE_SRI'"
-										value="PROCESANDO SRI"
-										icon="pi pi-clock"
-										severity="warn"
-										[rounded]="true"
-										styleClass="text-[10px] px-2 font-bold"
-									></p-tag>
 								</td>
 								<td class="text-center">
 									<p-button
-										*ngIf="
-											(pago.estado === 'PAGADA' || pago.estado_pago === 'PAGADA') && pago.estado_sri !== 'PENDIENTE_SRI'
-										"
+										*ngIf="pago.estado === 'PAGADA' || pago.estado_pago === 'PAGADA'"
 										icon="pi pi-file-pdf"
 										[rounded]="true"
 										[text]="true"
@@ -242,7 +216,7 @@
 										(onClick)="imprimirFacturaSocio(pago)"
 									></p-button>
 									<span
-										*ngIf="pago.estado === 'PENDIENTE' && pago.estado_sri !== 'PENDIENTE_SRI'"
+										*ngIf="pago.estado === 'PENDIENTE'"
 										class="text-orange-400 text-xs font-medium"
 										pTooltip="Pago Requerido"
 										><i class="pi pi-clock"></i
