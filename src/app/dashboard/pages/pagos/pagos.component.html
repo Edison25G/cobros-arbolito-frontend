@@ -113,7 +113,9 @@
 									[ngClass]="{
 										'text-emerald-600 border-emerald-200': factura.estado_sri === 'AUTORIZADA',
 										'text-orange-500 border-orange-200':
-											factura.estado_sri === 'PENDIENTE_SRI' || factura.estado_sri === 'DEVUELTA',
+											factura.estado_sri === 'PENDIENTE_SRI' ||
+											factura.estado_sri === 'DEVUELTA' ||
+											factura.estado_sri === 'NO_ENCONTRADO',
 										'text-blue-500 border-blue-200': factura.estado_sri === 'PENDIENTE_FIRMA',
 										'text-red-500 border-red-200': factura.estado_sri === 'ERROR' || factura.estado_sri === 'RECHAZADA',
 										'text-slate-500 border-slate-200': factura.estado_sri === 'NO_ENVIADA',
@@ -123,14 +125,16 @@
 										factura.estado_sri === 'RECHAZADA' ||
 										factura.estado_sri === 'ERROR'
 											? factura.sri_mensaje_error || factura.mensaje_error_sri || 'Error de validación SRI'
-											: 'Estado SRI'
+											: factura.estado_sri === 'NO_ENCONTRADO'
+												? 'SRI procesando internamente (Reintento automático)'
+												: 'Estado SRI'
 									"
 									tooltipPosition="left"
 								>
 									<i
 										class="pi"
 										[ngClass]="{
-											'pi-clock': factura.estado_sri === 'PENDIENTE_SRI',
+											'pi-clock': factura.estado_sri === 'PENDIENTE_SRI' || factura.estado_sri === 'NO_ENCONTRADO',
 											'pi-check-circle': factura.estado_sri === 'AUTORIZADA',
 											'pi-exclamation-triangle':
 												factura.estado_sri === 'DEVUELTA' ||
@@ -141,7 +145,8 @@
 												factura.estado_sri !== 'AUTORIZADA' &&
 												factura.estado_sri !== 'DEVUELTA' &&
 												factura.estado_sri !== 'RECHAZADA' &&
-												factura.estado_sri !== 'ERROR',
+												factura.estado_sri !== 'ERROR' &&
+												factura.estado_sri !== 'NO_ENCONTRADO',
 										}"
 									></i>
 									{{ factura.estado_sri }}

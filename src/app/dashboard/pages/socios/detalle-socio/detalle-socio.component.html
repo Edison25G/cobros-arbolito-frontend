@@ -212,7 +212,9 @@
 										[severity]="
 											pago.estado_sri === 'AUTORIZADA'
 												? 'success'
-												: pago.estado_sri === 'PENDIENTE_SRI' || pago.estado_sri === 'DEVUELTA'
+												: pago.estado_sri === 'PENDIENTE_SRI' ||
+													  pago.estado_sri === 'DEVUELTA' ||
+													  pago.estado_sri === 'NO_ENCONTRADO'
 													? 'warn'
 													: pago.estado_sri === 'PENDIENTE_FIRMA'
 														? 'info'
@@ -221,7 +223,7 @@
 															: 'danger'
 										"
 										[icon]="
-											pago.estado_sri === 'PENDIENTE_SRI'
+											pago.estado_sri === 'PENDIENTE_SRI' || pago.estado_sri === 'NO_ENCONTRADO'
 												? 'pi pi-clock'
 												: pago.estado_sri === 'AUTORIZADA'
 													? 'pi pi-check-circle'
@@ -236,7 +238,9 @@
 										[pTooltip]="
 											pago.estado_sri === 'DEVUELTA' || pago.estado_sri === 'RECHAZADA' || pago.estado_sri === 'ERROR'
 												? pago.sri_mensaje_error || pago.mensaje_error_sri || 'Haz clic en Gestión SRI para sincronizar'
-												: 'Estado en el SRI'
+												: pago.estado_sri === 'NO_ENCONTRADO'
+													? 'SRI procesando internamente (Reintento automático)'
+													: 'Estado en el SRI'
 										"
 										tooltipPosition="top"
 									></p-tag>

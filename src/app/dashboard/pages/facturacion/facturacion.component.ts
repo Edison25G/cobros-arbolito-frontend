@@ -9,6 +9,7 @@ import { MessageService } from 'primeng/api';
 
 import { FacturacionService } from '../../../core/services/facturacion.service';
 import { LecturaPendiente } from '../../../core/interfaces/factura.interface';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
 	selector: 'app-facturacion',
@@ -20,6 +21,8 @@ import { LecturaPendiente } from '../../../core/interfaces/factura.interface';
 export class FacturacionComponent implements OnInit {
 	private messageService = inject(MessageService);
 	private facturacionService = inject(FacturacionService);
+
+	private authService = inject(AuthService);
 
 	fechaEmision: Date = new Date();
 	lecturasPendientes: LecturaPendiente[] = []; // ✅ ¡Interfaz activa y segura!
@@ -33,7 +36,13 @@ export class FacturacionComponent implements OnInit {
 	granTotal = 0;
 
 	ngOnInit() {
-		this.buscarPreEmision();
+		// FIX: Evitar race condition de Token en F5.
+		// Solo cargamos la pre-emisión cuando el AuthInterceptor ya tiene el token validado en memoria.
+		this.authService.currentUser$.subscribe((user) => {
+			if (user) {
+				this.buscarPreEmision();
+			}
+		});
 	}
 
 	buscarPreEmision() {
