@@ -71,12 +71,12 @@ export class GestionSriComponent implements OnInit {
 		});
 
 		this.facturacionService.sincronizarSRI().subscribe({
-			next: (_res) => {
+			next: (res: any) => {
 				this.isSyncing = false;
 				this.messageService.add({
 					severity: 'success',
-					summary: 'Éxito',
-					detail: 'Trabajo enviado a los workers de backend.',
+					summary: 'Sincronización Iniciada',
+					detail: res?.mensaje || res?.detail || 'Facturas enviadas a la cola de procesamiento.',
 				});
 				setTimeout(() => this.cargarFacturasConProblemas(), 3000); // Dar algo de tiempo antes de recargar visualmente
 			},
