@@ -65,31 +65,41 @@ export class FacturacionComponent implements OnInit {
 	}
 
 	generarEmisionMasiva() {
-		if (!this.lecturasPendientes.length) return;
+		if (this.isProcessing || !this.lecturasPendientes.length) return;
+
 		this.isProcessing = true;
 
-		this.facturacionService.generarEmisionMasiva(this.lecturasPendientes).subscribe({
+		// GUARDAMOS LOS DATOS Y LIMPIAMOS LA TABLA DE UNA VEZ
+		// Esto visualmente le dice al usuario: "Ya recibí tu orden, estoy procesando"
+		const datosBuffer = [...this.lecturasPendientes];
+		this.lecturasPendientes = [];
+		this.calcularResumen();
+
+		this.facturacionService.generarEmisionMasiva(datosBuffer).subscribe({
 			next: (res: any) => {
-				// Ahora siempre entrará aquí aunque mandes duplicados,
-				// porque el back ya los maneja.
 				this.messageService.add({
 					severity: 'success',
-					summary: 'Proceso Completado',
-					detail: res.mensaje || 'Las facturas pendientes han sido procesadas.',
-					life: 3000,
+					summary: '¡Proceso Exitoso!',
+					detail: res.mensaje || 'Todas las planillas han sido generadas.',
+					life: 4000,
 				});
+				// Refrescamos desde el servidor por si quedó algo pendiente
 				this.finalizarProceso();
 			},
 			error: (err) => {
+				// Si el servidor falla de verdad (error 500, caída de red):
+				// Devolvemos los datos a la tabla para que no se pierda la vista
+				this.lecturasPendientes = datosBuffer;
 				this.isProcessing = false;
-				// Si llega a entrar aquí, es por un error real de servidor (caída de DB, etc.)
+				this.calcularResumen();
+
 				this.messageService.add({
 					severity: 'error',
-					summary: 'Error Crítico',
-					detail: err.error?.detalle || 'Error inesperado en el servidor.',
+					summary: 'Error de Conexión',
+					detail: err.error?.detalle || 'El servidor no pudo procesar la solicitud. Intente de nuevo.',
 					life: 5000,
 				});
-				console.error('TRACEBACK:', err.error?.traceback);
+				console.error('Error Crítico:', err);
 			},
 		});
 	}
