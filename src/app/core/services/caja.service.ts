@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 import { environment } from '../../environments/environment';
 import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
@@ -37,8 +37,14 @@ export class CajaService {
 	}
 
 	// 3. Registrar cobro (Pago Mixto o Efectivo en Ventanilla)
-	registrarCobro(datos: RegistrarCobroDTO): Observable<CobroResponse> {
-		return this.http.post<CobroResponse>(`${this.apiUrl}/cobros/registrar/`, datos).pipe(catchError(this.handleError));
+	registrarCobro(datos: RegistrarCobroDTO, idempotencyKey?: string): Observable<CobroResponse> {
+		let headers = new HttpHeaders();
+		if (idempotencyKey) {
+			headers = headers.set('Idempotency-Key', idempotencyKey);
+		}
+		return this.http
+			.post<CobroResponse>(`${this.apiUrl}/cobros/registrar/`, datos, { headers })
+			.pipe(catchError(this.handleError));
 	}
 
 	// 4. BUSCAR DEUDAS PENDIENTES

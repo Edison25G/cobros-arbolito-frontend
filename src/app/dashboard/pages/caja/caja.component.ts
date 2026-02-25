@@ -29,6 +29,7 @@ import {
 } from '../../../core/interfaces/caja.interface';
 
 import { ComprobanteService } from '../../../core/services/comprobante.service';
+import { v4 as uuidv4 } from 'uuid';
 
 @Component({
 	selector: 'app-caja',
@@ -192,8 +193,9 @@ export class CajaComponent implements OnInit {
 		const montoExacto = Number(Number(factura.total).toFixed(2));
 
 		const pagos: PagoItem[] = [{ metodo: 'EFECTIVO', monto: montoExacto }];
+		const idempotencyKey = uuidv4();
 
-		this.cajaService.registrarCobro({ factura_id: factura.id, pagos }).subscribe({
+		this.cajaService.registrarCobro({ factura_id: factura.id, pagos }, idempotencyKey).subscribe({
 			next: (resp) => {
 				const status = resp.status;
 
@@ -324,8 +326,9 @@ export class CajaComponent implements OnInit {
 
 		this.procesandoPago = true;
 		const factura = this.facturaSeleccionada;
+		const idempotencyKey = uuidv4();
 
-		this.cajaService.registrarCobro({ factura_id: factura.id, pagos }).subscribe({
+		this.cajaService.registrarCobro({ factura_id: factura.id, pagos }, idempotencyKey).subscribe({
 			next: (resp) => {
 				this.messageService.add({
 					severity: 'success',

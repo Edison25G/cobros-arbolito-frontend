@@ -6,7 +6,24 @@
 			<h2 class="text-2xl font-bold text-gray-800">Gestión de Comprobantes SRI</h2>
 			<p class="text-gray-500 text-sm">Monitoreo y sincronización de facturas electrónicas.</p>
 		</div>
-		<p-button label="Actualizar Lista" icon="pi pi-refresh" (onClick)="cargarFacturasConProblemas()"></p-button>
+		<div class="flex gap-2">
+			<p-button
+				label="Sincronizar SRI"
+				icon="pi pi-sync"
+				severity="info"
+				[loading]="isSyncing"
+				pTooltip="Sincroniza en 2do plano las facturas pendientes"
+				tooltipPosition="bottom"
+				(onClick)="sincronizarMasivo()"
+			></p-button>
+			<p-button
+				label="Actualizar Lista"
+				icon="pi pi-refresh"
+				severity="secondary"
+				[outlined]="true"
+				(onClick)="cargarFacturasConProblemas()"
+			></p-button>
+		</div>
 	</div>
 
 	<div class="card shadow-sm border border-gray-100 rounded-xl overflow-hidden bg-white">

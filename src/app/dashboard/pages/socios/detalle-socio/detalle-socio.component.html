@@ -225,11 +225,19 @@
 												? 'pi pi-clock'
 												: pago.estado_sri === 'AUTORIZADA'
 													? 'pi pi-check-circle'
-													: ''
+													: pago.estado_sri === 'DEVUELTA' ||
+														  pago.estado_sri === 'RECHAZADA' ||
+														  pago.estado_sri === 'ERROR'
+														? 'pi pi-exclamation-triangle'
+														: ''
 										"
 										[rounded]="true"
 										styleClass="text-[9px] px-2 font-bold opacity-80"
-										pTooltip="Estado en el SRI"
+										[pTooltip]="
+											pago.estado_sri === 'DEVUELTA' || pago.estado_sri === 'RECHAZADA' || pago.estado_sri === 'ERROR'
+												? pago.sri_mensaje_error || pago.mensaje_error_sri || 'Haz clic en Gestión SRI para sincronizar'
+												: 'Estado en el SRI'
+										"
 										tooltipPosition="top"
 									></p-tag>
 								</td>
