@@ -117,7 +117,10 @@
 
 					<td>
 						<div class="text-xs text-gray-500">
-							{{ item.lectura_id }} ➔ <span class="font-bold text-gray-800">{{ item.lectura_actual }}</span>
+							<span class="text-blue-500 font-semibold mr-1">#{{ item.id }}</span>
+
+							{{ item.lectura_anterior | number: '1.0-0' }} ➔
+							<span class="font-bold text-gray-800">{{ item.lectura_actual | number: '1.0-0' }}</span>
 						</div>
 					</td>
 
