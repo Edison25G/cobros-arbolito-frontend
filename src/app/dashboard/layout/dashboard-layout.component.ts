@@ -78,12 +78,12 @@ export class DashboardLayoutComponent implements OnInit, OnDestroy {
 			roles: [RolUsuario.TESORERO, RolUsuario.ADMIN],
 		},
 
-		{
-			label: 'Gestión SRI',
-			icon: 'pi pi-cloud-upload',
-			link: '/dashboard/gestion-sri', // <--- Cambiado para que coincida con la ruta
-			roles: [RolUsuario.TESORERO, RolUsuario.ADMIN],
-		},
+		// {
+		// 	label: 'Gestión SRI',
+		// 	icon: 'pi pi-cloud-upload',
+		// 	link: '/dashboard/gestion-sri', // <--- Cambiado para que coincida con la ruta
+		// 	roles: [RolUsuario.TESORERO, RolUsuario.ADMIN],
+		// },
 
 		{
 			label: 'Registro de Lecturas',
