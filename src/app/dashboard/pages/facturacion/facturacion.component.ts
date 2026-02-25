@@ -69,52 +69,53 @@ export class FacturacionComponent implements OnInit {
 
 		this.isProcessing = true;
 
-		// GUARDAMOS LOS DATOS Y LIMPIAMOS LA TABLA DE UNA VEZ
-		// Esto visualmente le dice al usuario: "Ya recibí tu orden, estoy procesando"
+		// 1. Clonamos para el buffer de error y LIMPIAMOS LA VISTA DE INMEDIATO
 		const datosBuffer = [...this.lecturasPendientes];
 		this.lecturasPendientes = [];
-		this.calcularResumen();
+		this.calcularResumen(); // Esto pone los contadores en 0 instantáneamente
 
 		this.facturacionService.generarEmisionMasiva(datosBuffer).subscribe({
 			next: (res: any) => {
+				// 2. Si el back ignoró algunos por ser duplicados, suele mandar un mensaje descriptivo
+				const fueDuplicado =
+					res.mensaje?.toLowerCase().includes('ya existe') || res.detalle?.toLowerCase().includes('duplicate');
+
 				this.messageService.add({
-					severity: 'success',
-					summary: '¡Proceso Exitoso!',
-					detail: res.mensaje || 'Todas las planillas han sido generadas.',
+					severity: fueDuplicado ? 'info' : 'success',
+					summary: fueDuplicado ? 'Información' : '¡Proceso Exitoso!',
+					detail: res.mensaje || 'Proceso completado correctamente.',
 					life: 4000,
 				});
-				// Refrescamos desde el servidor por si quedó algo pendiente
+
+				// 3. Forzamos la finalización para limpiar cualquier rastro
 				this.finalizarProceso();
 			},
 			error: (err) => {
-				// Si el servidor falla de verdad (error 500, caída de red):
-				// Devolvemos los datos a la tabla para que no se pierda la vista
+				// Si hubo un error real de red o servidor, devolvemos los datos
 				this.lecturasPendientes = datosBuffer;
 				this.isProcessing = false;
 				this.calcularResumen();
 
 				this.messageService.add({
 					severity: 'error',
-					summary: 'Error de Conexión',
-					detail: err.error?.detalle || 'El servidor no pudo procesar la solicitud. Intente de nuevo.',
+					summary: 'Error',
+					detail: err.error?.detalle || 'No se pudo procesar la solicitud.',
 					life: 5000,
 				});
-				console.error('Error Crítico:', err);
 			},
 		});
 	}
 
-	/**
-	 * Limpia los datos de la interfaz y refresca la lista desde el servidor
-	 */
 	private finalizarProceso() {
+		// RESET TOTAL de variables locales
 		this.lecturasPendientes = [];
 		this.totalPlanillasMedidor = 0;
 		this.totalAgua = 0;
+		this.totalMultas = 0;
 		this.granTotal = 0;
 		this.isProcessing = false;
 
-		// Volvemos a consultar para traer solo lo que realmente falta por facturar
+		// Llamamos al GET para asegurarnos de que la tabla refleje lo que el BACK diga que falta
 		this.buscarPreEmision();
 	}
 }
