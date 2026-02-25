@@ -61,4 +61,9 @@ export class FacturacionService {
 			params: { clave_acceso: claveAcceso },
 		});
 	}
+
+	// Sincronización asíncrona masiva
+	sincronizarSRI(): Observable<any> {
+		return this.http.post(`${this.apiUrl}/sri/sincronizar/`, {});
+	}
 }

@@ -140,6 +140,42 @@ export class DetalleSocioComponent implements OnInit {
 	}
 
 	// ==========================================================
+	// 1.5 SINCRONIZACIÓN ASÍNCRONA SRI
+	// ==========================================================
+
+	isSyncingSRI = false;
+
+	sincronizarFacturasSRI() {
+		this.isSyncingSRI = true;
+		this.messageService.add({
+			severity: 'info',
+			summary: 'Sincronizando',
+			detail: 'Iniciando sincronización en segundo plano...',
+		});
+
+		this.facturacionService.sincronizarSRI().subscribe({
+			next: (res: any) => {
+				this.isSyncingSRI = false;
+				this.messageService.add({
+					severity: 'success',
+					summary: 'Éxito',
+					detail: res.mensaje || 'Proceso iniciado. En breve las facturas cambiarán de estado.',
+				});
+				// Optionally reload the history right away or wait for the user to do it
+				this.cargarHistorialReal();
+			},
+			error: (_err: any) => {
+				this.isSyncingSRI = false;
+				this.messageService.add({
+					severity: 'error',
+					summary: 'Error',
+					detail: 'No se pudo iniciar la sincronización SRI.',
+				});
+			},
+		});
+	}
+
+	// ==========================================================
 	// 2. GESTIÓN DE TERRENOS (CRUD)
 	// ==========================================================
 
