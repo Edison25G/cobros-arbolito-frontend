@@ -70,8 +70,9 @@
 			label="Confirmar y Generar Todo"
 			icon="pi pi-check-circle"
 			[loading]="isProcessing"
-			(onClick)="generarEmisionMasiva()"
+			(click)="generarEmisionMasiva()"
 			styleClass="p-button-lg bg-green-600 border-green-600 hover:bg-green-700 shadow-lg font-bold px-6"
+			[disabled]="lecturasPendientes.length === 0"
 		>
 		</p-button>
 	</div>
@@ -121,7 +122,7 @@
 						</div>
 					</td>
 
-					<td class="text-right font-bold text-blue-600">{{ item.consumo }} m³</td>
+					<td class="text-right font-bold text-blue-600 bg-blue-50/20">{{ item.consumo }} m³</td>
 
 					<td class="text-right text-gray-600">
 						{{ item.valor_agua | currency }}
@@ -131,7 +132,7 @@
 						{{ item.multas_mingas > 0 ? (item.multas_mingas | currency) : '-' }}
 					</td>
 
-					<td class="text-right font-bold text-green-700 bg-green-50/30">
+					<td class="text-right font-extrabold text-green-700 bg-green-50">
 						{{ item.subtotal | currency }}
 					</td>
 				</tr>

@@ -60,41 +60,51 @@ export class FacturacionComponent implements OnInit {
 
 		// Sumamos usando el subtotal o valor_agua según lo que definieron
 		this.totalAgua = this.lecturasPendientes.reduce((acc, item) => acc + (item.subtotal || 0), 0);
-		this.totalMultas = 0;
+		this.totalMultas = this.lecturasPendientes.reduce((acc, item) => acc + (item.multas_mingas || 0), 0);
 		this.granTotal = this.totalAgua + this.totalMultas;
 	}
 
 	generarEmisionMasiva() {
 		if (!this.lecturasPendientes.length) return;
-
 		this.isProcessing = true;
 
 		this.facturacionService.generarEmisionMasiva(this.lecturasPendientes).subscribe({
 			next: (res: any) => {
+				// Ahora siempre entrará aquí aunque mandes duplicados,
+				// porque el back ya los maneja.
 				this.messageService.add({
 					severity: 'success',
-					summary: 'Completado',
-					detail: res.mensaje || 'Facturas generadas con éxito.',
+					summary: 'Proceso Completado',
+					detail: res.mensaje || 'Las facturas pendientes han sido procesadas.',
+					life: 3000,
 				});
-
-				// ✅ LIMPIEZA TOTAL POST-GENERACIÓN
-				this.lecturasPendientes = [];
-				this.totalPlanillasMedidor = 0;
-				this.totalAgua = 0;
-				this.granTotal = 0;
-
-				// Refrescamos para confirmar que ya no hay nada en el Back
-				this.buscarPreEmision();
-				this.isProcessing = false;
+				this.finalizarProceso();
 			},
 			error: (err) => {
 				this.isProcessing = false;
+				// Si llega a entrar aquí, es por un error real de servidor (caída de DB, etc.)
 				this.messageService.add({
 					severity: 'error',
-					summary: 'Fallo en Servidor',
-					detail: err.error?.detalle || 'Error al procesar la emisión.',
+					summary: 'Error Crítico',
+					detail: err.error?.detalle || 'Error inesperado en el servidor.',
+					life: 5000,
 				});
+				console.error('TRACEBACK:', err.error?.traceback);
 			},
 		});
+	}
+
+	/**
+	 * Limpia los datos de la interfaz y refresca la lista desde el servidor
+	 */
+	private finalizarProceso() {
+		this.lecturasPendientes = [];
+		this.totalPlanillasMedidor = 0;
+		this.totalAgua = 0;
+		this.granTotal = 0;
+		this.isProcessing = false;
+
+		// Volvemos a consultar para traer solo lo que realmente falta por facturar
+		this.buscarPreEmision();
 	}
 }
