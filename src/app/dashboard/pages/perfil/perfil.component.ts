@@ -74,19 +74,20 @@ export class PerfilComponent implements OnInit {
 		this.currentRole = this.authService.getRole() || 'SOCIO';
 
 		this.authService.getProfile().subscribe({
-			next: (data: UserProfile) => {
+			next: (data: any) => {
+				// Usamos 'any' o actualiza tu interface UserProfile
 				this.socioData = data;
-				// Si vienen datos nulos, evitar "undefined undefined"
+
 				const fName = data.first_name || '';
 				const lName = data.last_name || '';
 				this.currentUser = fName || lName ? `${fName} ${lName}`.trim() : this.currentUser;
 				this.photoUrl = data.foto || null;
 
-				// Llenar formulario de contacto
+				// Ahora sabemos que los nombres coinciden 100% con Python
 				this.contactForm.patchValue({
-					email: data.email,
-					telefono: data.telefono,
-					direccion: data.direccion,
+					email: data.email || '',
+					telefono: data.telefono || '',
+					direccion: data.direccion || '',
 				});
 			},
 			error: (err: any) => {
@@ -103,20 +104,22 @@ export class PerfilComponent implements OnInit {
 	onUpdateContact() {
 		if (this.contactForm.invalid) return;
 
-		if (!this.socioData || !this.socioData.id) {
-			this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No hay datos de socio cargados.' });
+		// 🚨 Usamos id_socio (el ID del modelo Socio), NO el id del modelo User
+		const socioId = this.socioData?.id_socio;
+
+		if (!socioId) {
+			this.messageService.add({
+				severity: 'warn',
+				summary: 'Sin perfil de socio',
+				detail: 'Como Operador/Admin, no tienes un perfil de socio vinculado para guardar dirección o teléfono.',
+			});
 			return;
 		}
 
 		this.isSavingContact = true;
-		// Aquí llamamos al método de actualizar socio.
-		// IMPORTANTE: El backend debe permitir que el propio usuario se edite (ej: PATCH /socios/me/)
-		// O usamos el updateSocio del admin si tienes permisos, pero lo ideal es un endpoint propio.
-
-		// Simulamos la actualización con el servicio de socio existente
 		const updateData = this.contactForm.value;
 
-		this.socioService.updateSocio(this.socioData.id, updateData).subscribe({
+		this.socioService.updateSocio(socioId, updateData).subscribe({
 			next: () => {
 				this.messageService.add({
 					severity: 'success',
@@ -124,11 +127,6 @@ export class PerfilComponent implements OnInit {
 					detail: 'Información de contacto guardada.',
 				});
 				this.isSavingContact = false;
-				// Actualizar vista local
-				if (this.socioData) {
-					this.socioData.email = updateData.email;
-					this.socioData.telefono = updateData.telefono;
-				}
 			},
 			error: (_err) => {
 				this.messageService.add({
@@ -172,32 +170,50 @@ export class PerfilComponent implements OnInit {
 	// Manejo de subida de foto (Frontend preview + Backend upload)
 	onPhotoSelect(event: any) {
 		const file = event.files[0];
+
 		if (file) {
-			// 1. Previsualización inmediata
+			// 1. Verificación crucial: Usar el ID del Socio (NO el del User)
+			const socioId = this.socioData?.id_socio;
+
+			if (!socioId) {
+				this.messageService.add({
+					severity: 'warn',
+					summary: 'Acción no permitida',
+					detail: 'Tu cuenta actual no tiene un perfil de socio vinculado para subir una foto.',
+				});
+				return;
+			}
+
+			// 2. Previsualización inmediata en la interfaz
 			const reader = new FileReader();
 			reader.onload = (e: any) => (this.photoUrl = e.target.result);
 			reader.readAsDataURL(file);
 
-			// 2. Subida al backend (Form Data)
+			// 3. Empaquetar el archivo para enviarlo a Python
 			const formData = new FormData();
 			formData.append('foto', file);
 
-			if (!this.socioData || !this.socioData.id) {
-				this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No hay datos de socio.' });
-				return;
-			}
-
-			this.socioService.updateSocio(this.socioData.id, formData).subscribe({
-				next: (_res: any) => {
+			// 4. Subida al backend al endpoint PATCH /socios/<socioId>/
+			this.socioService.updateSocio(socioId, formData).subscribe({
+				next: (res: any) => {
 					this.messageService.add({
 						severity: 'success',
 						summary: 'Foto Actualizada',
-						detail: 'Tu foto de perfil se ha guardado.',
+						detail: 'Tu foto de perfil se ha guardado correctamente.',
 					});
-					// Si el backend devuelve la URL final, úsala: this.photoUrl = res.foto;
+
+					// Si la API de Python devuelve el objeto actualizado con la ruta de la imagen, la usamos:
+					if (res && res.foto) {
+						this.photoUrl = res.foto;
+					}
 				},
-				error: () => {
-					this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo subir la imagen.' });
+				error: (err) => {
+					console.error('Error subiendo foto:', err);
+					this.messageService.add({
+						severity: 'error',
+						summary: 'Error',
+						detail: 'No se pudo guardar la imagen en el servidor. Inténtalo de nuevo.',
+					});
 				},
 			});
 		}
