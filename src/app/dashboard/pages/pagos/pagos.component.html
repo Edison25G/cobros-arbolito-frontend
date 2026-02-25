@@ -108,7 +108,7 @@
 									{{ factura.estado_financiero || factura.estado | uppercase }}
 								</span>
 								<span
-									*ngIf="factura.estado_sri"
+									*ngIf="false"
 									class="px-2 py-1 text-[9px] font-bold rounded-full border shadow-sm flex items-center gap-1 bg-white/80"
 									[ngClass]="{
 										'text-emerald-600 border-emerald-200': factura.estado_sri === 'AUTORIZADA',
@@ -193,24 +193,18 @@
 									<i class="pi pi-wallet"></i> Pagar
 								</button>
 
-								<!-- SI ESTÁ PAGADA y AUTORIZADA: Imprimir Ticket -->
+								<!-- SI ESTÁ PAGADA: Imprimir Ticket -->
 								<button
-									*ngIf="
-										(factura.estado_financiero || factura.estado) === EstadoFinanciero.PAGADA &&
-										factura.estado_sri === 'AUTORIZADA'
-									"
+									*ngIf="(factura.estado_financiero || factura.estado) === EstadoFinanciero.PAGADA"
 									(click)="verDetalleFactura(factura)"
 									class="flex-1 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 shadow-sm px-3 py-2 rounded-lg font-semibold text-xs transition-all flex items-center justify-center gap-2"
 								>
 									<i class="pi pi-print"></i> Ticket
 								</button>
 
-								<!-- SI ESTÁ PAGADA y AUTORIZADA: Ver SRI -->
+								<!-- SI ESTÁ PAGADA: Ver SRI -->
 								<button
-									*ngIf="
-										(factura.estado_financiero || factura.estado) === EstadoFinanciero.PAGADA &&
-										factura.estado_sri === 'AUTORIZADA'
-									"
+									*ngIf="(factura.estado_financiero || factura.estado) === EstadoFinanciero.PAGADA"
 									class="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 shadow-sm px-3 py-2 rounded-lg font-semibold text-xs transition-all flex items-center justify-center gap-2"
 								>
 									<i class="pi pi-external-link"></i> SRI

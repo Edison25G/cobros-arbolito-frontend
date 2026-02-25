@@ -207,7 +207,7 @@
 
 									<!-- Estado SRI (Tributario) -->
 									<p-tag
-										*ngIf="pago.estado_sri"
+										*ngIf="false"
 										[value]="pago.estado_sri"
 										[severity]="
 											pago.estado_sri === 'AUTORIZADA'
@@ -252,10 +252,7 @@
 								<td class="text-center">
 									<!-- Botón PDF solo si el SRI autorizó -->
 									<p-button
-										*ngIf="
-											((pago.estado_financiero || pago.estado) === 'PAGADA' || pago.estado_pago === 'PAGADA') &&
-											pago.estado_sri === 'AUTORIZADA'
-										"
+										*ngIf="(pago.estado_financiero || pago.estado) === 'PAGADA' || pago.estado_pago === 'PAGADA'"
 										icon="pi pi-file-pdf"
 										[rounded]="true"
 										[text]="true"
