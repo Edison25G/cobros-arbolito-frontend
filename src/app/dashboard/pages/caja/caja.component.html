@@ -504,6 +504,20 @@
 				</div>
 			</div>
 		</div>
+
+		<!-- Fallback si el backend no devuelve el comprobante -->
+		<div
+			*ngIf="!comprobanteActual"
+			class="flex flex-col items-center justify-center p-8 text-center bg-gray-50 rounded-lg"
+		>
+			<i class="pi pi-check-circle text-5xl text-green-500 mb-4 shadow-sm rounded-full bg-white"></i>
+			<h2 class="text-xl font-bold text-gray-800 mb-2">¡Pago Registrado Exitosamente!</h2>
+			<p class="text-gray-600 mb-4">El cobro ha sido procesado y enviado al SRI correctamente.</p>
+			<div class="bg-blue-50 text-blue-700 p-3 rounded-md text-sm border border-blue-100 max-w-sm">
+				<i class="pi pi-info-circle mr-1"></i> El sistema de impresión está esperando que el servidor retorne los
+				detalles del comprobante para generar el PDF.
+			</div>
+		</div>
 	</ng-template>
 
 	<ng-template pTemplate="footer">
