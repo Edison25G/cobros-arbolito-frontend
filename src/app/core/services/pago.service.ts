@@ -4,7 +4,7 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { environment } from '../../environments/environment';
 import { Observable, throwError, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
-import { FacturaSocio, EstadoFactura } from '../models/pago.interface';
+import { FacturaSocio, EstadoFinanciero } from '../models/pago.interface';
 
 @Injectable({
 	providedIn: 'root',
@@ -25,7 +25,9 @@ export class PagoService {
 					fecha_emision: item.fecha_emision,
 					fecha_vencimiento: item.fecha_vencimiento,
 					total: Number(item.total || 0),
-					estado: (item.estado || item.estado_pago) as EstadoFactura,
+					estado: (item.estado || item.estado_pago) as string,
+					estado_financiero: item.estado_financiero as EstadoFinanciero,
+					estado_sri: item.estado_sri,
 					clave_acceso_sri: item.clave_acceso_sri,
 					socio: item.socio
 						? {

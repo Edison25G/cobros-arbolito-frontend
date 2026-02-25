@@ -190,23 +190,56 @@
 								</td>
 								<td class="text-sm">Consumo Agua Potable</td>
 								<td class="text-right font-bold text-gray-800">{{ pago.total | currency }}</td>
-								<td class="text-center">
+								<td class="text-center flex flex-col gap-1 items-center justify-center">
+									<!-- Estado de Cobro (Financiero) -->
 									<p-tag
-										[value]="pago.estado || pago.estado_pago"
+										[value]="pago.estado_financiero || pago.estado || pago.estado_pago"
 										[severity]="
-											(pago.estado || pago.estado_pago) === 'PAGADA'
+											(pago.estado_financiero || pago.estado || pago.estado_pago) === 'PAGADA'
 												? 'success'
-												: (pago.estado || pago.estado_pago) === 'POR_VALIDAR'
+												: (pago.estado_financiero || pago.estado || pago.estado_pago) === 'POR_VALIDAR'
 													? 'info'
 													: 'warn'
 										"
 										[rounded]="true"
 										styleClass="text-[10px] px-2 uppercase font-bold"
 									></p-tag>
+
+									<!-- Estado SRI (Tributario) -->
+									<p-tag
+										*ngIf="pago.estado_sri"
+										[value]="pago.estado_sri"
+										[severity]="
+											pago.estado_sri === 'AUTORIZADA'
+												? 'success'
+												: pago.estado_sri === 'PENDIENTE_SRI' || pago.estado_sri === 'DEVUELTA'
+													? 'warn'
+													: pago.estado_sri === 'PENDIENTE_FIRMA'
+														? 'info'
+														: pago.estado_sri === 'NO_ENVIADA'
+															? 'secondary'
+															: 'danger'
+										"
+										[icon]="
+											pago.estado_sri === 'PENDIENTE_SRI'
+												? 'pi pi-clock'
+												: pago.estado_sri === 'AUTORIZADA'
+													? 'pi pi-check-circle'
+													: ''
+										"
+										[rounded]="true"
+										styleClass="text-[9px] px-2 font-bold opacity-80"
+										pTooltip="Estado en el SRI"
+										tooltipPosition="top"
+									></p-tag>
 								</td>
 								<td class="text-center">
+									<!-- Botón PDF solo si el SRI autorizó -->
 									<p-button
-										*ngIf="pago.estado === 'PAGADA' || pago.estado_pago === 'PAGADA'"
+										*ngIf="
+											((pago.estado_financiero || pago.estado) === 'PAGADA' || pago.estado_pago === 'PAGADA') &&
+											pago.estado_sri === 'AUTORIZADA'
+										"
 										icon="pi pi-file-pdf"
 										[rounded]="true"
 										[text]="true"
@@ -215,8 +248,10 @@
 										tooltipPosition="left"
 										(onClick)="imprimirFacturaSocio(pago)"
 									></p-button>
+
+									<!-- Pendiente de Pago -->
 									<span
-										*ngIf="pago.estado === 'PENDIENTE'"
+										*ngIf="(pago.estado_financiero || pago.estado) === 'PENDIENTE'"
 										class="text-orange-400 text-xs font-medium"
 										pTooltip="Pago Requerido"
 										><i class="pi pi-clock"></i

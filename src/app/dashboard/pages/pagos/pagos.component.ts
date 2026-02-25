@@ -7,7 +7,7 @@ import { InputTextModule } from 'primeng/inputtext'; // 👈 IMPORTANTE para inp
 import { PagoService } from '../../../core/services/pago.service';
 import { ErrorService } from '../../../auth/core/services/error.service';
 import { ComprobanteService } from '../../../core/services/comprobante.service';
-import { FacturaSocio, EstadoFactura } from '../../../core/models/pago.interface';
+import { FacturaSocio, EstadoFinanciero } from '../../../core/models/pago.interface';
 
 // --- PrimeNG v20 (Módulos) ---
 import { TableModule } from 'primeng/table';
@@ -51,7 +51,7 @@ export class PagosComponent implements OnInit {
 	// --- Estado del Componente ---
 	public misFacturas: FacturaSocio[] = [];
 	public isLoading = true;
-	public EstadoFactura = EstadoFactura;
+	public EstadoFinanciero = EstadoFinanciero;
 
 	// Variables para captura de datos
 	public referenciaInput = '';
@@ -99,15 +99,18 @@ export class PagosComponent implements OnInit {
 		});
 	}
 
-	getSeverity(estado: EstadoFactura): 'success' | 'info' | 'warn' | 'danger' {
+	getSeverity(estado: string | EstadoFinanciero): 'success' | 'info' | 'warn' | 'danger' {
 		switch (estado) {
-			case EstadoFactura.Pagada:
+			case EstadoFinanciero.PAGADA:
+			case 'PAGADA':
 				return 'success';
-			case EstadoFactura.EnVerificacion: // Antes POR_VALIDAR
+			case 'POR_VALIDAR': // Backward compatibility mapping if needed
 				return 'info';
-			case EstadoFactura.Pendiente:
+			case EstadoFinanciero.PENDIENTE:
+			case 'PENDIENTE':
 				return 'warn';
-			case EstadoFactura.Anulada:
+			case EstadoFinanciero.ANULADA:
+			case 'ANULADA':
 				return 'danger';
 			default:
 				return 'warn';

@@ -1,8 +1,17 @@
-export enum EstadoFactura {
-	Pendiente = 'PENDIENTE',
-	EnVerificacion = 'POR_VALIDAR',
-	Pagada = 'PAGADA',
-	Anulada = 'ANULADA',
+export enum EstadoFinanciero {
+	PENDIENTE = 'PENDIENTE',
+	PAGADA = 'PAGADA',
+	ANULADA = 'ANULADA',
+}
+
+export enum EstadoSRI {
+	NO_ENVIADA = 'NO_ENVIADA',
+	PENDIENTE_FIRMA = 'PENDIENTE_FIRMA',
+	PENDIENTE_SRI = 'PENDIENTE_SRI',
+	AUTORIZADA = 'AUTORIZADA',
+	DEVUELTA = 'DEVUELTA',
+	RECHAZADA = 'RECHAZADA',
+	ERROR = 'ERROR',
 }
 
 export interface FacturaSocio {
@@ -10,8 +19,11 @@ export interface FacturaSocio {
 	fecha_emision: string;
 	fecha_vencimiento: string;
 	total: number;
-	estado: EstadoFactura;
-	clave_acceso_sri?: string; // Necesario para el código de barras
+	estado: string; // (Legacy)
+	estado_financiero?: EstadoFinanciero;
+	estado_sri: EstadoSRI | string | null;
+	sri_mensaje_error?: string | null;
+	clave_acceso_sri?: string | null;
 	socio?: {
 		nombres: string;
 		apellidos: string;
