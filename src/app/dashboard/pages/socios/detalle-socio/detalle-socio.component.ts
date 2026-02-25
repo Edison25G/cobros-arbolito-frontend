@@ -307,7 +307,7 @@ export class DetalleSocioComponent implements OnInit {
 		};
 
 		const facturaData = {
-			id: item.factura_id,
+			id: item.factura_id || item.id || 0,
 			fecha_emision: item.fecha_emision,
 			total: item.total,
 			clave_acceso_sri: item.clave_acceso_sri, // Clave vital para código de barras
