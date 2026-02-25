@@ -338,7 +338,7 @@ export class DetalleSocioComponent implements OnInit {
 		const socioData = {
 			nombres: this.socio?.nombres,
 			apellidos: this.socio?.apellidos,
-			cedula: this.socio?.identificacion,
+			identificacion: this.socio?.identificacion,
 			direccion: this.socio?.direccion || 'S/N',
 		};
 
